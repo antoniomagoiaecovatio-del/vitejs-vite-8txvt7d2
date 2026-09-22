@@ -2876,6 +2876,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     tipoClienteRef: 'Todos los clientes',
     implantacionRef: 'Todas las implantaciones',
     estructuraRef: 'Todas las estructuras',
+    potenciaRef: 'Todas las potencias',
   });
   const [resultadoEstimacion, setResultadoEstimacion] = useState(null);
   const [errorEstimacion, setErrorEstimacion] = useState('');
@@ -3261,10 +3262,14 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       const coincideEstructura =
         formEstimacion.estructuraRef === 'Todas las estructuras' ||
         o.estructura === formEstimacion.estructuraRef;
+      const coincidePotencia =
+        formEstimacion.potenciaRef === 'Todas las potencias' ||
+        getPowerRangeLabel(getPowerRange(o.kwp)) === formEstimacion.potenciaRef;
       return (
         coincideCliente &&
         coincideImplantacion &&
         coincideEstructura &&
+        coincidePotencia &&
         o.hs_mo_kwp != null &&
         !Number.isNaN(Number(o.hs_mo_kwp)) &&
         // Se descartan las obras "Alto" (12-18) y "Crítico" (>18) del
@@ -3319,6 +3324,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     formEstimacion.tipoClienteRef,
     formEstimacion.implantacionRef,
     formEstimacion.estructuraRef,
+    formEstimacion.potenciaRef,
   ]);
 
   const obrasFiltradas = useMemo(
@@ -4853,6 +4859,7 @@ const dataAnio =
       tipoClienteRef: 'Todos los clientes',
       implantacionRef: 'Todas las implantaciones',
       estructuraRef: 'Todas las estructuras',
+      potenciaRef: 'Todas las potencias',
     });
   };
 
@@ -5150,11 +5157,16 @@ const dataAnio =
               >
                 Sugerencia automática según obras similares
               </div>
-              <div style={S.formGrid}>
+              <div style={{ ...S.formGrid, gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 {[
                   ['tipoClienteRef', 'Tipo de cliente', tiposCliente],
                   ['implantacionRef', 'Implantación', implantaciones],
                   ['estructuraRef', 'Tipo de estructura', estructurasEstimador],
+                  [
+                    'potenciaRef',
+                    'Rango de potencia',
+                    ['Todas las potencias', ...OPCIONES_POTENCIA_LABELS],
+                  ],
                 ].map(([f, l, opts]) => (
                   <div key={f}>
                     <label style={S.label}>{l}</label>
