@@ -3266,7 +3266,11 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         coincideImplantacion &&
         coincideEstructura &&
         o.hs_mo_kwp != null &&
-        !Number.isNaN(Number(o.hs_mo_kwp))
+        !Number.isNaN(Number(o.hs_mo_kwp)) &&
+        // Se descartan las obras "Alto" (12-18) y "Crítico" (>18) del
+        // gráfico de Hs MO/kWp por obra (naranja y rojo): son casos
+        // atípicos que no deberían influir en la sugerencia de cotización.
+        Number(o.hs_mo_kwp) <= 12
       );
     });
     const valores = similares.map((o) => Number(o.hs_mo_kwp));
@@ -3277,38 +3281,37 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         sugerido: null,
         mejor: null,
         peor: null,
-        tipico: null,
-        peorReal: null,
         curva: [],
       };
 
     const mejor = Math.min(...valores);
-    const peorReal = Math.max(...valores);
+    const peor = Math.max(...valores);
+    const promedio = valores.reduce((s, v) => s + v, 0) / valores.length;
     const h = calcularAnchoBanda(valores);
 
-    // El caso más complejo real (peorReal) no se usa para cotizar: nadie
-    // presupuesta con el peor escenario histórico. Se corre un escalón:
-    // - "Peor" pasa a ser el valor típico (el pico de la campana de toda
-    //   la distribución): un escenario conservador pero realista.
-    // - "Sugerido" queda entre el mejor caso y el punto medio (mejor↔
-    //   típico), es decir a un cuarto del camino desde el mejor caso —
-    //   más cerca del mejor escenario que del típico.
-    const tipico = encontrarPicoDensidad(valores, h);
-    const puntoMedio = (mejor + tipico) / 2;
-    const sugerido = (mejor + puntoMedio) / 2;
+    // "Sugerido" es el pico de la campana (la moda de la distribución):
+    // el valor donde se concentran más obras, más robusto que el
+    // promedio simple porque no se deja arrastrar por 1 o 2 obras
+    // atípicas dentro del rango ya filtrado.
+    const sugerido = encontrarPicoDensidad(valores, h);
 
-    // La campana que se grafica solo va de "Mejor" a "Peor" (el típico):
-    // lo que hay más allá ya no es relevante para cotizar.
-    const puntos = curvaDensidadEntre(valores, h, mejor, tipico);
+    // Campana completa (con margen a los costados), no acotada a
+    // Mejor-Peor.
+    const margen = (peor - mejor) * 0.15 + h;
+    const puntos = curvaDensidadEntre(
+      valores,
+      h,
+      mejor - margen,
+      peor + margen,
+      60
+    );
 
     return {
       cantidad: valores.length,
-      promedio: valores.reduce((s, v) => s + v, 0) / valores.length,
+      promedio,
       mejor,
       sugerido,
-      peor: tipico,
-      tipico,
-      peorReal,
+      peor,
       curva: puntos,
     };
   }, [
@@ -5173,7 +5176,7 @@ const dataAnio =
                     <div
   style={{
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
+    gridTemplateColumns: 'repeat(5, 1fr)',
     gap: 14,
   }}
 >
@@ -5206,7 +5209,16 @@ const dataAnio =
       botonBorde: '#f59e0b',
     },
     {
-      label: 'Peor',
+      label: 'Valor medio',
+      value: indicadorSugerido.promedio,
+      color: '#60a5fa',
+      indicador: indicadorSugerido.promedio,
+      boton: 'Usar valor medio',
+      botonColor: '#1d4ed8',
+      botonBorde: '#60a5fa',
+    },
+    {
+      label: 'Peor valor registrado',
       value: indicadorSugerido.peor,
       color: '#ef4444',
       indicador: indicadorSugerido.peor,
@@ -5344,6 +5356,12 @@ const dataAnio =
           }}
         />
         <ReferenceLine
+          x={indicadorSugerido.promedio}
+          stroke="#60a5fa"
+          strokeDasharray="2 3"
+          label={{ value: 'Valor medio', position: 'insideBottomLeft', fill: '#60a5fa', fontSize: 10 }}
+        />
+        <ReferenceLine
           x={indicadorSugerido.peor}
           stroke="#ef4444"
           strokeDasharray="2 3"
@@ -5352,24 +5370,16 @@ const dataAnio =
       </AreaChart>
     </ResponsiveContainer>
     <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.45 }}>
-      La campana va solo de "Mejor" a "Peor": cada obra similar aporta una
-      campanita chica centrada en su indicador y esta curva es la suma de
-      todas, pero se corta ahí porque nadie cotiza con el peor caso
-      histórico. <strong style={{ color: '#e5e7eb' }}>"Peor"</strong> es el
-      valor típico (el punto más alto de la curva completa, donde se
-      concentran más obras) y{' '}
-      <strong style={{ color: '#e5e7eb' }}>"Sugerido"</strong> queda entre
-      el mejor caso y el punto medio (mejor↔típico) — más cerca del mejor
-      escenario.{' '}
-      {indicadorSugerido.peorReal !== null && (
-        <>
-          El caso más complejo realmente registrado fue{' '}
-          <strong style={{ color: '#e5e7eb' }}>
-            {indicadorSugerido.peorReal.toFixed(2)}
-          </strong>{' '}
-          HS MO/kWp (no se usa para cotizar).
-        </>
-      )}
+      Cada obra similar aporta una campanita centrada en su indicador; esta
+      curva es la suma de todas. Ya se excluyeron las obras "Alto" y
+      "Crítico" (naranja y rojo en Hs MO/kWp por obra): no entran en esta
+      cuenta.{' '}
+      <strong style={{ color: '#e5e7eb' }}>"Sugerido"</strong> es el punto
+      más alto de la curva (la moda: donde se concentran más obras), más
+      robusto que el{' '}
+      <strong style={{ color: '#e5e7eb' }}>"Valor medio"</strong> (el
+      promedio simple) porque no se deja arrastrar por 1 o 2 obras
+      atípicas dentro del rango ya filtrado.
     </div>
   </div>
 )}
