@@ -26,6 +26,7 @@ import {
   RiTimerFlashLine,
   RiCalendarLine,
   RiCalculatorLine,
+  RiMapPinLine,
 } from '@remixicon/react';
 
 const {
@@ -6339,8 +6340,10 @@ const dataAnio =
             style={{
               background: '#111827',
               border: '1px solid #1f2937',
-              borderRadius: 12,
+              borderRadius: 16,
               overflow: 'hidden',
+              boxShadow:
+                '0 10px 15px -3px rgba(0,0,0,0.35), 0 4px 6px -4px rgba(0,0,0,0.35)',
             }}
           >
             <div
@@ -6515,6 +6518,34 @@ const dataAnio =
                 }}
               >
                 <thead>
+                  <tr>
+                    <th
+                      colSpan={2}
+                      style={{
+                        position: 'sticky',
+                        left: 0,
+                        background: '#0f172a',
+                        zIndex: 2,
+                      }}
+                    />
+                    <th colSpan={4} style={{ background: '#0f172a' }} />
+                    <th
+                      colSpan={ETAPAS_COLS.length}
+                      style={{
+                        background: '#111c31',
+                        color: '#60a5fa',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        textAlign: 'center',
+                        padding: '6px 8px',
+                        borderBottom: '1px solid #1f2937',
+                      }}
+                    >
+                      Etapas de ejecución
+                    </th>
+                  </tr>
                   <tr style={{ borderBottom: '2px solid #374151' }}>
                     {/* Columnas fijas */}
                     <th
@@ -6657,7 +6688,37 @@ const dataAnio =
                             borderBottom: '1px solid #1f2937',
                           }}
                         >
-                          {p.nombre_proyecto || '—'}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            <span>{p.nombre_proyecto || '—'}</span>
+                            {p.ubicacion && (
+                              <a
+                                href={p.ubicacion}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Ver ubicación en el mapa"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: 6,
+                                  background: '#1d4ed822',
+                                  color: '#60a5fa',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <RiMapPinLine style={{ width: 12, height: 12 }} />
+                              </a>
+                            )}
+                          </div>
                         </td>
                         <td
                           style={{
