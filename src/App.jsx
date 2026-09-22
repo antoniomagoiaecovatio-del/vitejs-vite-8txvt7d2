@@ -5188,7 +5188,7 @@ const dataAnio =
                     <div
   style={{
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: 14,
   }}
 >
@@ -5219,15 +5219,6 @@ const dataAnio =
       boton: 'Usar sugerido',
       botonColor: '#d97706',
       botonBorde: '#f59e0b',
-    },
-    {
-      label: 'Valor medio',
-      value: indicadorSugerido.promedio,
-      color: '#60a5fa',
-      indicador: indicadorSugerido.promedio,
-      boton: 'Usar valor medio',
-      botonColor: '#1d4ed8',
-      botonBorde: '#60a5fa',
     },
     {
       label: 'Peor valor registrado',
@@ -5368,12 +5359,6 @@ const dataAnio =
           }}
         />
         <ReferenceLine
-          x={indicadorSugerido.promedio}
-          stroke="#60a5fa"
-          strokeDasharray="2 3"
-          label={{ value: 'Valor medio', position: 'insideBottomLeft', fill: '#60a5fa', fontSize: 10 }}
-        />
-        <ReferenceLine
           x={indicadorSugerido.peor}
           stroke="#ef4444"
           strokeDasharray="2 3"
@@ -5387,11 +5372,8 @@ const dataAnio =
       "Crítico" (naranja y rojo en Hs MO/kWp por obra): no entran en esta
       cuenta.{' '}
       <strong style={{ color: '#e5e7eb' }}>"Sugerido"</strong> es el punto
-      más alto de la curva (la moda: donde se concentran más obras), más
-      robusto que el{' '}
-      <strong style={{ color: '#e5e7eb' }}>"Valor medio"</strong> (el
-      promedio simple) porque no se deja arrastrar por 1 o 2 obras
-      atípicas dentro del rango ya filtrado.
+      más alto de la curva (la moda: donde se concentra la mayor cantidad
+      de obras dentro del rango ya filtrado).
     </div>
   </div>
 )}
