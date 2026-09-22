@@ -443,22 +443,28 @@ const getPowerRange = (kwp) => {
   const n = Number(kwp);
 
   if (Number.isNaN(n) || n <= 0) return 'sin_dato';
-  if (n <= 5) return 'micro';
-  if (n <= 50) return 'small';
-  if (n <= 200) return 'medium';
-  return 'large';
+  if (n <= 4) return 'micro';
+  if (n <= 12) return 'pequena';
+  if (n <= 40) return 'mediana';
+  if (n <= 99) return 'grande';
+  if (n <= 300) return 'muy_grande';
+  return 'parque';
 };
 
 const getPowerRangeLabel = (range) => {
   switch (range) {
     case 'micro':
-      return 'Micro (1–5 kW)';
-    case 'small':
-      return 'Pequeña (5–50 kW)';
-    case 'medium':
-      return 'Mediana (50–200 kW)';
-    case 'large':
-      return 'Grande (>200 kW)';
+      return 'Micro (1–4 kWp)';
+    case 'pequena':
+      return 'Pequeña (5–12 kWp)';
+    case 'mediana':
+      return 'Mediana (13–40 kWp)';
+    case 'grande':
+      return 'Grande (41–99 kWp)';
+    case 'muy_grande':
+      return 'Muy grande (100–300 kWp)';
+    case 'parque':
+      return 'Parque solar (>300 kWp)';
     default:
       return 'Sin rango';
   }
@@ -1393,9 +1399,14 @@ const colorDesvioMO = (pct) => {
   return '#60a5fa';
 };
 
-const OPCIONES_POTENCIA_LABELS =['micro', 'small', 'medium', 'large'].map(
-  getPowerRangeLabel
-);
+const OPCIONES_POTENCIA_LABELS = [
+  'micro',
+  'pequena',
+  'mediana',
+  'grande',
+  'muy_grande',
+  'parque',
+].map(getPowerRangeLabel);
 
 // ── Estimador de obras: jornadas, calendario y costo de mano de obra ──
 const HORAS_JORNADA_DIA = 8; // 8 a 17 hs con 1 h de almuerzo
@@ -4362,7 +4373,7 @@ const dataAnio =
 
     const conUsd = obras.filter((o) => o.desvioUsd !== null);
 
-    const porRango = ['micro', 'small', 'medium', 'large']
+    const porRango = ['micro', 'pequena', 'mediana', 'grande', 'muy_grande', 'parque']
       .map((clave) => {
         const lista = obras.filter((o) => o.rango === clave);
 
