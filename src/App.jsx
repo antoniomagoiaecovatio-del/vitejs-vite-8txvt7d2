@@ -236,55 +236,82 @@ const calcularPorcentajesEnteros = (items) => {
   return redondeados;
 };
 
-// Estima la curva de densidad (KDE gaussiano) de una lista de valores y
-// devuelve la grilla de puntos para graficarla junto con el "pico": el
-// valor donde la campana es más alta, es decir donde se concentra la
-// mayoría de los casos. A diferencia del promedio simple, el pico no se
-// deja arrastrar por 1 o 2 obras atípicas (muy simples o muy complejas).
-//
-// Ancho de banda por la regla de Silverman: h = 0.9 · desvío · n^(-1/5).
-const estimarDensidadKDE = (valores, pasos = 60) => {
-  const n = valores.length;
+// Kernel gaussiano estándar, usado por la estimación de densidad (KDE).
+const gaussianoKernel = (u) => Math.exp(-0.5 * u * u) / Math.sqrt(2 * Math.PI);
 
-  if (n === 0) return { puntos: [], pico: null, h: 0 };
+// Ancho de banda por la regla de Silverman: h = 0.9 · desvío · n^(-1/5), con
+// un piso mínimo para que nunca sea 0 (obras con valor casi idéntico) ni tan
+// angosto que la curva se vea con un pico por cada obra en vez de una
+// campana suavizada.
+const calcularAnchoBanda = (valores) => {
+  const n = valores.length;
+  if (n < 2) return 0;
 
   const min = Math.min(...valores);
   const max = Math.max(...valores);
-
-  if (min === max || n < 2) {
-    return { puntos: [{ x: min, densidad: 1 }], pico: min, h: 0 };
-  }
+  if (min === max) return 0;
 
   const media = valores.reduce((s, v) => s + v, 0) / n;
   const varianza =
     valores.reduce((s, v) => s + (v - media) ** 2, 0) / (n - 1);
   const desvio = Math.sqrt(varianza);
 
-  // Piso mínimo para que el ancho de banda nunca sea 0 (todas las obras
-  // con un valor casi idéntico) ni tan angosto que la curva se vea con
-  // un pico por cada obra en vez de una campana suavizada.
-  const h = Math.max(0.9 * desvio * Math.pow(n, -1 / 5), (max - min) / 40);
+  return Math.max(0.9 * desvio * Math.pow(n, -1 / 5), (max - min) / 40);
+};
+
+// Densidad KDE en un punto x dado un ancho de banda h ya calculado.
+const densidadKDE = (x, valores, h) => {
+  const n = valores.length;
+  if (h === 0) return valores.includes(x) ? 1 : 0;
+  return (
+    valores.reduce((acc, v) => acc + gaussianoKernel((x - v) / h), 0) /
+    (n * h)
+  );
+};
+
+// Encuentra el pico (la "moda") de la curva de densidad, escaneando todo el
+// rango de los datos con margen. Es el valor donde se concentra la mayoría
+// de los casos — a diferencia del promedio simple, no se deja arrastrar por
+// 1 o 2 obras atípicas (muy simples o muy complejas).
+const encontrarPicoDensidad = (valores, h, pasos = 200) => {
+  const min = Math.min(...valores);
+  const max = Math.max(...valores);
+
+  if (min === max) return min;
 
   const margen = (max - min) * 0.15 + h;
   const desde = min - margen;
   const hasta = max + margen;
   const paso = (hasta - desde) / pasos;
 
-  const gaussiana = (u) => Math.exp(-0.5 * u * u) / Math.sqrt(2 * Math.PI);
-
-  const puntos = [];
-  let pico = { x: media, densidad: -Infinity };
+  let pico = { x: desde, densidad: -Infinity };
 
   for (let i = 0; i <= pasos; i++) {
     const x = desde + i * paso;
-    const densidad =
-      valores.reduce((acc, v) => acc + gaussiana((x - v) / h), 0) / (n * h);
-
-    puntos.push({ x, densidad });
+    const densidad = densidadKDE(x, valores, h);
     if (densidad > pico.densidad) pico = { x, densidad };
   }
 
-  return { puntos, pico: pico.x, h };
+  return pico.x;
+};
+
+// Genera los puntos de la curva de densidad solo entre "desde" y "hasta"
+// (para graficar únicamente el tramo que interesa: entre el mejor caso y
+// el típico, no toda la cola de obras más complejas).
+const curvaDensidadEntre = (valores, h, desde, hasta, pasos = 50) => {
+  if (desde >= hasta) {
+    return [{ x: desde, densidad: densidadKDE(desde, valores, h) }];
+  }
+
+  const paso = (hasta - desde) / pasos;
+  const puntos = [];
+
+  for (let i = 0; i <= pasos; i++) {
+    const x = desde + i * paso;
+    puntos.push({ x, densidad: densidadKDE(x, valores, h) });
+  }
+
+  return puntos;
 };
 
 const formatDias = (v) => {
@@ -3255,18 +3282,24 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         curva: [],
       };
 
-    const { puntos, pico } = estimarDensidadKDE(valores);
     const mejor = Math.min(...valores);
     const peorReal = Math.max(...valores);
+    const h = calcularAnchoBanda(valores);
 
     // El caso más complejo real (peorReal) no se usa para cotizar: nadie
     // presupuesta con el peor escenario histórico. Se corre un escalón:
-    // - "Peor" pasa a ser el valor típico (el pico de la campana, antes
-    //   llamado "Sugerido"): un escenario conservador pero realista.
-    // - "Sugerido" pasa a ser el punto medio entre el mejor caso y ese
-    //   típico, para no arrancar la cotización tan arriba.
-    const tipico = pico;
-    const sugerido = (mejor + tipico) / 2;
+    // - "Peor" pasa a ser el valor típico (el pico de la campana de toda
+    //   la distribución): un escenario conservador pero realista.
+    // - "Sugerido" queda entre el mejor caso y el punto medio (mejor↔
+    //   típico), es decir a un cuarto del camino desde el mejor caso —
+    //   más cerca del mejor escenario que del típico.
+    const tipico = encontrarPicoDensidad(valores, h);
+    const puntoMedio = (mejor + tipico) / 2;
+    const sugerido = (mejor + puntoMedio) / 2;
+
+    // La campana que se grafica solo va de "Mejor" a "Peor" (el típico):
+    // lo que hay más allá ya no es relevante para cotizar.
+    const puntos = curvaDensidadEntre(valores, h, mejor, tipico);
 
     return {
       cantidad: valores.length,
@@ -5258,7 +5291,7 @@ const dataAnio =
     <ResponsiveContainer width="100%" height={170}>
       <AreaChart
         data={indicadorSugerido.curva}
-        margin={{ top: 28, right: 12, bottom: 0, left: 0 }}
+        margin={{ top: 28, right: 28, bottom: 0, left: 8 }}
       >
         <defs>
           <linearGradient id="densidadSugerido" x1="0" y1="0" x2="0" y2="1">
@@ -5319,13 +5352,15 @@ const dataAnio =
       </AreaChart>
     </ResponsiveContainer>
     <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.45 }}>
-      Cada obra similar aporta una campana chica centrada en su indicador; la
-      curva es la suma de todas. Nadie cotiza con el peor caso histórico, así
-      que se corrió un escalón: <strong style={{ color: '#e5e7eb' }}>"Peor"</strong>{' '}
-      es ahora el valor típico (el punto más alto de la curva, donde se
+      La campana va solo de "Mejor" a "Peor": cada obra similar aporta una
+      campanita chica centrada en su indicador y esta curva es la suma de
+      todas, pero se corta ahí porque nadie cotiza con el peor caso
+      histórico. <strong style={{ color: '#e5e7eb' }}>"Peor"</strong> es el
+      valor típico (el punto más alto de la curva completa, donde se
       concentran más obras) y{' '}
-      <strong style={{ color: '#e5e7eb' }}>"Sugerido"</strong> es el punto
-      medio entre el mejor caso y ese típico.{' '}
+      <strong style={{ color: '#e5e7eb' }}>"Sugerido"</strong> queda entre
+      el mejor caso y el punto medio (mejor↔típico) — más cerca del mejor
+      escenario.{' '}
       {indicadorSugerido.peorReal !== null && (
         <>
           El caso más complejo realmente registrado fue{' '}
