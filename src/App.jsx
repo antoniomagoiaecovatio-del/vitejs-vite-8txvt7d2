@@ -42,6 +42,8 @@ const {
   ReferenceLine,
   LabelList,
   ComposedChart,
+  Area,
+  AreaChart,
   Line,
   LineChart,
 
@@ -232,6 +234,57 @@ const calcularPorcentajesEnteros = (items) => {
   }
 
   return redondeados;
+};
+
+// Estima la curva de densidad (KDE gaussiano) de una lista de valores y
+// devuelve la grilla de puntos para graficarla junto con el "pico": el
+// valor donde la campana es más alta, es decir donde se concentra la
+// mayoría de los casos. A diferencia del promedio simple, el pico no se
+// deja arrastrar por 1 o 2 obras atípicas (muy simples o muy complejas).
+//
+// Ancho de banda por la regla de Silverman: h = 0.9 · desvío · n^(-1/5).
+const estimarDensidadKDE = (valores, pasos = 60) => {
+  const n = valores.length;
+
+  if (n === 0) return { puntos: [], pico: null, h: 0 };
+
+  const min = Math.min(...valores);
+  const max = Math.max(...valores);
+
+  if (min === max || n < 2) {
+    return { puntos: [{ x: min, densidad: 1 }], pico: min, h: 0 };
+  }
+
+  const media = valores.reduce((s, v) => s + v, 0) / n;
+  const varianza =
+    valores.reduce((s, v) => s + (v - media) ** 2, 0) / (n - 1);
+  const desvio = Math.sqrt(varianza);
+
+  // Piso mínimo para que el ancho de banda nunca sea 0 (todas las obras
+  // con un valor casi idéntico) ni tan angosto que la curva se vea con
+  // un pico por cada obra en vez de una campana suavizada.
+  const h = Math.max(0.9 * desvio * Math.pow(n, -1 / 5), (max - min) / 40);
+
+  const margen = (max - min) * 0.15 + h;
+  const desde = min - margen;
+  const hasta = max + margen;
+  const paso = (hasta - desde) / pasos;
+
+  const gaussiana = (u) => Math.exp(-0.5 * u * u) / Math.sqrt(2 * Math.PI);
+
+  const puntos = [];
+  let pico = { x: media, densidad: -Infinity };
+
+  for (let i = 0; i <= pasos; i++) {
+    const x = desde + i * paso;
+    const densidad =
+      valores.reduce((acc, v) => acc + gaussiana((x - v) / h), 0) / (n * h);
+
+    puntos.push({ x, densidad });
+    if (densidad > pico.densidad) pico = { x, densidad };
+  }
+
+  return { puntos, pico: pico.x, h };
 };
 
 const formatDias = (v) => {
@@ -3191,12 +3244,26 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     });
     const valores = similares.map((o) => Number(o.hs_mo_kwp));
     if (!valores.length)
-      return { cantidad: 0, promedio: null, mejor: null, peor: null };
+      return {
+        cantidad: 0,
+        promedio: null,
+        sugerido: null,
+        mejor: null,
+        peor: null,
+        curva: [],
+      };
+
+    const { puntos, pico } = estimarDensidadKDE(valores);
+
     return {
       cantidad: valores.length,
       promedio: valores.reduce((s, v) => s + v, 0) / valores.length,
+      // "Sugerido" = el pico de la curva de densidad, no el promedio: no
+      // se deja arrastrar por 1 o 2 obras atípicas.
+      sugerido: pico,
       mejor: Math.min(...valores),
       peor: Math.max(...valores),
+      curva: puntos,
     };
   }, [
     obras,
@@ -5055,7 +5122,7 @@ const dataAnio =
                 ))}
               </div>
               <div style={{ marginTop: 16 }}>
-                {indicadorSugerido.promedio !== null ? (
+                {indicadorSugerido.sugerido !== null ? (
                   <>
                     <div
   style={{
@@ -5085,9 +5152,9 @@ const dataAnio =
     },
     {
       label: 'Sugerido',
-      value: indicadorSugerido.promedio,
+      value: indicadorSugerido.sugerido,
       color: '#fbbf24',
-      indicador: indicadorSugerido.promedio,
+      indicador: indicadorSugerido.sugerido,
       boton: 'Usar sugerido',
       botonColor: '#d97706',
       botonBorde: '#f59e0b',
@@ -5160,6 +5227,101 @@ const dataAnio =
     </div>
   ))}
 </div>
+
+{indicadorSugerido.curva.length > 1 && (
+  <div style={{ marginTop: 18 }}>
+    <div
+      style={{
+        fontSize: 10,
+        color: '#6b7280',
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        marginBottom: 6,
+      }}
+    >
+      Cómo se calculó el sugerido — distribución de las {indicadorSugerido.cantidad}{' '}
+      obras similares
+    </div>
+    <ResponsiveContainer width="100%" height={170}>
+      <AreaChart
+        data={indicadorSugerido.curva}
+        margin={{ top: 28, right: 12, bottom: 0, left: 0 }}
+      >
+        <defs>
+          <linearGradient id="densidadSugerido" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.45} />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <XAxis
+          dataKey="x"
+          type="number"
+          domain={['dataMin', 'dataMax']}
+          tick={{ fill: '#6b7280', fontSize: 10 }}
+          tickFormatter={(v) => v.toFixed(1)}
+        />
+        <YAxis hide domain={[0, 'dataMax']} />
+        <Tooltip
+          formatter={(v) => [Number(v).toFixed(3), 'densidad relativa']}
+          labelFormatter={(v) => `${Number(v).toFixed(2)} HS MO / kWp`}
+          contentStyle={{
+            background: '#1f2937',
+            border: '1px solid #374151',
+            borderRadius: 8,
+            fontSize: 11,
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey="densidad"
+          stroke="#f59e0b"
+          strokeWidth={2}
+          fill="url(#densidadSugerido)"
+          isAnimationActive={false}
+        />
+        <ReferenceLine
+          x={indicadorSugerido.mejor}
+          stroke="#22c55e"
+          strokeDasharray="2 3"
+          label={{ value: 'Mejor', position: 'insideTopLeft', fill: '#22c55e', fontSize: 10 }}
+        />
+        <ReferenceLine
+          x={indicadorSugerido.sugerido}
+          stroke="#fbbf24"
+          strokeWidth={1.5}
+          label={{
+            value: 'Sugerido',
+            position: 'top',
+            fill: '#fbbf24',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        />
+        <ReferenceLine
+          x={indicadorSugerido.peor}
+          stroke="#ef4444"
+          strokeDasharray="2 3"
+          label={{ value: 'Peor', position: 'insideTopRight', fill: '#ef4444', fontSize: 10 }}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.45 }}>
+      Cada obra similar aporta una campana chica centrada en su indicador; la
+      curva es la suma de todas. El "Sugerido" es el punto más alto de esa
+      curva (donde se concentran más obras), no el promedio simple — así no
+      lo arrastran 1 o 2 obras muy atípicas.{' '}
+      {indicadorSugerido.promedio !== null && (
+        <>
+          El promedio simple sería{' '}
+          <strong style={{ color: '#e5e7eb' }}>
+            {indicadorSugerido.promedio.toFixed(2)}
+          </strong>
+          .
+        </>
+      )}
+    </div>
+  </div>
+)}
                   </>
                 ) : (
                   <div style={{ color: '#9ca3af', fontSize: 13 }}>
