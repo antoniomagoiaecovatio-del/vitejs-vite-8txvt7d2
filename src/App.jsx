@@ -933,21 +933,18 @@ const getEtapaAvance = (etapas_lista, letraKey) => {
   return match !== undefined ? Number(match.avance) : null;
 };
 
+// Colores sólidos (no tintes al 10%) para que cada etapa se distinga de
+// un vistazo, tipo "barra de datos" de Sheets/Excel: el color llena la
+// celda en proporción al avance.
 const etapaCellStyle = (val) => {
-  if (val === null)
-    return { bg: 'transparent', color: '#374151', border: 'transparent' };
+  if (val === null) return { fill: 'transparent', border: '#1f2937' };
 
-  if (val >= 100)
-    return { bg: '#22c55e1a', color: '#22c55e', border: '#22c55e44' };
-  if (val >= 60)
-    return { bg: '#3b82f61a', color: '#60a5fa', border: '#3b82f644' };
-  if (val >= 20)
-    return { bg: '#f59e0b1a', color: '#fbbf24', border: '#f59e0b44' };
-  if (val > 0)
-    return { bg: '#ef44441a', color: '#f87171', border: '#ef444444' };
+  if (val >= 100) return { fill: '#16a34a', border: '#22c55e' };
+  if (val >= 60) return { fill: '#2563eb', border: '#3b82f6' };
+  if (val >= 20) return { fill: '#d97706', border: '#f59e0b' };
 
-  // 0%
-  return { bg: '#ef44441a', color: '#f87171', border: '#ef444444' };
+  // 1-19% y 0%: mismo color de alerta.
+  return { fill: '#dc2626', border: '#ef4444' };
 };
 
 function HsLabel({ value, color = '#f9fafb' }) {
@@ -3540,13 +3537,15 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     });
   };
   
+  // Filtro inverso: los estados marcados son los que se OCULTAN, no los
+  // que se muestran. Con nada marcado se ve todo.
   const proyectosEstadoTablaFiltrados = useMemo(() => {
     if (filtrosEstadoTablaProyecto.length === 0) {
       return proyectosEstadoFiltrados;
     }
-  
-    return proyectosEstadoFiltrados.filter((p) =>
-      filtrosEstadoTablaProyecto.includes(p.estado)
+
+    return proyectosEstadoFiltrados.filter(
+      (p) => !filtrosEstadoTablaProyecto.includes(p.estado)
     );
   }, [
     proyectosEstadoFiltrados,
@@ -5983,7 +5982,7 @@ const dataAnio =
 
       {/* ── ESTADO PROYECTOS ── */}
       {tabActiva === 'estadoProyectos' && (
-        <main style={S.main}>
+        <main style={{ ...S.main, maxWidth: 1900 }}>
           {errorProyectos && (
             <div
               style={{
@@ -6397,14 +6396,14 @@ const dataAnio =
       userSelect: 'none',
       listStyle: 'none',
     }}
-    title="Seleccionar uno o varios estados"
+    title="Elegí los estados que querés ocultar de la tabla"
   >
     <span>
       {filtrosEstadoTablaProyecto.length === 0
-        ? 'Todos los estados'
+        ? 'Mostrando todos'
         : filtrosEstadoTablaProyecto.length === 1
-        ? filtrosEstadoTablaProyecto[0]
-        : `${filtrosEstadoTablaProyecto.length} estados seleccionados`}
+        ? `Ocultando: ${filtrosEstadoTablaProyecto[0]}`
+        : `Ocultando ${filtrosEstadoTablaProyecto.length} estados`}
     </span>
 
     <span style={{ color: '#9ca3af' }}>▾</span>
@@ -6416,7 +6415,7 @@ const dataAnio =
       top: 'calc(100% + 6px)',
       right: 0,
       zIndex: 30,
-      minWidth: 210,
+      minWidth: 220,
       background: '#1f2937',
       border: '1px solid #374151',
       borderRadius: 8,
@@ -6424,6 +6423,17 @@ const dataAnio =
       boxShadow: '0 12px 30px rgba(0, 0, 0, 0.35)',
     }}
   >
+    <div
+      style={{
+        fontSize: 10,
+        color: '#6b7280',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        padding: '2px 8px 6px',
+      }}
+    >
+      Tildá para ocultar
+    </div>
     <label
       style={{
         display: 'flex',
@@ -6442,7 +6452,7 @@ const dataAnio =
         onChange={() => setFiltrosEstadoTablaProyecto([])}
       />
 
-      <span>Todos los estados</span>
+      <span>Mostrar todos (no ocultar ninguno)</span>
     </label>
 
     {estadosTablaProyecto.map((estado) => (
@@ -6569,7 +6579,7 @@ const dataAnio =
                         left: 72,
                         background: '#0f172a',
                         zIndex: 2,
-                        minWidth: 260,
+                        minWidth: 220,
                         padding: '10px 12px',
                       }}
                     >
@@ -6578,8 +6588,8 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 95,
-                        padding: '10px 8px',
+                        minWidth: 82,
+                        padding: '10px 6px',
                         textAlign: 'center',
                       }}
                     >
@@ -6589,8 +6599,8 @@ const dataAnio =
                     <th
   style={{
     ...S.th,
-    minWidth: 105,
-    padding: '10px 8px',
+    minWidth: 92,
+    padding: '10px 6px',
     textAlign: 'center',
     whiteSpace: 'nowrap',
   }}
@@ -6600,8 +6610,8 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 100,
-                        padding: '10px 10px',
+                        minWidth: 88,
+                        padding: '10px 8px',
                         textAlign: 'center',
                       }}
                     >
@@ -6610,8 +6620,8 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 80,
-                        padding: '10px 8px',
+                        minWidth: 70,
+                        padding: '10px 6px',
                         textAlign: 'center',
                       }}
                     >
@@ -6623,10 +6633,10 @@ const dataAnio =
                         key={col.key}
                         style={{
                           ...S.th,
-                          width: 90,
-                          minWidth: 90,
-                          maxWidth: 90,
-                          padding: '10px 6px',
+                          width: 84,
+                          minWidth: 84,
+                          maxWidth: 84,
+                          padding: '10px 4px',
                           textAlign: 'center',
                           whiteSpace: 'normal',
                           wordBreak: 'normal',
@@ -6681,8 +6691,8 @@ const dataAnio =
                             fontWeight: 600,
                             fontSize: 12,
                             padding: '9px 12px',
-                            minWidth: 260,
-                            maxWidth: 360,
+                            minWidth: 220,
+                            maxWidth: 300,
                             whiteSpace: 'normal',
                             lineHeight: 1.25,
                             borderBottom: '1px solid #1f2937',
@@ -6805,7 +6815,9 @@ const dataAnio =
                             </span>
                           </div>
                         </td>
-                        {/* Celdas por etapa */}
+                        {/* Celdas por etapa — barra de datos tipo Sheets: el
+                        color sólido llena la celda en proporción al avance,
+                        así se lee de un vistazo sin tener que leer cada %. */}
                         {ETAPAS_COLS.map((col) => {
                           const val = getEtapaAvance(p.etapas_lista, col.key);
                           const c = etapaCellStyle(val);
@@ -6813,37 +6825,62 @@ const dataAnio =
                             <td
                               key={col.key}
                               style={{
-                                ...S.td,
-                                width: 90,
-                                minWidth: 90,
-                                maxWidth: 90,
-                                textAlign: 'center',
-                                padding: '7px 4px',
+                                width: 84,
+                                minWidth: 84,
+                                maxWidth: 84,
+                                padding: '5px 4px',
+                                borderBottom: '1px solid #1f2937',
                               }}
                             >
                               {val !== null ? (
-                                <span
+                                <div
                                   style={{
-                                    display: 'inline-block',
-                                    minWidth: 46,
-                                    padding: '3px 5px',
-                                    borderRadius: 5,
-                                    background: c.bg,
-                                    color: c.color,
-                                    border: `1px solid ${c.border}`,
-                                    fontWeight: 700,
-                                    fontSize: 11,
-                                    letterSpacing: '0.02em',
+                                    position: 'relative',
+                                    height: 26,
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    background: '#0b1220',
+                                    border: `1px solid ${c.border}55`,
                                   }}
                                 >
-                                  {val}%
-                                </span>
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      width: `${val === 0 ? 100 : val}%`,
+                                      background: c.fill,
+                                      opacity: val === 0 ? 0.55 : 1,
+                                    }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: 'relative',
+                                      height: '100%',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: 11,
+                                      fontWeight: 800,
+                                      color: '#ffffff',
+                                      textShadow: '0 1px 3px rgba(0,0,0,0.85)',
+                                    }}
+                                  >
+                                    {val}%
+                                  </div>
+                                </div>
                               ) : (
-                                <span
-                                  style={{ color: '#2d3748', fontSize: 11 }}
+                                <div
+                                  style={{
+                                    height: 26,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#374151',
+                                    fontSize: 11,
+                                  }}
                                 >
                                   —
-                                </span>
+                                </div>
                               )}
                             </td>
                           );
