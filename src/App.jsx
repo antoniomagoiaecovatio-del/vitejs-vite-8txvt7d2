@@ -5326,10 +5326,65 @@ const dataAnio =
 
   if (loading && obras.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-950">
-        <div className="text-center text-gray-500 dark:text-gray-500">
-          <div className="mb-3 text-4xl">⚡</div>
-          <p>Cargando datos...</p>
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-transparent">
+        <div className="text-center" role="status" aria-live="polite">
+          <svg
+            viewBox="0 0 190 140"
+            width="260"
+            height="192"
+            aria-hidden="true"
+            className="mx-auto"
+          >
+            {/* sol */}
+            <g className="sol-rayos" stroke="#ffc933" strokeWidth="2.4" strokeLinecap="round">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <line
+                  key={i}
+                  x1="138"
+                  y1="8"
+                  x2="138"
+                  y2="14"
+                  transform={`rotate(${i * 45} 138 30)`}
+                />
+              ))}
+            </g>
+            <circle className="sol-sol" cx="138" cy="30" r="11" fill="#ffc933" />
+            {/* panel solar */}
+            <g transform="translate(14 46) skewX(-14)">
+              <rect
+                x="-4"
+                y="-4"
+                width="121"
+                height="68"
+                rx="4"
+                fill="#16323a"
+                stroke="#55787f"
+                strokeWidth="2"
+              />
+              {Array.from({ length: 12 }).map((_, i) => {
+                const col = i % 4;
+                const fila = Math.floor(i / 4);
+                return (
+                  <rect
+                    key={i}
+                    className="sol-celda"
+                    style={{ '--i': fila * 4 + (fila % 2 ? 3 - col : col) }}
+                    x={col * 29}
+                    y={fila * 22}
+                    width="26"
+                    height="19"
+                    rx="2"
+                    fill="#24525a"
+                  />
+                );
+              })}
+            </g>
+            {/* soporte */}
+            <path d="M62 112 L52 132 M92 112 L102 132 M44 132 H110" stroke="#55787f" strokeWidth="3" strokeLinecap="round" fill="none" />
+          </svg>
+          <p className="mt-2 text-sm text-gray-400">
+            Cargando datos<span className="sol-puntos inline-block w-4 text-left" />
+          </p>
         </div>
       </div>
     );

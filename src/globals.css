@@ -201,3 +201,73 @@ select,
 .donut-int .recharts-wrapper {
   overflow: visible !important;
 }
+
+/* Pantalla de carga: panel solar que se "carga" celda por celda */
+@keyframes solCelda {
+  0%,
+  100% {
+    fill: #24525a;
+    opacity: 0.55;
+  }
+  35%,
+  60% {
+    fill: #95de1d;
+    opacity: 1;
+  }
+}
+@keyframes solGiro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes solLatido {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+@keyframes solPuntos {
+  0%,
+  20% {
+    content: '';
+  }
+  40% {
+    content: '.';
+  }
+  60% {
+    content: '..';
+  }
+  80%,
+  100% {
+    content: '...';
+  }
+}
+.sol-celda {
+  animation: solCelda 2s ease-in-out infinite both;
+  animation-delay: calc(var(--i) * 110ms);
+}
+.sol-rayos {
+  transform-origin: 138px 30px;
+  animation: solGiro 9s linear infinite;
+}
+.sol-sol {
+  transform-origin: 138px 30px;
+  animation: solLatido 2s ease-in-out infinite;
+}
+.sol-puntos::after {
+  content: '';
+  animation: solPuntos 1.6s steps(1, end) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sol-celda,
+  .sol-rayos,
+  .sol-sol,
+  .sol-puntos::after {
+    animation: none;
+  }
+}
