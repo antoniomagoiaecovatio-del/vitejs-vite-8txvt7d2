@@ -3303,11 +3303,19 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     const promedio = valores.reduce((s, v) => s + v, 0) / valores.length;
     const h = calcularAnchoBanda(valores);
 
-    // "Sugerido" es el pico de la campana (la moda de la distribución):
-    // el valor donde se concentran más obras, más robusto que el
-    // promedio simple porque no se deja arrastrar por 1 o 2 obras
-    // atípicas dentro del rango ya filtrado.
-    const sugerido = encontrarPicoDensidad(valores, h);
+    // "Sugerido" es el promedio ponderado por kWp de las obras similares
+    // (ya sin las "Alto" y "Crítico"): cada obra pesa según su potencia, así
+    // que equivale a las Hs MO totales sobre los kWp totales. Es estable
+    // aunque haya pocas obras y siempre queda entre el Mejor y el Peor.
+    const pesos = similares.map((o) => {
+      const w = Number(o.kwp);
+      return Number.isFinite(w) && w > 0 ? w : 0;
+    });
+    const sumaPesos = pesos.reduce((s, w) => s + w, 0);
+    const sugerido =
+      sumaPesos > 0
+        ? valores.reduce((s, v, i) => s + v * pesos[i], 0) / sumaPesos
+        : promedio;
 
     // Campana completa (con margen a los costados), no acotada a
     // Mejor-Peor.
@@ -5307,8 +5315,8 @@ const dataAnio =
         marginBottom: 6,
       }}
     >
-      Cómo se calculó el sugerido — distribución de las {indicadorSugerido.cantidad}{' '}
-      obras similares
+      Cómo se calculó el sugerido — {indicadorSugerido.cantidad}{' '}
+      obras similares (promedio ponderado por kWp)
     </div>
     <ResponsiveContainer width="100%" height={170}>
       <AreaChart
@@ -5375,12 +5383,12 @@ const dataAnio =
     </ResponsiveContainer>
     <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 4, lineHeight: 1.45 }}>
       Cada obra similar aporta una campanita centrada en su indicador; esta
-      curva es la suma de todas. Ya se excluyeron las obras "Alto" y
-      "Crítico" (naranja y rojo en Hs MO/kWp por obra): no entran en esta
-      cuenta.{' '}
-      <strong style={{ color: '#e3eaea' }}>"Sugerido"</strong> es el punto
-      más alto de la curva (la moda: donde se concentra la mayor cantidad
-      de obras dentro del rango ya filtrado).
+      curva es la suma de todas y muestra cómo se distribuyen. Ya se
+      excluyeron las obras "Alto" y "Crítico" (naranja y rojo en Hs MO/kWp
+      por obra): no entran en esta cuenta.{' '}
+      <strong style={{ color: '#e3eaea' }}>"Sugerido"</strong> es el promedio
+      ponderado por kWp de las obras similares: cada obra pesa según su
+      potencia (equivale a las Hs MO totales divididas por los kWp totales).
     </div>
   </div>
 )}
