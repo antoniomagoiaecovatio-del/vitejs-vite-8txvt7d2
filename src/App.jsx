@@ -3059,6 +3059,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [sortDir, setSortDir] = useState('asc');
   const [criterioGraficoKwp, setCriterioGraficoKwp] =
   useState('implantacion');
+  // Fórmula del gráfico: 'kwp' (pesa la potencia) u 'obras' (cada obra pesa igual).
+  const [metricaGrafico, setMetricaGrafico] = useState('kwp');
 
   // Obra de referencia resaltada al pasar el mouse por una barra de la campana.
   const [refHover, setRefHover] = useState(null);
@@ -3730,7 +3732,9 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
           : isImplantacion(key);
   
       if (esValido) {
-        map[key] = (map[key] || 0) + (Number(o.kwp) || 0);
+        map[key] =
+          (map[key] || 0) +
+          (metricaGrafico === 'obras' ? 1 : Number(o.kwp) || 0);
       }
     });
   
@@ -3740,7 +3744,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     }));
   
     return calcularPorcentajesEnteros(dataBase);
-  }, [obras, criterioGraficoKwp]);
+  }, [obras, criterioGraficoKwp, metricaGrafico]);
 
   const mejores = useMemo(
     () =>
@@ -10417,9 +10421,10 @@ const dataAnio =
         <RiPieChartLine className="size-4" aria-hidden="true" />
       </div>
       <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
+        {metricaGrafico === 'obras' ? 'Obras' : 'kWp'} por{' '}
         {criterioGraficoKwp === 'tipo_cliente'
-          ? 'kWp por tipo de cliente'
-          : 'kWp por implantación'}
+          ? 'tipo de cliente'
+          : 'implantación'}
       </div>
     </div>
 
@@ -10428,15 +10433,65 @@ const dataAnio =
       onChange={(e) => setCriterioGraficoKwp(e.target.value)}
       className="w-auto"
     >
-      <option value="implantacion">kWp por implantación</option>
-      <option value="tipo_cliente">kWp por tipo de cliente</option>
+      <option value="implantacion">
+        {metricaGrafico === 'obras' ? 'Obras' : 'kWp'} por implantación
+      </option>
+      <option value="tipo_cliente">
+        {metricaGrafico === 'obras' ? 'Obras' : 'kWp'} por tipo de cliente
+      </option>
     </SelectNative>
+  </div>
+
+  {/* Interruptor: cambia la fórmula del gráfico (por kWp o por cantidad de obras) */}
+  <div className="mb-3 flex items-center justify-center gap-3 text-xs">
+    <span
+      className={
+        metricaGrafico === 'kwp'
+          ? 'font-semibold text-white'
+          : 'text-gray-500'
+      }
+    >
+      Por kWp instalados
+    </span>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={metricaGrafico === 'obras'}
+      aria-label="Calcular los porcentajes por cantidad de obras"
+      onClick={() =>
+        setMetricaGrafico((m) => (m === 'kwp' ? 'obras' : 'kwp'))
+      }
+      className="relative h-7 w-12 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#95de1d]"
+      style={{
+        background: metricaGrafico === 'obras' ? '#95de1d' : '#3b5d65',
+        borderColor: metricaGrafico === 'obras' ? '#7bc410' : '#55787f',
+      }}
+    >
+      <span
+        className="absolute top-0.5 size-[22px] rounded-full bg-white shadow-md shadow-black/40 transition-all duration-200"
+        style={{ left: metricaGrafico === 'obras' ? 22 : 2 }}
+      />
+    </button>
+    <span
+      className={
+        metricaGrafico === 'obras'
+          ? 'font-semibold text-white'
+          : 'text-gray-500'
+      }
+    >
+      Por cantidad de obras
+    </span>
   </div>
 
   <DonutInteractivo
     data={pieData.map((d) => ({ ...d, fill: TIPO_COLORS[d.name] || '#8fa6a9' }))}
     height={250}
-    centroBig={formatKwp(pieData.reduce((t, d) => t + d.value, 0))}
+    centroBig={
+      metricaGrafico === 'obras'
+        ? pieData.reduce((t, d) => t + d.value, 0)
+        : formatKwp(pieData.reduce((t, d) => t + d.value, 0))
+    }
+    centroSmall={metricaGrafico === 'obras' ? 'obras' : undefined}
   />
               <div className="mt-2 flex flex-col gap-1.5">
                 {pieData.map((d) => (
@@ -10467,7 +10522,10 @@ const dataAnio =
     </div>
 
     <span style={{ fontWeight: 600 }}>
-  {formatKwp(d.value)} · {d.porcentajeEntero}%
+  {metricaGrafico === 'obras'
+    ? `${d.value} ${d.value === 1 ? 'obra' : 'obras'}`
+    : formatKwp(d.value)}{' '}
+  · {d.porcentajeEntero}%
 </span>
   </div>
 ))}
