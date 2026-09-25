@@ -1618,7 +1618,7 @@ const generarPlanObra = (
           semana: seQueda ? semanaEnBloque : null,
           texto:
             !seQueda && modalidad === '1'
-              ? 'Ida y vuelta + trabajo'
+              ? 'Ida + trabajo + vuelta'
               : tipo === 'idavuelta'
               ? `Ida, ${base.toLowerCase()} y vuelta`
               : tipo === 'ida'
@@ -2029,7 +2029,7 @@ const cronogramaJornada = (clave, modalidad) => {
   }
 
   if (modalidad === '1') {
-    const idaVuelta = c('idavuelta', 'Ida y vuelta + trabajo');
+    const idaVuelta = c('idavuelta', 'Ida + trabajo + vuelta');
 
     return [[idaVuelta, idaVuelta, idaVuelta, idaVuelta, idaVuelta, casa, casa]];
   }
