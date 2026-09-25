@@ -1044,6 +1044,48 @@ const renderPiePercentLabel = ({
   );
 };
 
+const pctFmt = (a, b) =>
+  b > 0 ? `${((a / b) * 100).toFixed(1)}%` : '—';
+
+// Ventana emergente reutilizable para las tarjetas de KPIs.
+const VentanaKpi = ({ titulo, subtitulo, onClose, children }) => (
+  <div
+    className="fixed inset-0 z-50 flex animate-dialog-overlay-show items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={titulo}
+      onClick={(e) => e.stopPropagation()}
+      className="modal-pop max-h-[85vh] w-full max-w-[640px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900 shadow-2xl shadow-black/60"
+    >
+      <div
+        className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4"
+        style={{
+          background:
+            'linear-gradient(110deg, #123138 0%, #1d4a50 60%, #24604f 100%)',
+        }}
+      >
+        <div>
+          <div className="text-base font-bold">{titulo}</div>
+          {subtitulo && <div className="text-xs text-gray-400">{subtitulo}</div>}
+        </div>
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="flex size-8 items-center justify-center rounded-lg text-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="max-h-[calc(85vh-72px)] space-y-3 overflow-y-auto p-4">
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
 const S = {
   app: {
     minHeight: '100vh',
@@ -2870,16 +2912,16 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
 
   // Obra de referencia resaltada al pasar el mouse por una barra de la campana.
   const [refHover, setRefHover] = useState(null);
-  // Ventana con el detalle de las obras activas (tarjeta "Obras activas").
-  const [modalActivas, setModalActivas] = useState(false);
+  // Ventana abierta desde una tarjeta de KPIs: 'activas' | 'hs' | 'capacidad'.
+  const [modalKpi, setModalKpi] = useState(null);
   useEffect(() => {
-    if (!modalActivas) return undefined;
+    if (!modalKpi) return undefined;
     const alTeclear = (e) => {
-      if (e.key === 'Escape') setModalActivas(false);
+      if (e.key === 'Escape') setModalKpi(null);
     };
     window.addEventListener('keydown', alTeclear);
     return () => window.removeEventListener('keydown', alTeclear);
-  }, [modalActivas]);
+  }, [modalKpi]);
   const [formEstimacion, setFormEstimacion] = useState({
     nombre: '',
     potencia: '',
@@ -3446,7 +3488,38 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
           conHs.reduce((s, o) => s + Number(o.hs_mo_kwp), 0) / conHs.length
         ).toFixed(1)
       : '-';
-    return { activas, listaActivas, totalKwp, kwpInstalado, avgHs };
+    // Detalle para las ventanas de "Prom. HS MO/kWp" y "Capacidad total".
+    const listaHs = [...conHs].sort(
+      (a, b) => Number(a.hs_mo_kwp) - Number(b.hs_mo_kwp)
+    );
+    const sumaKwpHs = conHs.reduce((s, o) => s + (Number(o.kwp) || 0), 0);
+    const hsPonderado = sumaKwpHs
+      ? conHs.reduce(
+          (s, o) => s + Number(o.hs_mo_kwp) * (Number(o.kwp) || 0),
+          0
+        ) / sumaKwpHs
+      : null;
+    const porEstado = Object.values(
+      obras.reduce((acc, o) => {
+        const k = o.estado || 'Sin estado';
+        if (!acc[k]) acc[k] = { estado: k, obras: 0, kwp: 0 };
+        acc[k].obras += 1;
+        acc[k].kwp += Number(o.kwp) || 0;
+        return acc;
+      }, {})
+    ).sort((a, b) => b.kwp - a.kwp);
+    const obrasInstaladas = obras.filter((o) => o.avance === 100).length;
+    return {
+      activas,
+      listaActivas,
+      totalKwp,
+      kwpInstalado,
+      avgHs,
+      listaHs,
+      hsPonderado,
+      porEstado,
+      obrasInstaladas,
+    };
   }, [obras]);
 
   const barData = useMemo(
@@ -9772,7 +9845,7 @@ const dataAnio =
                 color: '#95de1d',
                 icon: RiFlashlightLine,
                 accent: 'bg-emerald-500/10 text-emerald-400',
-                onClick: () => setModalActivas(true),
+                onClick: () => setModalKpi('activas'),
                 hint: 'Ver cuáles son',
               },
               {
@@ -9784,6 +9857,8 @@ const dataAnio =
                 color: '#ffc933',
                 icon: RiSunLine,
                 accent: 'bg-amber-500/10 text-amber-400',
+                onClick: () => setModalKpi('capacidad'),
+                hint: 'Ver cómo se calcula',
               },
               {
                 label: 'Prom. HS MO/kWp',
@@ -9793,6 +9868,8 @@ const dataAnio =
                 isHs: true,
                 icon: RiDashboardLine,
                 accent: 'bg-violet-500/10 text-violet-400',
+                onClick: () => setModalKpi('hs'),
+                hint: 'Ver cómo se calcula',
               },
             ].map((k) => (
               <Card
@@ -9851,100 +9928,220 @@ const dataAnio =
             ))}
           </div>
 
-          {modalActivas && (
-            <div
-              className="fixed inset-0 z-50 flex animate-dialog-overlay-show items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-              onClick={() => setModalActivas(false)}
+          {modalKpi === 'activas' && (
+            <VentanaKpi
+              titulo="Obras activas"
+              subtitulo={`${stats.activas} en obra o con la parte solar finalizada · ${formatKwp(
+                Math.round(
+                  stats.listaActivas.reduce((t, o) => t + (Number(o.kwp) || 0), 0)
+                )
+              )}`}
+              onClose={() => setModalKpi(null)}
             >
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label="Obras activas"
-                onClick={(e) => e.stopPropagation()}
-                className="modal-pop max-h-[80vh] w-full max-w-[640px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900 shadow-2xl shadow-black/60"
-              >
-                <div
-                  className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4"
-                  style={{
-                    background:
-                      'linear-gradient(110deg, #123138 0%, #1d4a50 60%, #24604f 100%)',
-                  }}
-                >
-                  <div>
-                    <div className="text-base font-bold">Obras activas</div>
-                    <div className="text-xs text-gray-400">
-                      {stats.activas} en obra o con la parte solar finalizada ·{' '}
-                      {formatKwp(
-                        Math.round(
-                          stats.listaActivas.reduce(
-                            (s, o) => s + (Number(o.kwp) || 0),
-                            0
-                          )
-                        )
-                      )}
+              {stats.listaActivas.length === 0 && (
+                <div className="py-6 text-center text-sm text-gray-400">
+                  No hay obras activas en este momento.
+                </div>
+              )}
+              {stats.listaActivas.map((o, i) => {
+                const enObra = o.estado === 'En obra';
+                const color = enObra ? '#ffc933' : '#4fc3f7';
+                return (
+                  <div
+                    key={`${o.nombre}-${i}`}
+                    className="rounded-xl border border-white/5 bg-gray-800/60 p-3"
+                    style={{
+                      animation: `slideUpAndFade 260ms ${i * 45}ms both cubic-bezier(0.16, 1, 0.3, 1)`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 truncate text-sm font-semibold">
+                        {o.nombre}
+                      </div>
+                      <span
+                        className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                        style={{ background: color + '26', color }}
+                      >
+                        {o.estado}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-950">
+                        <div
+                          className="h-2 rounded-full"
+                          style={{
+                            width: `${Math.max(0, Math.min(100, Number(o.avance) || 0))}%`,
+                            background: color,
+                          }}
+                        />
+                      </div>
+                      <div className="w-10 text-right text-xs font-semibold">
+                        {Math.round(Number(o.avance) || 0)}%
+                      </div>
+                    </div>
+                    <div className="mt-1.5 text-xs text-gray-400">
+                      {formatKwp(Math.round(Number(o.kwp) || 0))}
+                      {o.tipo_cliente ? ` · ${o.tipo_cliente}` : ''}
+                      {o.implantacion ? ` · ${o.implantacion}` : ''}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setModalActivas(false)}
-                    aria-label="Cerrar"
-                    className="flex size-8 items-center justify-center rounded-lg text-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
-                  >
-                    ✕
-                  </button>
+                );
+              })}
+            </VentanaKpi>
+          )}
+
+          {modalKpi === 'hs' && (
+            <VentanaKpi
+              titulo="Promedio HS MO / kWp"
+              subtitulo="Cómo se llega al promedio general"
+              onClose={() => setModalKpi(null)}
+            >
+              <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
+                <div className="text-3xl font-extrabold text-white">
+                  {stats.avgHs}{' '}
+                  <span className="text-lg font-normal text-gray-400">
+                    HS MO / kWp
+                  </span>
                 </div>
-                <div className="max-h-[calc(80vh-72px)] space-y-2 overflow-y-auto p-4">
-                  {stats.listaActivas.length === 0 && (
-                    <div className="py-6 text-center text-sm text-gray-400">
-                      No hay obras activas en este momento.
-                    </div>
-                  )}
-                  {stats.listaActivas.map((o, i) => {
-                    const enObra = o.estado === 'En obra';
-                    const color = enObra ? '#ffc933' : '#4fc3f7';
-                    return (
-                      <div
-                        key={`${o.nombre}-${i}`}
-                        className="rounded-xl border border-white/5 bg-gray-800/60 p-3"
-                        style={{
-                          animation: `slideUpAndFade 260ms ${i * 45}ms both cubic-bezier(0.16, 1, 0.3, 1)`,
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0 truncate text-sm font-semibold">
-                            {o.nombre}
-                          </div>
-                          <span
-                            className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                            style={{ background: color + '26', color }}
-                          >
-                            {o.estado}
-                          </span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-3">
-                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-950">
-                            <div
-                              className="h-2 rounded-full"
-                              style={{
-                                width: `${Math.max(0, Math.min(100, Number(o.avance) || 0))}%`,
-                                background: color,
-                              }}
-                            />
-                          </div>
-                          <div className="w-10 text-right text-xs font-semibold">
-                            {Math.round(Number(o.avance) || 0)}%
-                          </div>
-                        </div>
-                        <div className="mt-1.5 text-xs text-gray-400">
-                          {formatKwp(Math.round(Number(o.kwp) || 0))}
-                          {o.tipo_cliente ? ` · ${o.tipo_cliente}` : ''}
-                          {o.implantacion ? ` · ${o.implantacion}` : ''}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="mt-2 text-sm text-gray-300">
+                  Es el <strong>promedio simple</strong> del indicador (horas de
+                  mano de obra por kWp instalado) de las obras que tienen ese
+                  dato cargado: se suman los indicadores y se divide por la
+                  cantidad de obras.
                 </div>
               </div>
-            </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  ['Obras registradas', obras.length, '#f4f8f8'],
+                  ['Con indicador', stats.listaHs.length, '#95de1d'],
+                  [
+                    'Sin indicador',
+                    obras.length - stats.listaHs.length,
+                    '#ffc933',
+                  ],
+                ].map(([t, v, c]) => (
+                  <div
+                    key={t}
+                    className="rounded-xl border border-white/5 bg-gray-800/60 p-3"
+                  >
+                    <div className="text-2xl font-extrabold" style={{ color: c }}>
+                      {v}
+                    </div>
+                    <div className="text-[11px] text-gray-400">{t}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl border border-white/5 bg-gray-800/60 p-3 text-sm text-gray-300">
+                <div>
+                  <strong className="text-white">Desde cuándo:</strong> obras
+                  registradas desde marzo de 2025 (fecha de referencia del
+                  panel; las obras no traen fecha propia en la hoja).
+                </div>
+                <div className="mt-1.5">
+                  <strong className="text-white">Ponderado por kWp:</strong>{' '}
+                  {stats.hsPonderado != null
+                    ? stats.hsPonderado.toFixed(2)
+                    : '—'}{' '}
+                  HS MO / kWp (para comparar: las obras grandes pesan más).
+                </div>
+                <div className="mt-1.5 text-xs text-gray-400">
+                  Este promedio incluye todas las obras con indicador, también
+                  las "Alto" y "Crítico" (naranja y rojo). El estimador de
+                  duración de obras las excluye para sugerir un valor.
+                </div>
+              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                Obras incluidas ({stats.listaHs.length}) — de menor a mayor
+                indicador
+              </div>
+              <div className="space-y-1">
+                {stats.listaHs.map((o, i) => (
+                  <div
+                    key={`${o.nombre}-${i}`}
+                    className="flex items-center justify-between gap-3 rounded-lg bg-gray-800/40 px-3 py-1.5 text-sm"
+                  >
+                    <span className="min-w-0 truncate">{o.nombre}</span>
+                    <span className="w-20 shrink-0 text-right text-xs text-gray-400">
+                      {formatKwp(Math.round(Number(o.kwp) || 0))}
+                    </span>
+                    <span
+                      className="w-14 shrink-0 text-right font-semibold"
+                      style={{ color: HsMoColor(Number(o.hs_mo_kwp)) }}
+                    >
+                      {Number(o.hs_mo_kwp).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </VentanaKpi>
+          )}
+
+          {modalKpi === 'capacidad' && (
+            <VentanaKpi
+              titulo="Capacidad total"
+              subtitulo="Cómo se llega a la potencia registrada e instalada"
+              onClose={() => setModalKpi(null)}
+            >
+              <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
+                <div className="text-3xl font-extrabold text-[#ffc933]">
+                  {formatKwp(Math.round(stats.totalKwp))}
+                </div>
+                <div className="mt-2 text-sm text-gray-300">
+                  Es la <strong>suma de los kWp de todas las obras
+                  registradas</strong> ({obras.length} obras), sin importar en
+                  qué estado estén.
+                </div>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
+                <div className="text-2xl font-extrabold text-[#95de1d]">
+                  {formatKwp(Math.round(stats.kwpInstalado))}
+                </div>
+                <div className="mt-1 text-sm text-gray-300">
+                  <strong>Instalados desde marzo de 2025:</strong> suma de los
+                  kWp de las {stats.obrasInstaladas} obras con avance de 100%
+                  ({pctFmt(stats.kwpInstalado, stats.totalKwp)} de la capacidad
+                  total). Marzo de 2025 es la fecha de referencia del panel; las
+                  obras no traen fecha propia en la hoja.
+                </div>
+              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                Capacidad por estado de obra
+              </div>
+              <div className="space-y-2">
+                {stats.porEstado.map((e, i) => (
+                  <div
+                    key={e.estado}
+                    className="rounded-xl border border-white/5 bg-gray-800/60 p-3"
+                    style={{
+                      animation: `slideUpAndFade 260ms ${i * 45}ms both cubic-bezier(0.16, 1, 0.3, 1)`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="font-semibold">{e.estado}</span>
+                      <span className="text-gray-300">
+                        {e.obras} {e.obras === 1 ? 'obra' : 'obras'} ·{' '}
+                        <strong className="text-white">
+                          {formatKwp(Math.round(e.kwp))}
+                        </strong>
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-950">
+                        <div
+                          className="h-2 rounded-full bg-[#ffc933]"
+                          style={{
+                            width: `${stats.totalKwp ? (e.kwp / stats.totalKwp) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="w-12 text-right text-xs font-semibold">
+                        {pctFmt(e.kwp, stats.totalKwp)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </VentanaKpi>
           )}
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
