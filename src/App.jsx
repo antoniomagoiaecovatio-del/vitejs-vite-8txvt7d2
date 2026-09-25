@@ -41,6 +41,7 @@ const {
   PieChart,
   Pie,
   ReferenceLine,
+  ReferenceDot,
   LabelList,
   ComposedChart,
   Area,
@@ -3296,6 +3297,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         mejor: null,
         peor: null,
         curva: [],
+        referencias: [],
       };
 
     const mejor = Math.min(...valores);
@@ -3328,6 +3330,16 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       60
     );
 
+    // Obras históricas que entran en el cálculo (se muestran en segundo plano
+    // dentro de la campana para que se vea de dónde sale el Sugerido).
+    const referencias = similares
+      .map((o, i) => ({
+        nombre: o.nombre,
+        valor: valores[i],
+        kwp: pesos[i],
+      }))
+      .sort((a, b) => a.valor - b.valor);
+
     return {
       cantidad: valores.length,
       promedio,
@@ -3335,6 +3347,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       sugerido,
       peor,
       curva: puntos,
+      referencias,
     };
   }, [
     obras,
@@ -5355,6 +5368,26 @@ const dataAnio =
           fill="url(#densidadSugerido)"
           isAnimationActive={false}
         />
+        {(() => {
+          const maxDens = Math.max(
+            ...indicadorSugerido.curva.map((c) => c.densidad),
+            0
+          );
+          return indicadorSugerido.referencias.map((r, i) => (
+            <ReferenceDot
+              key={`ref-${r.nombre}-${i}`}
+              x={r.valor}
+              y={maxDens * (0.07 + 0.08 * (i % 3))}
+              ifOverflow="visible"
+              shape={({ cx, cy }) => (
+                <g>
+                  <circle cx={cx} cy={cy} r={3.5} fill="#b9c7c9" fillOpacity={0.5} />
+                  <title>{`${r.nombre}: ${r.valor.toFixed(2)} HS MO/kWp · ${r.kwp.toFixed(0)} kWp`}</title>
+                </g>
+              )}
+            />
+          ));
+        })()}
         <ReferenceLine
           x={indicadorSugerido.mejor}
           stroke="#95de1d"
@@ -5389,7 +5422,39 @@ const dataAnio =
       <strong style={{ color: '#e3eaea' }}>"Sugerido"</strong> es el promedio
       ponderado por kWp de las obras similares: cada obra pesa según su
       potencia (equivale a las Hs MO totales divididas por los kWp totales).
+      Los puntos grises sobre la curva son las obras históricas usadas como
+      referencia (pasá el mouse para ver cuál es cada una).
     </div>
+    <details style={{ marginTop: 6 }}>
+      <summary
+        style={{
+          fontSize: 11,
+          color: '#8fa6a9',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        Obras de referencia ({indicadorSugerido.referencias.length})
+      </summary>
+      <div
+        style={{
+          marginTop: 6,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '4px 14px',
+          fontSize: 11,
+          color: '#8fa6a9',
+        }}
+      >
+        {indicadorSugerido.referencias.map((r, i) => (
+          <span key={`refl-${r.nombre}-${i}`}>
+            {r.nombre}:{' '}
+            <span style={{ color: '#b9c7c9' }}>{r.valor.toFixed(2)}</span> ·{' '}
+            {r.kwp.toFixed(0)} kWp
+          </span>
+        ))}
+      </div>
+    </details>
   </div>
 )}
                   </>
