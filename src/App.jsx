@@ -9880,11 +9880,11 @@ const dataAnio =
               },
               {
                 label: 'Capacidad total',
-                value: formatKwp(Math.round(stats.totalKwp)),
+                value: potenciaTotalInstalada.disponible
+                  ? formatKwp(Math.round(potenciaTotalInstalada.totalKwp))
+                  : '—',
                 sub: potenciaTotalInstalada.disponible
-                  ? `${formatKwp(
-                      Math.round(potenciaTotalInstalada.totalKwp)
-                    )} instalados en ${potenciaTotalInstalada.aniosTexto}`
+                  ? `instalados en ${potenciaTotalInstalada.aniosTexto} · ${potenciaTotalInstalada.cantObras} obras`
                   : 'cargando potencia instalada…',
                 color: '#ffc933',
                 icon: RiSunLine,
@@ -10106,28 +10106,18 @@ const dataAnio =
           {modalKpi === 'capacidad' && (
             <VentanaKpi
               titulo="Capacidad total"
-              subtitulo="Cómo se llega a la potencia registrada e instalada"
+              subtitulo="Cómo se llega a la potencia instalada hasta la fecha"
               onClose={() => setModalKpi(null)}
             >
               <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
                 <div className="text-3xl font-extrabold text-[#ffc933]">
-                  {formatKwp(Math.round(stats.totalKwp))}
-                </div>
-                <div className="mt-2 text-sm text-gray-300">
-                  Es la <strong>suma de los kWp de todas las obras
-                  registradas</strong> ({obras.length} obras), sin importar en
-                  qué estado estén.
-                </div>
-              </div>
-              <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
-                <div className="text-2xl font-extrabold text-[#95de1d]">
                   {potenciaTotalInstalada.disponible
                     ? formatKwp(Math.round(potenciaTotalInstalada.totalKwp))
                     : '—'}
                 </div>
-                <div className="mt-1 text-sm text-gray-300">
+                <div className="mt-2 text-sm text-gray-300">
                   <strong>
-                    Instalados en {potenciaTotalInstalada.aniosTexto || '—'}:
+                    Todo lo instalado hasta la fecha ({potenciaTotalInstalada.aniosTexto || '—'}):
                   </strong>{' '}
                   suma de la potencia instalada mes a mes en las hojas PI (
                   {potenciaTotalInstalada.cantMeses} meses con datos,{' '}
@@ -10136,8 +10126,18 @@ const dataAnio =
                   "Todos".
                 </div>
               </div>
+              <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
+                <div className="text-2xl font-extrabold text-[#95de1d]">
+                  {formatKwp(Math.round(stats.totalKwp))}
+                </div>
+                <div className="mt-1 text-sm text-gray-300">
+                  <strong>Capacidad de las obras del panel:</strong> suma de los
+                  kWp de las {obras.length} obras registradas en la hoja de
+                  obras, sin importar en qué estado estén (detalle abajo).
+                </div>
+              </div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-                Capacidad por estado de obra
+                Obras del panel por estado
               </div>
               <div className="space-y-2">
                 {stats.porEstado.map((e, i) => (
