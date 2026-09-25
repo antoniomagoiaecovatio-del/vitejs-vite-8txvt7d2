@@ -3876,9 +3876,19 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     return { total, finalizados, enEjecucion, pendientes, avancePromedio };
   }, [proyectosEstado]);
 
+  // Si en la tabla se ocultan los proyectos finalizados, el gráfico de avance
+  // tampoco los muestra.
+  const ocultaFinalizadosGrafico = filtrosEstadoTablaProyecto.some(
+    (e) => normalizeKey(e) === 'finalizado'
+  );
+
   const avanceProyectoData = useMemo(
     () =>
       [...proyectosEstadoFiltrados]
+        .filter(
+          (p) =>
+            !(ocultaFinalizadosGrafico && normalizeKey(p.estado) === 'finalizado')
+        )
         .sort((a, b) => (Number(b.avance) || 0) - (Number(a.avance) || 0))
         .map((p) => ({
           name: p.nombre_proyecto || p.id_proyecto,
@@ -3893,7 +3903,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
               ? '#ffc933'
               : '#8fa6a9',
         })),
-    [proyectosEstadoFiltrados]
+    [proyectosEstadoFiltrados, ocultaFinalizadosGrafico]
   );
 
   const estadoProyectoData = useMemo(() => {
