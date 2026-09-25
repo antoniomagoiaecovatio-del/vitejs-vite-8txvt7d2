@@ -5342,11 +5342,15 @@ const dataAnio =
         style={{ background: 'linear-gradient(110deg, #123138 0%, #1d4a50 55%, #24604f 100%)' }}
       >
         <div className="flex items-center">
-          <img
-            src="/logo-ecovatio.png"
-            alt="Ecovatio"
-            className="mr-4 h-7 shrink-0"
-          />
+          <a
+            href="https://ecovatio.com.ar/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Ir a ecovatio.com.ar"
+            className="mr-4 shrink-0 transition-opacity hover:opacity-80"
+          >
+            <img src="/logo-ecovatio.png" alt="Ecovatio" className="h-7" />
+          </a>
           <div className="border-l border-white/15 pl-4">
             <div className="text-sm font-bold">Panel de Obras Solares</div>
             <div className="text-xs text-gray-500 dark:text-gray-500">
