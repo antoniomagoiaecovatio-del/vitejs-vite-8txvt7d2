@@ -252,22 +252,31 @@ select,
   animation-delay: calc(var(--i) * 110ms);
 }
 .sol-rayos {
-  transform-origin: 138px 30px;
+  transform-box: fill-box;
+  transform-origin: center;
   animation: solGiro 9s linear infinite;
 }
 .sol-sol {
-  transform-origin: 138px 30px;
+  transform-box: fill-box;
+  transform-origin: center;
   animation: solLatido 2s ease-in-out infinite;
 }
-.sol-puntos::after {
-  content: '';
-  animation: solPuntos 1.6s steps(1, end) infinite;
+@keyframes solBorde {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+.sol-borde {
+  animation: solBorde 2.6s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .sol-celda,
   .sol-rayos,
   .sol-sol,
-  .sol-puntos::after {
+  .sol-borde {
     animation: none;
   }
 }

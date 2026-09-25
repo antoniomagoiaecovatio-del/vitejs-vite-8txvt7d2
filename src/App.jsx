@@ -5327,30 +5327,41 @@ const dataAnio =
   if (loading && obras.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-transparent">
-        <div className="text-center" role="status" aria-live="polite">
+        <div className="text-center" role="status" aria-label="Cargando datos">
           <svg
-            viewBox="0 0 190 140"
-            width="260"
-            height="192"
+            viewBox="0 0 200 156"
+            width="280"
+            height="218"
             aria-hidden="true"
             className="mx-auto"
           >
-            {/* sol */}
-            <g className="sol-rayos" stroke="#ffc933" strokeWidth="2.4" strokeLinecap="round">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <line
-                  key={i}
-                  x1="138"
-                  y1="8"
-                  x2="138"
-                  y2="14"
-                  transform={`rotate(${i * 45} 138 30)`}
-                />
-              ))}
-            </g>
-            <circle className="sol-sol" cx="138" cy="30" r="11" fill="#ffc933" />
+            {/* recorrido de carga: una barra minimalista que da la vuelta al perímetro */}
+            <rect
+              x="3"
+              y="3"
+              width="194"
+              height="150"
+              rx="24"
+              fill="none"
+              stroke="#2c5059"
+              strokeWidth="2"
+            />
+            <rect
+              className="sol-borde"
+              x="3"
+              y="3"
+              width="194"
+              height="150"
+              rx="24"
+              fill="none"
+              stroke="#95de1d"
+              strokeWidth="3"
+              strokeLinecap="round"
+              pathLength="100"
+              strokeDasharray="16 84"
+            />
             {/* panel solar */}
-            <g transform="translate(14 46) skewX(-14)">
+            <g transform="translate(30 50) skewX(-14)">
               <rect
                 x="-4"
                 y="-4"
@@ -5379,12 +5390,28 @@ const dataAnio =
                 );
               })}
             </g>
-            {/* soporte */}
-            <path d="M62 112 L52 132 M92 112 L102 132 M44 132 H110" stroke="#55787f" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path
+              d="M78 120 L68 140 M108 120 L118 140 M58 140 H128"
+              stroke="#55787f"
+              strokeWidth="3"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* sol: va al frente, después del panel, para que nunca quede tapado */}
+            <g className="sol-rayos" stroke="#ffc933" strokeWidth="2.4" strokeLinecap="round">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <line
+                  key={i}
+                  x1="152"
+                  y1="22"
+                  x2="152"
+                  y2="28"
+                  transform={`rotate(${i * 45} 152 44)`}
+                />
+              ))}
+            </g>
+            <circle className="sol-sol" cx="152" cy="44" r="11" fill="#ffc933" />
           </svg>
-          <p className="mt-2 text-sm text-gray-400">
-            Cargando datos<span className="sol-puntos inline-block w-4 text-left" />
-          </p>
         </div>
       </div>
     );
