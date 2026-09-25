@@ -3522,6 +3522,36 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     };
   }, [obras]);
 
+  // Potencia instalada según las hojas PI (la misma que muestra la solapa
+  // "Potencia Instalada por año" en la vista "Todos"): así el KPI de la
+  // pantalla principal coincide con esa solapa.
+  const potenciaTotalInstalada = useMemo(() => {
+    const meses = potenciaInstalada.flatMap((item) =>
+      (item.meses || [])
+        .filter((mes) => Number(mes.total_kwp) > 0)
+        .map((mes) => ({ ...mes, anio: Number(item.anio) }))
+    );
+    const obrasSet = new Set();
+    meses.forEach((mes) =>
+      (mes.obras || []).forEach((o) => o.obra && obrasSet.add(o.obra))
+    );
+    const anios = [...new Set(meses.map((m) => m.anio))]
+      .filter(Boolean)
+      .sort((a, b) => a - b);
+    return {
+      disponible: meses.length > 0,
+      totalKwp: meses.reduce((t, m) => t + Number(m.total_kwp || 0), 0),
+      cantMeses: meses.length,
+      cantObras: obrasSet.size,
+      aniosTexto:
+        anios.length > 1
+          ? `${anios.slice(0, -1).join(', ')} y ${anios[anios.length - 1]}`
+          : anios.length === 1
+          ? String(anios[0])
+          : '',
+    };
+  }, [potenciaInstalada]);
+
   const barData = useMemo(
     () =>
       obras
@@ -9851,9 +9881,11 @@ const dataAnio =
               {
                 label: 'Capacidad total',
                 value: formatKwp(Math.round(stats.totalKwp)),
-                sub: `${formatKwp(
-                  Math.round(stats.kwpInstalado)
-                )} instalados desde marzo de 2025`,
+                sub: potenciaTotalInstalada.disponible
+                  ? `${formatKwp(
+                      Math.round(potenciaTotalInstalada.totalKwp)
+                    )} instalados en ${potenciaTotalInstalada.aniosTexto}`
+                  : 'cargando potencia instalada…',
                 color: '#ffc933',
                 icon: RiSunLine,
                 accent: 'bg-amber-500/10 text-amber-400',
@@ -10033,11 +10065,6 @@ const dataAnio =
               </div>
               <div className="rounded-xl border border-white/5 bg-gray-800/60 p-3 text-sm text-gray-300">
                 <div>
-                  <strong className="text-white">Desde cuándo:</strong> obras
-                  registradas desde marzo de 2025 (fecha de referencia del
-                  panel; las obras no traen fecha propia en la hoja).
-                </div>
-                <div className="mt-1.5">
                   <strong className="text-white">Ponderado por kWp:</strong>{' '}
                   {stats.hsPonderado != null
                     ? stats.hsPonderado.toFixed(2)
@@ -10094,14 +10121,19 @@ const dataAnio =
               </div>
               <div className="rounded-xl border border-white/5 bg-gray-800/60 p-4">
                 <div className="text-2xl font-extrabold text-[#95de1d]">
-                  {formatKwp(Math.round(stats.kwpInstalado))}
+                  {potenciaTotalInstalada.disponible
+                    ? formatKwp(Math.round(potenciaTotalInstalada.totalKwp))
+                    : '—'}
                 </div>
                 <div className="mt-1 text-sm text-gray-300">
-                  <strong>Instalados desde marzo de 2025:</strong> suma de los
-                  kWp de las {stats.obrasInstaladas} obras con avance de 100%
-                  ({pctFmt(stats.kwpInstalado, stats.totalKwp)} de la capacidad
-                  total). Marzo de 2025 es la fecha de referencia del panel; las
-                  obras no traen fecha propia en la hoja.
+                  <strong>
+                    Instalados en {potenciaTotalInstalada.aniosTexto || '—'}:
+                  </strong>{' '}
+                  suma de la potencia instalada mes a mes en las hojas PI (
+                  {potenciaTotalInstalada.cantMeses} meses con datos,{' '}
+                  {potenciaTotalInstalada.cantObras} obras). Es el mismo dato
+                  que la solapa "Potencia Instalada por año" en la vista
+                  "Todos".
                 </div>
               </div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
