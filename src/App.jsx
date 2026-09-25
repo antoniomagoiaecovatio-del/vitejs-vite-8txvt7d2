@@ -3911,6 +3911,9 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   
     proyectosEstado.forEach((p) => {
       const estado = p.estado || 'Sin estado';
+      // con "Ocultar finalizados" activo, los finalizados no entran al gráfico
+      if (ocultaFinalizadosGrafico && normalizeKey(estado) === 'finalizado')
+        return;
       map[estado] = (map[estado] || 0) + 1;
     });
   
@@ -3920,7 +3923,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     }));
   
     return calcularPorcentajesEnteros(dataBase);
-  }, [proyectosEstado]);
+  }, [proyectosEstado, ocultaFinalizadosGrafico]);
 
   const potenciaAnioActual = useMemo(() => {
     if (anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES) {
