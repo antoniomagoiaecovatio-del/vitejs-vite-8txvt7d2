@@ -115,42 +115,42 @@ const DASHBOARD_TABS = [
 ];
 
 const HsMoColor = (val) => {
-  if (val === null || val === undefined) return '#6b7280';
-  if (val <= 5) return '#22c55e';
-  if (val <= 8) return '#86efac';
-  if (val <= 12) return '#fbbf24';
-  if (val <= 18) return '#f97316';
-  return '#ef4444';
+  if (val === null || val === undefined) return '#8fa6a9';
+  if (val <= 5) return '#95de1d';
+  if (val <= 8) return '#c7ee8a';
+  if (val <= 12) return '#ffc933';
+  if (val <= 18) return '#ff9f4a';
+  return '#ff5f5f';
 };
 
 const TIPO_COLORS = {
-  'En techo': '#3b82f6',
-  'En suelo': '#f59e0b',
-  'Cochera Solar': '#10b981',
-  Residencial: '#8b5cf6',
-  Industrial: '#3b82f6',
-  Comercio: '#10b981',
-  Agro: '#ec4899',
-  'Parque solar': '#f59e0b',
-  'Sector público': '#ef4444',
-  'Sector publico': '#ef4444',
+  'En techo': '#4fc3f7',
+  'En suelo': '#ffc933',
+  'Cochera Solar': '#22d3c5',
+  Residencial: '#9b7bff',
+  Industrial: '#4fc3f7',
+  Comercio: '#22d3c5',
+  Agro: '#ff8fb1',
+  'Parque solar': '#ffc933',
+  'Sector público': '#ff5f5f',
+  'Sector publico': '#ff5f5f',
 };
 const OBRA_COLORS = [
-  '#3b82f6',
-  '#22c55e',
-  '#f97316',
+  '#4fc3f7',
+  '#95de1d',
+  '#ff9f4a',
   '#a855f7',
-  '#ef4444',
+  '#ff5f5f',
   '#14b8a6',
-  '#f59e0b',
-  '#ec4899',
+  '#ffc933',
+  '#ff8fb1',
   '#06b6d4',
   '#84cc16',
   '#6366f1',
   '#f43f5e',
-  '#10b981',
+  '#22d3c5',
   '#eab308',
-  '#8b5cf6',
+  '#9b7bff',
   '#0ea5e9',
   '#65a30d',
   '#dc2626',
@@ -937,17 +937,17 @@ const getEtapaAvance = (etapas_lista, letraKey) => {
 // un vistazo, tipo "barra de datos" de Sheets/Excel: el color llena la
 // celda en proporción al avance.
 const etapaCellStyle = (val) => {
-  if (val === null) return { fill: 'transparent', border: '#1f2937' };
+  if (val === null) return { fill: 'transparent', border: '#2c5059' };
 
-  if (val >= 100) return { fill: '#16a34a', border: '#22c55e' };
-  if (val >= 60) return { fill: '#2563eb', border: '#3b82f6' };
-  if (val >= 20) return { fill: '#d97706', border: '#f59e0b' };
+  if (val >= 100) return { fill: '#16a34a', border: '#95de1d' };
+  if (val >= 60) return { fill: '#2563eb', border: '#4fc3f7' };
+  if (val >= 20) return { fill: '#e5a91c', border: '#ffc933' };
 
   // 1-19% y 0%: mismo color de alerta.
-  return { fill: '#dc2626', border: '#ef4444' };
+  return { fill: '#dc2626', border: '#ff5f5f' };
 };
 
-function HsLabel({ value, color = '#f9fafb' }) {
+function HsLabel({ value, color = '#f4f8f8' }) {
   return (
     <span>
       <span className="font-extrabold" style={{ color }}>
@@ -1033,7 +1033,7 @@ const renderPiePercentLabel = ({
     <text
       x={x}
       y={y}
-      fill="#f9fafb"
+      fill="#f4f8f8"
       textAnchor="middle"
       dominantBaseline="central"
       style={{ fontSize: 12, fontWeight: 700 }}
@@ -1046,13 +1046,13 @@ const renderPiePercentLabel = ({
 const S = {
   app: {
     minHeight: '100vh',
-    background: '#030712',
-    color: '#f9fafb',
+    background: '#16323a',
+    color: '#f4f8f8',
     fontFamily: 'system-ui, sans-serif',
   },
   header: {
-    background: '#111827',
-    borderBottom: '1px solid #1f2937',
+    background: '#1d3c44',
+    borderBottom: '1px solid #2c5059',
     padding: '12px 24px',
     display: 'flex',
     alignItems: 'center',
@@ -1061,7 +1061,7 @@ const S = {
   logoIcon: {
     width: 32,
     height: 32,
-    background: '#d97706',
+    background: '#e5a91c',
     borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
@@ -1086,11 +1086,11 @@ const S = {
     overflowX: 'auto',
   },
   tabBtn: {
-    border: '1px solid #374151',
+    border: '1px solid #3b5d65',
     borderRadius: 10,
     padding: '9px 14px',
     fontSize: 13,
-    color: '#e5e7eb',
+    color: '#e3eaea',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },
@@ -1100,8 +1100,8 @@ const S = {
     gap: 16,
   },
   kpi: {
-    background: '#111827',
-    border: '1px solid #1f2937',
+    background: '#1d3c44',
+    border: '1px solid #2c5059',
     borderRadius: 16,
     padding: '20px 24px',
     boxShadow:
@@ -1110,8 +1110,8 @@ const S = {
   row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
   row3: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 },
   card: {
-    background: '#111827',
-    border: '1px solid #1f2937',
+    background: '#1d3c44',
+    border: '1px solid #2c5059',
     borderRadius: 16,
     padding: '20px 24px',
     boxShadow:
@@ -1123,24 +1123,24 @@ const S = {
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: 16,
-    color: '#9ca3af',
+    color: '#b9c7c9',
   },
   input: {
-    background: '#0b1220',
-    border: '1px solid #374151',
+    background: '#16323a',
+    border: '1px solid #3b5d65',
     borderRadius: 8,
     padding: '6px 10px',
     fontSize: 12,
-    color: '#e5e7eb',
+    color: '#e3eaea',
     outline: 'none',
   },
   estimatorInput: {
-    background: '#0b1220',
-    border: '1px solid #374151',
+    background: '#16323a',
+    border: '1px solid #3b5d65',
     borderRadius: 8,
     padding: '10px 12px',
     fontSize: 13,
-    color: '#e5e7eb',
+    color: '#e3eaea',
     outline: 'none',
     width: '100%',
     boxSizing: 'border-box',
@@ -1148,23 +1148,23 @@ const S = {
   label: {
     display: 'block',
     fontSize: 12,
-    color: '#f9fafb',
+    color: '#f4f8f8',
     fontWeight: 700,
     marginBottom: 4,
   },
-  help: { fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.35 },
+  help: { fontSize: 11, color: '#8fa6a9', marginTop: 4, lineHeight: 1.35 },
   btn: {
-    background: '#0b1220',
-    border: '1px solid #374151',
+    background: '#16323a',
+    border: '1px solid #3b5d65',
     borderRadius: 8,
     padding: '7px 13px',
     fontSize: 12,
-    color: '#e5e7eb',
+    color: '#e3eaea',
     cursor: 'pointer',
   },
   primaryBtn: {
-    background: '#d97706',
-    border: '1px solid #f59e0b',
+    background: '#e5a91c',
+    border: '1px solid #ffc933',
     borderRadius: 8,
     padding: '11px 16px',
     fontSize: 13,
@@ -1174,12 +1174,12 @@ const S = {
     boxShadow: '0 6px 16px -4px rgba(217,119,6,0.45)',
   },
   secondaryBtn: {
-    background: '#0b1220',
-    border: '1px solid #38bdf8',
+    background: '#16323a',
+    border: '1px solid #4fc3f7',
     borderRadius: 8,
     padding: '11px 16px',
     fontSize: 13,
-    color: '#38bdf8',
+    color: '#4fc3f7',
     cursor: 'pointer',
     fontWeight: 700,
   },
@@ -1188,11 +1188,11 @@ const S = {
     gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1fr 1.2fr 1.5fr',
     gap: 8,
     fontSize: 10,
-    color: '#6b7280',
+    color: '#8fa6a9',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     padding: '10px 16px',
-    borderBottom: '1px solid #1f2937',
+    borderBottom: '1px solid #2c5059',
   },
   trow: {
     display: 'grid',
@@ -1206,14 +1206,14 @@ const S = {
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
   th: {
     textAlign: 'left',
-    color: '#9ca3af',
-    borderBottom: '1px solid #374151',
+    color: '#b9c7c9',
+    borderBottom: '1px solid #3b5d65',
     padding: '8px',
     fontSize: 11,
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
   },
-  td: { borderBottom: '1px solid #1f2937', padding: '8px', color: '#e5e7eb' },
+  td: { borderBottom: '1px solid #2c5059', padding: '8px', color: '#e3eaea' },
 };
 function PotenciaInstaladaTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -1227,8 +1227,8 @@ function PotenciaInstaladaTooltip({ active, payload }) {
   return (
     <div
       style={{
-        background: '#1f2937',
-        border: '1px solid #374151',
+        background: '#2c5059',
+        border: '1px solid #3b5d65',
         borderRadius: 8,
         padding: '10px 12px',
         fontSize: 12,
@@ -1237,7 +1237,7 @@ function PotenciaInstaladaTooltip({ active, payload }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {visibles.slice(0, 12).map((p) => {
-          const color = p.color || p.fill || '#9ca3af';
+          const color = p.color || p.fill || '#b9c7c9';
 
           return (
             <div
@@ -1247,7 +1247,7 @@ function PotenciaInstaladaTooltip({ active, payload }) {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: 14,
-                color: '#e5e7eb',
+                color: '#e3eaea',
               }}
             >
               <span
@@ -1271,7 +1271,7 @@ function PotenciaInstaladaTooltip({ active, payload }) {
 
                 <span
                   style={{
-                    color: '#9ca3af',
+                    color: '#b9c7c9',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -1282,7 +1282,7 @@ function PotenciaInstaladaTooltip({ active, payload }) {
                 </span>
               </span>
 
-              <strong style={{ color: '#f9fafb', whiteSpace: 'nowrap' }}>
+              <strong style={{ color: '#f4f8f8', whiteSpace: 'nowrap' }}>
                 {formatKwp(p.value)}
               </strong>
             </div>
@@ -1290,7 +1290,7 @@ function PotenciaInstaladaTooltip({ active, payload }) {
         })}
 
         {visibles.length > 12 && (
-          <div style={{ color: '#6b7280', marginTop: 4 }}>
+          <div style={{ color: '#8fa6a9', marginTop: 4 }}>
             + {visibles.length - 12} obras más
           </div>
         )}
@@ -1307,8 +1307,8 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
   return (
     <div
       style={{
-        background: '#1f2937',
-        border: '1px solid #374151',
+        background: '#2c5059',
+        border: '1px solid #3b5d65',
         borderRadius: 8,
         padding: '10px 12px',
         fontSize: 12,
@@ -1317,7 +1317,7 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
     >
       <div
         style={{
-          color: '#9ca3af',
+          color: '#b9c7c9',
           marginBottom: 8,
           fontWeight: 700,
         }}
@@ -1333,8 +1333,8 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
             gap: 14,
           }}
         >
-          <span style={{ color: '#9ca3af' }}>Potencia Ecovatio</span>
-          <strong style={{ color: '#60a5fa' }}>
+          <span style={{ color: '#b9c7c9' }}>Potencia Ecovatio</span>
+          <strong style={{ color: '#4fc3f7' }}>
             {formatKwp(row.kwp_propio ?? row.total_kwp)}
           </strong>
         </div>
@@ -1347,8 +1347,8 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
               gap: 14,
             }}
           >
-            <span style={{ color: '#9ca3af' }}>Tercerizada</span>
-            <strong style={{ color: '#a78bfa' }}>
+            <span style={{ color: '#b9c7c9' }}>Tercerizada</span>
+            <strong style={{ color: '#9b7bff' }}>
               {formatKwp(row.kwp_tercerizado)}
             </strong>
           </div>
@@ -1361,8 +1361,8 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
             gap: 14,
           }}
         >
-          <span style={{ color: '#9ca3af' }}>Dotación promedio</span>
-          <strong style={{ color: '#fbbf24' }}>
+          <span style={{ color: '#b9c7c9' }}>Dotación promedio</span>
+          <strong style={{ color: '#ffc933' }}>
             {row.dotacion_promedio != null
               ? Number(row.dotacion_promedio).toFixed(1).replace('.0', '')
               : '—'}
@@ -1376,8 +1376,8 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
             gap: 14,
           }}
         >
-          <span style={{ color: '#9ca3af' }}>kWp por persona</span>
-          <strong style={{ color: '#22c55e' }}>
+          <span style={{ color: '#b9c7c9' }}>kWp por persona</span>
+          <strong style={{ color: '#95de1d' }}>
             {row.kwp_por_persona != null
               ? formatKwp(row.kwp_por_persona)
               : '—'}
@@ -1391,10 +1391,10 @@ function PotenciaPersonalTooltip({ active, payload, label }) {
 // ±10%, verde = más de 10% por debajo, gris = sin dato.
 const colorDesvioMO = (pct) => {
   if (pct === null || pct === undefined || !Number.isFinite(Number(pct)))
-    return '#6b7280';
-  if (pct > 10) return '#ef4444';
-  if (pct < -10) return '#22c55e';
-  return '#60a5fa';
+    return '#8fa6a9';
+  if (pct > 10) return '#ff5f5f';
+  if (pct < -10) return '#95de1d';
+  return '#4fc3f7';
 };
 
 const OPCIONES_POTENCIA_LABELS = [
@@ -1943,13 +1943,13 @@ const descripcionViaje = (clave, modalidad) => {
 };
 
 const TIPOS_CRONOGRAMA = {
-  ida: { color: '#3b82f6', leyenda: 'Ida a la obra' },
-  vuelta: { color: '#a78bfa', leyenda: 'Vuelta a casa' },
-  idavuelta: { color: '#38bdf8', leyenda: 'Ida y vuelta' },
-  trabajo: { color: '#22c55e', leyenda: 'Trabajo' },
-  descanso: { color: '#f59e0b', leyenda: 'Descanso en el lugar' },
-  casa: { color: '#6b7280', leyenda: 'En casa' },
-  fin: { color: '#374151', leyenda: 'Fuera de la obra' },
+  ida: { color: '#4fc3f7', leyenda: 'Ida a la obra' },
+  vuelta: { color: '#9b7bff', leyenda: 'Vuelta a casa' },
+  idavuelta: { color: '#4fc3f7', leyenda: 'Ida y vuelta' },
+  trabajo: { color: '#95de1d', leyenda: 'Trabajo' },
+  descanso: { color: '#ffc933', leyenda: 'Descanso en el lugar' },
+  casa: { color: '#8fa6a9', leyenda: 'En casa' },
+  fin: { color: '#3b5d65', leyenda: 'Fuera de la obra' },
 };
 
 // Semanas de la jornada, día por día (lunes a domingo).
@@ -2223,9 +2223,9 @@ const construirHtmlInforme = (r) => {
   const totalPago = cal.diasPagoEquivalentes;
 
   const segmentos = [
-    ['Días de trabajo', diasTrabajo, '#22c55e'],
-    ['Descanso en el lugar', cal.diasDescansoEnLugar, '#f59e0b'],
-    ['Recargo domingos (pago doble)', recargoDomingos, '#f97316'],
+    ['Días de trabajo', diasTrabajo, '#95de1d'],
+    ['Descanso en el lugar', cal.diasDescansoEnLugar, '#ffc933'],
+    ['Recargo domingos (pago doble)', recargoDomingos, '#ff9f4a'],
   ].filter((seg) => seg[1] > 0);
 
   const barraPago = segmentos
@@ -2575,7 +2575,7 @@ function CronogramaSemanas({ semanas }) {
               style={{
                 textAlign: 'center',
                 fontSize: 10,
-                color: '#6b7280',
+                color: '#8fa6a9',
                 fontWeight: 700,
               }}
             >
@@ -2589,14 +2589,14 @@ function CronogramaSemanas({ semanas }) {
                 <div
                   style={{
                     fontSize: 10,
-                    color: '#9ca3af',
+                    color: '#b9c7c9',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
                     lineHeight: 1.3,
                   }}
                 >
-                  <strong style={{ color: '#d1d5db' }}>Semana {i + 1}</strong>
+                  <strong style={{ color: '#d5dfe0' }}>Semana {i + 1}</strong>
                   {sem.etiqueta && <span>{sem.etiqueta}</span>}
                 </div>
               )}
@@ -2610,13 +2610,13 @@ function CronogramaSemanas({ semanas }) {
                     key={j}
                     style={{
                       background: vacia ? 'transparent' : `${color}22`,
-                      border: vacia ? '1px dashed #1f2937' : `1px solid ${color}66`,
+                      border: vacia ? '1px dashed #2c5059' : `1px solid ${color}66`,
                       borderRadius: 6,
                       padding: '4px 3px',
                       fontSize: 10,
                       lineHeight: 1.25,
                       textAlign: 'center',
-                      color: '#e5e7eb',
+                      color: '#e3eaea',
                       minHeight: 44,
                       display: 'flex',
                       flexDirection: 'column',
@@ -2626,7 +2626,7 @@ function CronogramaSemanas({ semanas }) {
                     }}
                   >
                     {celda.fecha && (
-                      <span style={{ fontSize: 9, color: '#9ca3af' }}>
+                      <span style={{ fontSize: 9, color: '#b9c7c9' }}>
                         {celda.fecha.getDate()}/{celda.fecha.getMonth() + 1}
                       </span>
                     )}
@@ -2646,7 +2646,7 @@ function CronogramaSemanas({ semanas }) {
           flexWrap: 'wrap',
           marginTop: 10,
           fontSize: 11,
-          color: '#9ca3af',
+          color: '#b9c7c9',
         }}
       >
         {tiposUsados.map((tipo) => (
@@ -3589,12 +3589,12 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
           estado: p.estado,
           fill:
             p.avance >= 100
-              ? '#22c55e'
+              ? '#95de1d'
               : p.avance >= 60
-              ? '#3b82f6'
+              ? '#4fc3f7'
               : p.avance > 0
-              ? '#f59e0b'
-              : '#6b7280',
+              ? '#ffc933'
+              : '#8fa6a9',
         })),
     [proyectosEstadoFiltrados]
   );
@@ -4348,19 +4348,19 @@ const dataAnio =
       {
         clave: 'excedidas',
         label: 'Excedidas (más de +10%)',
-        color: '#ef4444',
+        color: '#ff5f5f',
         lista: conDias.filter((o) => o.desvioDias > 10),
       },
       {
         clave: 'objetivo',
         label: 'En objetivo (±10%)',
-        color: '#60a5fa',
+        color: '#4fc3f7',
         lista: conDias.filter((o) => o.desvioDias >= -10 && o.desvioDias <= 10),
       },
       {
         clave: 'debajo',
         label: 'Por debajo (menos de −10%)',
-        color: '#22c55e',
+        color: '#95de1d',
         lista: conDias.filter((o) => o.desvioDias < -10),
       },
     ].map((g) => ({
@@ -4524,7 +4524,7 @@ const dataAnio =
         nombre: 'Presupuesto',
         base: 0,
         valor: c.presupuesto,
-        color: '#60a5fa',
+        color: '#4fc3f7',
         texto: formatUsdAbs(c.presupuesto),
         detalle: `${c.n} obras con costo cargado`,
       },
@@ -4532,7 +4532,7 @@ const dataAnio =
         nombre: 'Sobrecostos',
         base: c.presupuesto,
         valor: c.sobrecostos,
-        color: '#ef4444',
+        color: '#ff5f5f',
         texto: `+${formatUsdAbs(c.sobrecostos)}`,
         detalle: `${c.nSobre} obras gastaron más de lo presupuestado`,
       },
@@ -4540,7 +4540,7 @@ const dataAnio =
         nombre: 'Ahorros',
         base: c.presupuesto + c.sobrecostos - c.ahorros,
         valor: c.ahorros,
-        color: '#22c55e',
+        color: '#95de1d',
         texto: `−${formatUsdAbs(c.ahorros)}`,
         detalle: `${c.nAhorro} obras gastaron menos de lo presupuestado`,
       },
@@ -4548,7 +4548,7 @@ const dataAnio =
         nombre: 'Gasto real',
         base: 0,
         valor: c.gasto,
-        color: '#a78bfa',
+        color: '#9b7bff',
         texto: formatUsdAbs(c.gasto),
         detalle: '',
       },
@@ -5039,23 +5039,19 @@ const dataAnio =
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-50">
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-800 dark:bg-gray-950">
+    <div className="min-h-screen bg-white text-gray-900 dark:bg-transparent dark:text-gray-50">
+      <header
+        className="flex items-center justify-between border-b border-white/10 px-6 py-3 shadow-lg shadow-black/20"
+        style={{ background: 'linear-gradient(110deg, #123138 0%, #1d4a50 55%, #24604f 100%)' }}
+      >
         <div className="flex items-center">
-          <div className="mr-2.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500">
-            <svg
-              viewBox="0 0 20 20"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="1.8"
-            >
-              <path d="M10 2L3 7l7 3.5L17 7zm-7 10l7 3.5 7-3.5M3 12l7 3.5 7-3.5" />
-            </svg>
-          </div>
-          <div>
-            <div className="text-sm font-semibold">Panel de Obras Solares</div>
+          <img
+            src="/logo-ecovatio.png"
+            alt="Ecovatio"
+            className="mr-4 h-7 shrink-0"
+          />
+          <div className="border-l border-white/15 pl-4">
+            <div className="text-sm font-bold">Panel de Obras Solares</div>
             <div className="text-xs text-gray-500 dark:text-gray-500">
               Indicadores de gestión fotovoltaica
             </div>
@@ -5099,21 +5095,21 @@ const dataAnio =
         <main style={S.main}>
           <div style={S.card}>
             <h2 style={{ margin: 0, fontSize: 20 }}>Estimación de Obras FV</h2>
-            <p style={{ color: '#e5e7eb', fontSize: 14, marginTop: 14 }}>
+            <p style={{ color: '#e3eaea', fontSize: 14, marginTop: 14 }}>
               Completá los datos para calcular la planificación de tu obra
               solar.
             </p>
             <div
               style={{
-                background: '#0f172a',
-                border: '1px solid #1f2937',
+                background: '#16323a',
+                border: '1px solid #2c5059',
                 borderRadius: 10,
                 padding: 12,
                 marginTop: 12,
                 marginBottom: 18,
               }}
             >
-              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: '#b9c7c9', marginBottom: 8 }}>
                 Indicadores históricos Ecovatio
               </div>
               <table style={S.table}>
@@ -5149,8 +5145,8 @@ const dataAnio =
             </div>
             <div
               style={{
-                background: '#111827',
-                border: '1px solid #374151',
+                background: '#1d3c44',
+                border: '1px solid #3b5d65',
                 borderRadius: 10,
                 padding: 14,
                 marginBottom: 18,
@@ -5159,7 +5155,7 @@ const dataAnio =
               <div
                 style={{
                   fontSize: 12,
-                  color: '#9ca3af',
+                  color: '#b9c7c9',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   marginBottom: 10,
@@ -5207,7 +5203,7 @@ const dataAnio =
     {
       label: 'Obras similares',
       value: indicadorSugerido.cantidad,
-      color: '#f9fafb',
+      color: '#f4f8f8',
       indicador: null,
       boton: null,
       botonColor: null,
@@ -5216,29 +5212,29 @@ const dataAnio =
     {
       label: 'Mejor',
       value: indicadorSugerido.mejor,
-      color: '#22c55e',
+      color: '#95de1d',
       indicador: indicadorSugerido.mejor,
       boton: 'Usar mejor',
       botonColor: '#166534',
-      botonBorde: '#22c55e',
+      botonBorde: '#95de1d',
     },
     {
       label: 'Sugerido',
       value: indicadorSugerido.sugerido,
-      color: '#fbbf24',
+      color: '#ffc933',
       indicador: indicadorSugerido.sugerido,
       boton: 'Usar sugerido',
-      botonColor: '#d97706',
-      botonBorde: '#f59e0b',
+      botonColor: '#e5a91c',
+      botonBorde: '#ffc933',
     },
     {
       label: 'Peor valor registrado',
       value: indicadorSugerido.peor,
-      color: '#ef4444',
+      color: '#ff5f5f',
       indicador: indicadorSugerido.peor,
       boton: 'Usar peor',
       botonColor: '#991b1b',
-      botonBorde: '#ef4444',
+      botonBorde: '#ff5f5f',
     },
   ].map((item) => (
     <div
@@ -5251,7 +5247,7 @@ const dataAnio =
     >
       <div
         style={{
-          color: '#6b7280',
+          color: '#8fa6a9',
           fontSize: 11,
           marginBottom: 4,
         }}
@@ -5305,7 +5301,7 @@ const dataAnio =
     <div
       style={{
         fontSize: 10,
-        color: '#6b7280',
+        color: '#8fa6a9',
         textTransform: 'uppercase',
         letterSpacing: '0.06em',
         marginBottom: 6,
@@ -5321,15 +5317,15 @@ const dataAnio =
       >
         <defs>
           <linearGradient id="densidadSugerido" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.45} />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="#ffc933" stopOpacity={0.45} />
+            <stop offset="100%" stopColor="#ffc933" stopOpacity={0.02} />
           </linearGradient>
         </defs>
         <XAxis
           dataKey="x"
           type="number"
           domain={['dataMin', 'dataMax']}
-          tick={{ fill: '#6b7280', fontSize: 10 }}
+          tick={{ fill: '#8fa6a9', fontSize: 10 }}
           tickFormatter={(v) => v.toFixed(1)}
         />
         <YAxis hide domain={[0, 'dataMax']} />
@@ -5337,8 +5333,8 @@ const dataAnio =
           formatter={(v) => [Number(v).toFixed(3), 'densidad relativa']}
           labelFormatter={(v) => `${Number(v).toFixed(2)} HS MO / kWp`}
           contentStyle={{
-            background: '#1f2937',
-            border: '1px solid #374151',
+            background: '#2c5059',
+            border: '1px solid #3b5d65',
             borderRadius: 8,
             fontSize: 11,
           }}
@@ -5346,43 +5342,43 @@ const dataAnio =
         <Area
           type="monotone"
           dataKey="densidad"
-          stroke="#f59e0b"
+          stroke="#ffc933"
           strokeWidth={2}
           fill="url(#densidadSugerido)"
           isAnimationActive={false}
         />
         <ReferenceLine
           x={indicadorSugerido.mejor}
-          stroke="#22c55e"
+          stroke="#95de1d"
           strokeDasharray="2 3"
-          label={{ value: 'Mejor', position: 'insideTopLeft', fill: '#22c55e', fontSize: 10 }}
+          label={{ value: 'Mejor', position: 'insideTopLeft', fill: '#95de1d', fontSize: 10 }}
         />
         <ReferenceLine
           x={indicadorSugerido.sugerido}
-          stroke="#fbbf24"
+          stroke="#ffc933"
           strokeWidth={1.5}
           label={{
             value: 'Sugerido',
             position: 'top',
-            fill: '#fbbf24',
+            fill: '#ffc933',
             fontSize: 11,
             fontWeight: 700,
           }}
         />
         <ReferenceLine
           x={indicadorSugerido.peor}
-          stroke="#ef4444"
+          stroke="#ff5f5f"
           strokeDasharray="2 3"
-          label={{ value: 'Peor', position: 'insideTopRight', fill: '#ef4444', fontSize: 10 }}
+          label={{ value: 'Peor', position: 'insideTopRight', fill: '#ff5f5f', fontSize: 10 }}
         />
       </AreaChart>
     </ResponsiveContainer>
-    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.45 }}>
+    <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 4, lineHeight: 1.45 }}>
       Cada obra similar aporta una campanita centrada en su indicador; esta
       curva es la suma de todas. Ya se excluyeron las obras "Alto" y
       "Crítico" (naranja y rojo en Hs MO/kWp por obra): no entran en esta
       cuenta.{' '}
-      <strong style={{ color: '#e5e7eb' }}>"Sugerido"</strong> es el punto
+      <strong style={{ color: '#e3eaea' }}>"Sugerido"</strong> es el punto
       más alto de la curva (la moda: donde se concentra la mayor cantidad
       de obras dentro del rango ya filtrado).
     </div>
@@ -5390,7 +5386,7 @@ const dataAnio =
 )}
                   </>
                 ) : (
-                  <div style={{ color: '#9ca3af', fontSize: 13 }}>
+                  <div style={{ color: '#b9c7c9', fontSize: 13 }}>
                     No hay obras similares para los filtros seleccionados.
                   </div>
                 )}
@@ -5484,14 +5480,14 @@ const dataAnio =
             <div
               style={{
                 marginTop: 22,
-                borderTop: '1px solid #1f2937',
+                borderTop: '1px solid #2c5059',
                 paddingTop: 16,
               }}
             >
               <div
                 style={{
                   fontSize: 12,
-                  color: '#9ca3af',
+                  color: '#b9c7c9',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   marginBottom: 12,
@@ -5529,8 +5525,8 @@ const dataAnio =
                       <div
                         style={{
                           marginTop: 12,
-                          background: '#0f172a',
-                          border: '1px solid #1f2937',
+                          background: '#16323a',
+                          border: '1px solid #2c5059',
                           borderRadius: 10,
                           padding: 12,
                         }}
@@ -5538,7 +5534,7 @@ const dataAnio =
                         <div
                           style={{
                             fontSize: 11,
-                            color: '#9ca3af',
+                            color: '#b9c7c9',
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             letterSpacing: '0.06em',
@@ -5616,7 +5612,7 @@ const dataAnio =
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#fbbf24',
+                            color: '#ffc933',
                             cursor: 'pointer',
                             padding: 0,
                             fontSize: 11,
@@ -5662,9 +5658,9 @@ const dataAnio =
               <div
                 style={{
                   marginTop: 16,
-                  background: '#ef444422',
-                  border: '1px solid #ef444444',
-                  color: '#f87171',
+                  background: '#ff5f5f22',
+                  border: '1px solid #ff5f5f44',
+                  color: '#ff7a7a',
                   borderRadius: 8,
                   padding: 12,
                   fontSize: 13,
@@ -5861,7 +5857,7 @@ const dataAnio =
                   : 'días de trabajo'}{' '}
                 en {resultadoEstimacion.calendario.semanas}{' '}
                 {resultadoEstimacion.calendario.semanas === 1 ? 'semana' : 'semanas'}:{' '}
-                <strong style={{ color: '#e5e7eb' }}>
+                <strong style={{ color: '#e3eaea' }}>
                   {resultadoEstimacion.calendario.composicion}
                 </strong>
                 . Los viajes se hacen dentro del horario de trabajo.
@@ -5870,8 +5866,8 @@ const dataAnio =
               </div>
               <div
                 style={{
-                  background: '#0f172a',
-                  border: '1px solid #1f2937',
+                  background: '#16323a',
+                  border: '1px solid #2c5059',
                   borderRadius: 10,
                   padding: 12,
                 }}
@@ -5908,7 +5904,7 @@ const dataAnio =
                       )}
                       <tr>
                         <td style={{ ...S.td, fontWeight: 800 }}>Total de mano de obra</td>
-                        <td style={{ ...S.td, fontWeight: 800, color: '#fbbf24' }}>
+                        <td style={{ ...S.td, fontWeight: 800, color: '#ffc933' }}>
                           {formatUsdAbs(resultadoEstimacion.costo.total)}
                         </td>
                       </tr>
@@ -5928,7 +5924,7 @@ const dataAnio =
                   </div>
                 </>
               ) : (
-                <div style={{ color: '#6b7280', fontSize: 13 }}>
+                <div style={{ color: '#8fa6a9', fontSize: 13 }}>
                   Ingresá el valor de MO del instalador (USD por día) para calcular
                   el costo.
                 </div>
@@ -5955,12 +5951,12 @@ const dataAnio =
                 </div>
                 <div
                   style={{
-                    background: '#0f172a',
-                    border: '1px solid #1f2937',
+                    background: '#16323a',
+                    border: '1px solid #2c5059',
                     borderRadius: 10,
                     padding: 14,
                     fontSize: 14,
-                    color: '#e5e7eb',
+                    color: '#e3eaea',
                   }}
                 >
                   {simulacion ? (
@@ -5969,7 +5965,7 @@ const dataAnio =
                       {simulacion.dias} días hábiles.
                     </strong>
                   ) : (
-                    <span style={{ color: '#6b7280' }}>
+                    <span style={{ color: '#8fa6a9' }}>
                       Ingresá operarios para simular.
                     </span>
                   )}
@@ -5986,12 +5982,12 @@ const dataAnio =
           {errorProyectos && (
             <div
               style={{
-                background: '#ef444422',
-                border: '1px solid #ef444444',
+                background: '#ff5f5f22',
+                border: '1px solid #ff5f5f44',
                 borderRadius: 8,
                 padding: '10px 16px',
                 fontSize: 13,
-                color: '#f87171',
+                color: '#ff7a7a',
               }}
             >
               {errorProyectos}
@@ -6012,11 +6008,11 @@ const dataAnio =
               <h2 style={{ margin: 0, fontSize: 20 }}>
                 Estado de Proyectos FV
               </h2>
-              <p style={{ margin: '8px 0 0', color: '#9ca3af', fontSize: 13 }}>
+              <p style={{ margin: '8px 0 0', color: '#b9c7c9', fontSize: 13 }}>
                 Seguimiento de avance general de los proyectos del año en curso.
               </p>
             </div>
-            <div style={{ textAlign: 'right', fontSize: 11, color: '#6b7280' }}>
+            <div style={{ textAlign: 'right', fontSize: 11, color: '#8fa6a9' }}>
               {lastUpdateProyectos
                 ? `Actualizado: ${lastUpdateProyectos}`
                 : 'Sin actualización'}
@@ -6029,7 +6025,7 @@ const dataAnio =
                 label: 'Proyectos',
                 value: statsProyectos.total,
                 sub: 'con nombre y estado',
-                color: '#f9fafb',
+                color: '#f4f8f8',
                 icon: RiListCheck,
                 accent: 'bg-blue-500/10 text-blue-400',
               },
@@ -6037,7 +6033,7 @@ const dataAnio =
                 label: 'En ejecución',
                 value: statsProyectos.enEjecucion,
                 sub: 'obras activas',
-                color: '#60a5fa',
+                color: '#4fc3f7',
                 icon: RiTimerLine,
                 accent: 'bg-sky-500/10 text-sky-400',
               },
@@ -6045,7 +6041,7 @@ const dataAnio =
                 label: 'Finalizados',
                 value: statsProyectos.finalizados,
                 sub: '100% completados',
-                color: '#22c55e',
+                color: '#95de1d',
                 icon: RiTrophyLine,
                 accent: 'bg-emerald-500/10 text-emerald-400',
               },
@@ -6053,7 +6049,7 @@ const dataAnio =
                 label: 'Avance promedio',
                 value: formatPercent(statsProyectos.avancePromedio),
                 sub: `${statsProyectos.pendientes} pendientes`,
-                color: '#fbbf24',
+                color: '#ffc933',
                 icon: RiDashboardLine,
                 accent: 'bg-amber-500/10 text-amber-400',
               },
@@ -6063,7 +6059,7 @@ const dataAnio =
                   <div
                     style={{
                       fontSize: 11,
-                      color: '#6b7280',
+                      color: '#8fa6a9',
                       textTransform: 'uppercase',
                       letterSpacing: '0.07em',
                       marginBottom: 6,
@@ -6083,7 +6079,7 @@ const dataAnio =
                 <div style={{ fontSize: 34, fontWeight: 800, color: k.color }}>
                   {k.value}
                 </div>
-                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 2 }}>
                   {k.sub}
                 </div>
               </div>
@@ -6127,7 +6123,7 @@ const dataAnio =
         : `${filtrosEstadoProyecto.length} estados seleccionados`}
     </span>
 
-    <span style={{ color: '#9ca3af' }}>▾</span>
+    <span style={{ color: '#b9c7c9' }}>▾</span>
   </summary>
 
   <div
@@ -6137,8 +6133,8 @@ const dataAnio =
       left: 0,
       zIndex: 50,
       minWidth: 220,
-      background: '#1f2937',
-      border: '1px solid #374151',
+      background: '#2c5059',
+      border: '1px solid #3b5d65',
       borderRadius: 8,
       padding: 8,
       boxShadow: '0 12px 30px rgba(0, 0, 0, 0.4)',
@@ -6152,7 +6148,7 @@ const dataAnio =
         padding: '7px 8px',
         cursor: 'pointer',
         fontSize: 12,
-        borderBottom: '1px solid #374151',
+        borderBottom: '1px solid #3b5d65',
         marginBottom: 4,
       }}
     >
@@ -6206,17 +6202,17 @@ const dataAnio =
                   data={avanceProyectoData}
                   margin={{ top: 8, right: 12, bottom: 100, left: -10 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#6b7280', fontSize: 9 }}
+                    tick={{ fill: '#8fa6a9', fontSize: 9 }}
                     angle={-45}
                     textAnchor="end"
                     interval={0}
                   />
                   <YAxis
                     domain={[0, 100]}
-                    tick={{ fill: '#6b7280', fontSize: 10 }}
+                    tick={{ fill: '#8fa6a9', fontSize: 10 }}
                   />
                   <Tooltip
   formatter={(value, name, props) => {
@@ -6228,16 +6224,16 @@ const dataAnio =
     ];
   }}
   contentStyle={{
-    background: '#1f2937',
-    border: '1px solid #374151',
+    background: '#2c5059',
+    border: '1px solid #3b5d65',
     borderRadius: 8,
     fontSize: 12,
   }}
   labelStyle={{
-    color: '#f9fafb',
+    color: '#f4f8f8',
   }}
   itemStyle={{
-    color: '#f9fafb',
+    color: '#f4f8f8',
   }}
 />
                   <Bar dataKey="value" radius={[3, 3, 0, 0]}>
@@ -6269,14 +6265,14 @@ const dataAnio =
       key={`${e.name}-${i}`}
       fill={
         normalizeKey(e.name) === 'finalizado'
-          ? '#22c55e'
+          ? '#95de1d'
           : normalizeKey(e.name).includes('ejecucion')
-          ? '#3b82f6'
+          ? '#4fc3f7'
           : normalizeKey(e.name) === 'pendiente'
-          ? '#f59e0b'
+          ? '#ffc933'
           : normalizeKey(e.name) === 'demorado'
-          ? '#ef4444'
-          : '#6b7280'
+          ? '#ff5f5f'
+          : '#8fa6a9'
       }
     />
   ))}
@@ -6337,8 +6333,8 @@ const dataAnio =
           {/* ── TABLA ETAPAS DETALLADA ── */}
           <div
             style={{
-              background: '#111827',
-              border: '1px solid #1f2937',
+              background: '#1d3c44',
+              border: '1px solid #2c5059',
               borderRadius: 16,
               overflow: 'hidden',
               boxShadow:
@@ -6348,7 +6344,7 @@ const dataAnio =
             <div
               style={{
                 padding: '12px 16px',
-                borderBottom: '1px solid #1f2937',
+                borderBottom: '1px solid #2c5059',
                 display: 'flex',
                 justifyContent: 'space-between',
                 gap: 10,
@@ -6366,7 +6362,7 @@ const dataAnio =
                 Detalle de proyectos{' '}
                 <span
                   style={{
-                    color: '#6b7280',
+                    color: '#8fa6a9',
                     fontWeight: 400,
                     textTransform: 'none',
                   }}
@@ -6406,7 +6402,7 @@ const dataAnio =
         : `Ocultando ${filtrosEstadoTablaProyecto.length} estados`}
     </span>
 
-    <span style={{ color: '#9ca3af' }}>▾</span>
+    <span style={{ color: '#b9c7c9' }}>▾</span>
   </summary>
 
   <div
@@ -6416,8 +6412,8 @@ const dataAnio =
       right: 0,
       zIndex: 30,
       minWidth: 220,
-      background: '#1f2937',
-      border: '1px solid #374151',
+      background: '#2c5059',
+      border: '1px solid #3b5d65',
       borderRadius: 8,
       padding: 8,
       boxShadow: '0 12px 30px rgba(0, 0, 0, 0.35)',
@@ -6426,7 +6422,7 @@ const dataAnio =
     <div
       style={{
         fontSize: 10,
-        color: '#6b7280',
+        color: '#8fa6a9',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
         padding: '2px 8px 6px',
@@ -6442,7 +6438,7 @@ const dataAnio =
         padding: '7px 8px',
         cursor: 'pointer',
         fontSize: 12,
-        borderBottom: '1px solid #374151',
+        borderBottom: '1px solid #3b5d65',
         marginBottom: 4,
       }}
     >
@@ -6489,11 +6485,11 @@ const dataAnio =
                 }}
               >
                 {[
-                  ['100%', '#22c55e'],
-                  ['60–99%', '#60a5fa'],
-                  ['20–59%', '#fbbf24'],
-                  ['1–19%', '#f87171'],
-                  ['0%', '#f87171'],
+                  ['100%', '#95de1d'],
+                  ['60–99%', '#4fc3f7'],
+                  ['20–59%', '#ffc933'],
+                  ['1–19%', '#ff7a7a'],
+                  ['0%', '#ff7a7a'],
                 ].map(([l, c]) => (
                   <div
                     key={l}
@@ -6502,7 +6498,7 @@ const dataAnio =
                       alignItems: 'center',
                       gap: 4,
                       fontSize: 10,
-                      color: '#6b7280',
+                      color: '#8fa6a9',
                     }}
                   >
                     <div
@@ -6534,36 +6530,36 @@ const dataAnio =
                       style={{
                         position: 'sticky',
                         left: 0,
-                        background: '#0f172a',
+                        background: '#16323a',
                         zIndex: 2,
                       }}
                     />
-                    <th colSpan={4} style={{ background: '#0f172a' }} />
+                    <th colSpan={4} style={{ background: '#16323a' }} />
                     <th
                       colSpan={ETAPAS_COLS.length}
                       style={{
                         background: '#111c31',
-                        color: '#60a5fa',
+                        color: '#4fc3f7',
                         fontSize: 10,
                         fontWeight: 700,
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
                         textAlign: 'center',
                         padding: '6px 8px',
-                        borderBottom: '1px solid #1f2937',
+                        borderBottom: '1px solid #2c5059',
                       }}
                     >
                       Etapas de ejecución
                     </th>
                   </tr>
-                  <tr style={{ borderBottom: '2px solid #374151' }}>
+                  <tr style={{ borderBottom: '2px solid #3b5d65' }}>
                     {/* Columnas fijas */}
                     <th
                       style={{
                         ...S.th,
                         position: 'sticky',
                         left: 0,
-                        background: '#0f172a',
+                        background: '#16323a',
                         zIndex: 2,
                         minWidth: 72,
                         padding: '10px 12px',
@@ -6577,7 +6573,7 @@ const dataAnio =
                         ...S.th,
                         position: 'sticky',
                         left: 72,
-                        background: '#0f172a',
+                        background: '#16323a',
                         zIndex: 2,
                         minWidth: 220,
                         padding: '10px 12px',
@@ -6642,7 +6638,7 @@ const dataAnio =
                           wordBreak: 'normal',
                           overflowWrap: 'break-word',
                           lineHeight: 1.2,
-                          color: '#6b7280',
+                          color: '#8fa6a9',
                           verticalAlign: 'middle',
                         }}
                       >
@@ -6653,12 +6649,12 @@ const dataAnio =
                 </thead>
                 <tbody>
                 {proyectosEstadoTablaFiltrados.map((p, i) => {
-                    const rowBg = i % 2 === 0 ? '#111827' : '#0d1526';
+                    const rowBg = i % 2 === 0 ? '#1d3c44' : '#0d1526';
                     return (
                       <tr
                         key={`${p.id_proyecto}-${i}`}
                         style={{
-                          borderBottom: '1px solid #1f2937',
+                          borderBottom: '1px solid #2c5059',
                           background: rowBg,
                         }}
                       >
@@ -6670,12 +6666,12 @@ const dataAnio =
                             left: 0,
                             background: rowBg,
                             zIndex: 1,
-                            color: '#6b7280',
+                            color: '#8fa6a9',
                             fontSize: 11,
                             padding: '9px 12px',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
-                            borderBottom: '1px solid #1f2937',
+                            borderBottom: '1px solid #2c5059',
                           }}
                         >
                           {p.id_proyecto || '—'}
@@ -6695,7 +6691,7 @@ const dataAnio =
                             maxWidth: 300,
                             whiteSpace: 'normal',
                             lineHeight: 1.25,
-                            borderBottom: '1px solid #1f2937',
+                            borderBottom: '1px solid #2c5059',
                           }}
                         >
                           <div
@@ -6721,7 +6717,7 @@ const dataAnio =
                                   height: 20,
                                   borderRadius: 6,
                                   background: '#1d4ed822',
-                                  color: '#60a5fa',
+                                  color: '#4fc3f7',
                                   flexShrink: 0,
                                 }}
                               >
@@ -6735,7 +6731,7 @@ const dataAnio =
                             ...S.td,
                             textAlign: 'center',
                             padding: '9px 8px',
-                            color: '#fbbf24',
+                            color: '#ffc933',
                             fontWeight: 700,
                             whiteSpace: 'nowrap',
                           }}
@@ -6751,7 +6747,7 @@ const dataAnio =
     ...S.td,
     textAlign: 'center',
     padding: '9px 8px',
-    color: '#e5e7eb',
+    color: '#e3eaea',
     fontWeight: 600,
     whiteSpace: 'nowrap',
   }}
@@ -6789,7 +6785,7 @@ const dataAnio =
                               style={{
                                 width: 50,
                                 height: 5,
-                                background: '#1f2937',
+                                background: '#2c5059',
                                 borderRadius: 999,
                                 overflow: 'hidden',
                               }}
@@ -6799,7 +6795,7 @@ const dataAnio =
                                   width: `${p.avance}%`,
                                   height: 5,
                                   background:
-                                    p.avance >= 100 ? '#22c55e' : '#3b82f6',
+                                    p.avance >= 100 ? '#95de1d' : '#4fc3f7',
                                   borderRadius: 999,
                                 }}
                               />
@@ -6808,7 +6804,7 @@ const dataAnio =
                               style={{
                                 fontSize: 10,
                                 fontWeight: 700,
-                                color: p.avance >= 100 ? '#22c55e' : '#e5e7eb',
+                                color: p.avance >= 100 ? '#95de1d' : '#e3eaea',
                               }}
                             >
                               {formatPercent(p.avance)}
@@ -6829,7 +6825,7 @@ const dataAnio =
                                 minWidth: 84,
                                 maxWidth: 84,
                                 padding: '5px 4px',
-                                borderBottom: '1px solid #1f2937',
+                                borderBottom: '1px solid #2c5059',
                               }}
                             >
                               {val !== null ? (
@@ -6839,7 +6835,7 @@ const dataAnio =
                                     height: 26,
                                     borderRadius: 6,
                                     overflow: 'hidden',
-                                    background: '#0b1220',
+                                    background: '#16323a',
                                     border: `1px solid ${c.border}55`,
                                   }}
                                 >
@@ -6875,7 +6871,7 @@ const dataAnio =
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    color: '#374151',
+                                    color: '#3b5d65',
                                     fontSize: 11,
                                   }}
                                 >
@@ -6896,7 +6892,7 @@ const dataAnio =
                           style={{
                             textAlign: 'center',
                             padding: 40,
-                            color: '#4b5563',
+                            color: '#55787f',
                           }}
                         >
                           Sin proyectos para mostrar
@@ -6910,7 +6906,7 @@ const dataAnio =
                         style={{
                           textAlign: 'center',
                           padding: 40,
-                          color: '#6b7280',
+                          color: '#8fa6a9',
                         }}
                       >
                         Cargando proyectos...
@@ -6929,12 +6925,12 @@ const dataAnio =
     {errorPotencia && (
       <div
         style={{
-          background: '#ef444422',
-          border: '1px solid #ef444444',
+          background: '#ff5f5f22',
+          border: '1px solid #ff5f5f44',
           borderRadius: 8,
           padding: '10px 16px',
           fontSize: 13,
-          color: '#f87171',
+          color: '#ff7a7a',
         }}
       >
         {errorPotencia}
@@ -6944,12 +6940,12 @@ const dataAnio =
     {advertenciasPotencia.length > 0 && (
       <div
         style={{
-          background: '#f59e0b1a',
-          border: '1px solid #f59e0b55',
+          background: '#ffc9331a',
+          border: '1px solid #ffc93355',
           borderRadius: 8,
           padding: '10px 16px',
           fontSize: 13,
-          color: '#fbbf24',
+          color: '#ffc933',
           lineHeight: 1.5,
         }}
       >
@@ -6981,7 +6977,7 @@ const dataAnio =
         <h2 style={{ margin: 0, fontSize: 20 }}>
           Potencia Instalada por año
         </h2>
-        <p style={{ margin: '8px 0 0', color: '#9ca3af', fontSize: 13 }}>
+        <p style={{ margin: '8px 0 0', color: '#b9c7c9', fontSize: 13 }}>
           Seguimiento mensual de potencia solar instalada, separado por obra y
           filtrado por año.
         </p>
@@ -7043,7 +7039,7 @@ const dataAnio =
       anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES
         ? 'meses con datos registrados'
         : 'período de análisis',
-    color: '#f9fafb',
+    color: '#f4f8f8',
   },
   {
     label: 'Potencia total',
@@ -7064,13 +7060,13 @@ const dataAnio =
           })} kWp`,
   
     sub: 'suma instalada',
-    color: '#fbbf24',
+    color: '#ffc933',
   },
   {
     label: 'Promedio mensual',
     value: potenciaAnioActual.promedio_mensual_label || '0 kWp',
     sub: `${potenciaAnioActual.cantidad_meses_con_potencia || 0} meses con potencia`,
-    color: '#60a5fa',
+    color: '#4fc3f7',
   },
   ...(mostrarProyeccionAnual
     ? [
@@ -7080,7 +7076,7 @@ const dataAnio =
         sub: `${potenciaAnioActual.total_anual_label || '0 kWp'} + ${
           potenciaAnioActual.promedio_mensual_label || '0 kWp'
         } × ${potenciaAnioActual.meses_restantes_proyeccion || 0} meses`,
-        color: '#a78bfa',
+        color: '#9b7bff',
       },
       ]
     : []),
@@ -7112,25 +7108,25 @@ const dataAnio =
         : 'seleccioná un año',
     
       color: !variacionInteranualPotencia.disponible
-        ? '#9ca3af'
+        ? '#b9c7c9'
         : variacionInteranualPotencia.variacionPct > 0
-        ? '#22c55e'
+        ? '#95de1d'
         : variacionInteranualPotencia.variacionPct < 0
-        ? '#ef4444'
-        : '#9ca3af',
+        ? '#ff5f5f'
+        : '#b9c7c9',
     },
   {
     label: 'Obras registradas',
     value: obrasTotalesPotencia.length,
     sub: 'con potencia cargada',
-    color: '#22c55e',
+    color: '#95de1d',
   },
 ].map((k) => (
         <div key={k.label} style={S.kpi}>
           <div
             style={{
               fontSize: 11,
-              color: '#6b7280',
+              color: '#8fa6a9',
               textTransform: 'uppercase',
               letterSpacing: '0.07em',
               marginBottom: 6,
@@ -7141,7 +7137,7 @@ const dataAnio =
           <div style={{ fontSize: 34, fontWeight: 800, color: k.color }}>
             {k.value}
           </div>
-          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 2 }}>
             {k.sub}
           </div>
         </div>
@@ -7165,7 +7161,7 @@ const dataAnio =
           ? 'Potencia instalada mensual por obra'
           : 'Relación potencia instalada / dotación operaciones'}
       </div>
-      <div style={{ color: '#6b7280', fontSize: 12 }}>
+      <div style={{ color: '#8fa6a9', fontSize: 12 }}>
         {vistaPotencia === VISTA_POTENCIA_POR_OBRA
           ? 'Barras apiladas por mes. Cada color representa una obra.'
           : 'Arriba: potencia instalada y dotación promedio. Abajo: kWp instalados por persona. La correlación es descriptiva, no implica causalidad.'}
@@ -7194,7 +7190,7 @@ const dataAnio =
       </select>
 
       {lastUpdatePotencia && (
-        <div style={{ color: '#6b7280', fontSize: 11 }}>
+        <div style={{ color: '#8fa6a9', fontSize: 11 }}>
           Actualizado: {lastUpdatePotencia}
         </div>
       )}
@@ -7227,7 +7223,7 @@ const dataAnio =
             } ${
               correlacionPotenciaDotacion >= 0 ? 'positiva' : 'negativa'
             } (escala −1 a 1)`,
-        '#fbbf24',
+        '#ffc933',
       ],
       [
         'Prom. kWp/persona',
@@ -7235,27 +7231,27 @@ const dataAnio =
           ? formatKwp(promedioKwpPorPersona)
           : '—',
         'productividad mensual promedio',
-        '#22c55e',
+        '#95de1d',
       ],
       [
         'Meses comparados',
         mesesComparadosRelacion.length,
         'con potencia y dotación',
-        '#60a5fa',
+        '#4fc3f7',
       ],
     ].map(([label, value, sub, color]) => (
       <div
         key={label}
         style={{
-          background: '#0f172a',
-          border: '1px solid #1f2937',
+          background: '#16323a',
+          border: '1px solid #2c5059',
           borderRadius: 10,
           padding: 12,
         }}
       >
         <div
           style={{
-            color: '#6b7280',
+            color: '#8fa6a9',
             fontSize: 10,
             textTransform: 'uppercase',
             letterSpacing: '0.07em',
@@ -7267,7 +7263,7 @@ const dataAnio =
         <div style={{ fontSize: 22, fontWeight: 700, color }}>
           {value}
         </div>
-        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 2 }}>
           {sub}
         </div>
       </div>
@@ -7287,11 +7283,11 @@ const dataAnio =
         left: 10,
       }}
     >
-      <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+      <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
 
       <XAxis
         dataKey="mes"
-        tick={{ fill: '#9ca3af', fontSize: 11 }}
+        tick={{ fill: '#b9c7c9', fontSize: 11 }}
         angle={anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES ? -35 : 0}
         textAnchor={
           anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES
@@ -7302,7 +7298,7 @@ const dataAnio =
       />
 
       <YAxis
-        tick={{ fill: '#9ca3af', fontSize: 11 }}
+        tick={{ fill: '#b9c7c9', fontSize: 11 }}
         tickFormatter={(v) => formatKwp(v)}
       />
 
@@ -7310,13 +7306,13 @@ const dataAnio =
 
       <ReferenceLine
         y={potenciaAnioActual.promedio_mensual_kwp}
-        stroke="#fbbf24"
+        stroke="#ffc933"
         strokeDasharray="6 3"
         strokeWidth={1.5}
         label={{
           value: `Promedio: ${potenciaAnioActual.promedio_mensual_label}`,
           position: 'insideTopRight',
-          fill: '#fbbf24',
+          fill: '#ffc933',
           fontSize: 11,
         }}
       />
@@ -7339,7 +7335,7 @@ const dataAnio =
               dataKey="total_kwp"
               position="top"
               formatter={(v) => formatKwp(v)}
-              style={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+              style={{ fill: '#b9c7c9', fontSize: 10, fontWeight: 600 }}
             />
           )}
         </Bar>
@@ -7354,26 +7350,26 @@ const dataAnio =
           gap: 18,
           flexWrap: 'wrap',
           fontSize: 12,
-          color: '#9ca3af',
+          color: '#b9c7c9',
           margin: '0 0 8px 4px',
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#60a5fa' }} />
+          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#4fc3f7' }} />
           Potencia instalada por Ecovatio (kWp, eje izquierdo)
         </span>
         {potenciaPersonalChartData.some((m) => m.kwp_tercerizado > 0) && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 12, height: 12, borderRadius: 2, background: '#a78bfa' }} />
+            <span style={{ width: 12, height: 12, borderRadius: 2, background: '#9b7bff' }} />
             Obra tercerizada ({OBRAS_TERCERIZADAS_LABEL}): no entra en kWp/persona
           </span>
         )}
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 16, height: 3, borderRadius: 2, background: '#fbbf24' }} />
+          <span style={{ width: 16, height: 3, borderRadius: 2, background: '#ffc933' }} />
           Dotación promedio (personas, eje derecho)
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#22c55e' }} />
+          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#95de1d' }} />
           kWp instalados por persona (gráfico inferior)
         </span>
       </div>
@@ -7383,11 +7379,11 @@ const dataAnio =
           data={potenciaPersonalChartData}
           margin={{ top: 24, right: 34, bottom: 8, left: 10 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
 
           <XAxis
             dataKey="mes"
-            tick={{ fill: '#9ca3af', fontSize: 11 }}
+            tick={{ fill: '#b9c7c9', fontSize: 11 }}
             angle={anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES ? -35 : 0}
             textAnchor={
               anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES
@@ -7401,7 +7397,7 @@ const dataAnio =
           <YAxis
             yAxisId="kwp"
             width={64}
-            tick={{ fill: '#60a5fa', fontSize: 11 }}
+            tick={{ fill: '#4fc3f7', fontSize: 11 }}
             tickFormatter={(v) => formatKwp(v)}
           />
 
@@ -7410,7 +7406,7 @@ const dataAnio =
             orientation="right"
             width={44}
             domain={[0, (max) => Math.max(4, Math.ceil(max * 1.25))]}
-            tick={{ fill: '#fbbf24', fontSize: 11 }}
+            tick={{ fill: '#ffc933', fontSize: 11 }}
             allowDecimals={false}
           />
 
@@ -7421,7 +7417,7 @@ const dataAnio =
             stackId="potencia"
             dataKey="kwp_propio"
             name="Ecovatio"
-            fill="#60a5fa"
+            fill="#4fc3f7"
           />
 
           <Bar
@@ -7429,14 +7425,14 @@ const dataAnio =
             stackId="potencia"
             dataKey="kwp_tercerizado"
             name="Tercerizado"
-            fill="#a78bfa"
+            fill="#9b7bff"
             radius={[4, 4, 0, 0]}
           >
             <LabelList
               dataKey="total_kwp"
               position="top"
               formatter={(v) => (Number(v) > 0 ? formatKwp(v) : '')}
-              style={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+              style={{ fill: '#b9c7c9', fontSize: 10, fontWeight: 600 }}
             />
           </Bar>
 
@@ -7444,9 +7440,9 @@ const dataAnio =
             yAxisId="personas"
             type="monotone"
             dataKey="dotacion_promedio"
-            stroke="#fbbf24"
+            stroke="#ffc933"
             strokeWidth={2.5}
-            dot={{ r: 4, fill: '#fbbf24', stroke: '#111827', strokeWidth: 1 }}
+            dot={{ r: 4, fill: '#ffc933', stroke: '#1d3c44', strokeWidth: 1 }}
             activeDot={{ r: 6 }}
             connectNulls
           >
@@ -7460,10 +7456,10 @@ const dataAnio =
                   : Number(v).toFixed(1).replace('.0', '')
               }
               style={{
-                fill: '#fbbf24',
+                fill: '#ffc933',
                 fontSize: 11,
                 fontWeight: 700,
-                stroke: '#111827',
+                stroke: '#1d3c44',
                 strokeWidth: 3,
                 paintOrder: 'stroke',
               }}
@@ -7475,13 +7471,13 @@ const dataAnio =
       <div
         style={{
           ...S.cardTitle,
-          color: '#22c55e',
+          color: '#95de1d',
           margin: '10px 0 2px 4px',
         }}
       >
         kWp instalados por persona
       </div>
-      <div style={{ color: '#6b7280', fontSize: 12, margin: '0 0 6px 4px' }}>
+      <div style={{ color: '#8fa6a9', fontSize: 12, margin: '0 0 6px 4px' }}>
         Potencia instalada por personal propio ÷ dotación promedio del mes
         (excluye obras tercerizadas: {OBRAS_TERCERIZADAS_LABEL}). Más alto =
         más potencia instalada por cada persona del equipo.
@@ -7497,11 +7493,11 @@ const dataAnio =
             left: 10,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
 
           <XAxis
             dataKey="mes"
-            tick={{ fill: '#9ca3af', fontSize: 11 }}
+            tick={{ fill: '#b9c7c9', fontSize: 11 }}
             angle={anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES ? -35 : 0}
             textAnchor={
               anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES
@@ -7513,7 +7509,7 @@ const dataAnio =
 
           <YAxis
             width={64}
-            tick={{ fill: '#22c55e', fontSize: 11 }}
+            tick={{ fill: '#95de1d', fontSize: 11 }}
             tickFormatter={(v) => formatKwp(v)}
           />
 
@@ -7525,26 +7521,26 @@ const dataAnio =
           {promedioKwpPorPersona !== null && (
             <ReferenceLine
               y={promedioKwpPorPersona}
-              stroke="#22c55e"
+              stroke="#95de1d"
               strokeDasharray="6 3"
               strokeWidth={1.2}
               label={{
                 value: `Promedio: ${formatKwp(promedioKwpPorPersona)}`,
                 position: 'insideTopRight',
-                fill: '#22c55e',
+                fill: '#95de1d',
                 fontSize: 11,
               }}
             />
           )}
 
-          <Bar dataKey="kwp_por_persona" fill="#22c55e" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="kwp_por_persona" fill="#95de1d" radius={[4, 4, 0, 0]}>
             <LabelList
               dataKey="kwp_por_persona"
               position="top"
               formatter={(v) =>
                 v === null || v === undefined ? '' : formatKwp(v)
               }
-              style={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+              style={{ fill: '#b9c7c9', fontSize: 10, fontWeight: 600 }}
             />
           </Bar>
         </BarChart>
@@ -7555,7 +7551,7 @@ const dataAnio =
 {vistaPotencia === VISTA_POTENCIA_POR_OBRA &&
   potenciaMensualChartData.length === 0 &&
   !loadingPotencia && (
-    <div style={{ textAlign: 'center', color: '#4b5563', padding: 30 }}>
+    <div style={{ textAlign: 'center', color: '#55787f', padding: 30 }}>
       Sin datos para mostrar.
     </div>
   )}
@@ -7563,7 +7559,7 @@ const dataAnio =
 {vistaPotencia === VISTA_POTENCIA_RELACION_PERSONAL &&
   potenciaPersonalChartData.length === 0 &&
   !loadingPotencia && (
-    <div style={{ textAlign: 'center', color: '#4b5563', padding: 30 }}>
+    <div style={{ textAlign: 'center', color: '#55787f', padding: 30 }}>
       Sin datos de potencia y dotación para comparar.
     </div>
   )}
@@ -7571,7 +7567,7 @@ const dataAnio =
 
     <div style={S.row2}>
       <div style={S.card}>
-        <div style={{ ...S.cardTitle, color: '#fbbf24' }}>
+        <div style={{ ...S.cardTitle, color: '#ffc933' }}>
   {anioPotenciaSeleccionado === POTENCIA_TODOS_LOS_MESES
     ? 'Mejores meses registrados'
     : 'Mejores meses del año'}
@@ -7587,27 +7583,27 @@ const dataAnio =
               marginBottom: 10,
             }}
           >
-            <span style={{ color: '#4b5563', fontSize: 11, width: 16 }}>
+            <span style={{ color: '#55787f', fontSize: 11, width: 16 }}>
               {i + 1}
             </span>
             <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>
               {mes.mes_label}
             </span>
-            <span style={{ color: '#fbbf24', fontWeight: 700 }}>
+            <span style={{ color: '#ffc933', fontWeight: 700 }}>
               {formatKwp(mes.total_kwp)}
             </span>
           </div>
         ))}
 
         {mejoresMesesPotencia.length === 0 && (
-          <div style={{ color: '#6b7280', fontSize: 13 }}>
+          <div style={{ color: '#8fa6a9', fontSize: 13 }}>
             Todavía no hay meses con potencia registrada.
           </div>
         )}
       </div>
 
       <div style={S.card}>
-        <div style={{ ...S.cardTitle, color: '#22c55e' }}>
+        <div style={{ ...S.cardTitle, color: '#95de1d' }}>
           Obras con mayor potencia instalada
         </div>
 
@@ -7622,7 +7618,7 @@ const dataAnio =
                 fontSize: 12,
               }}
             >
-              <span style={{ color: '#4b5563', width: 16 }}>{i + 1}</span>
+              <span style={{ color: '#55787f', width: 16 }}>{i + 1}</span>
 
               <div
                 style={{
@@ -7644,14 +7640,14 @@ const dataAnio =
                 {obra.obra}
               </span>
 
-              <strong style={{ color: '#22c55e' }}>
+              <strong style={{ color: '#95de1d' }}>
                 {formatKwp(obra.kwp)}
               </strong>
             </div>
           ))}
 
           {obrasTotalesPotencia.length === 0 && (
-            <div style={{ color: '#6b7280', fontSize: 13 }}>
+            <div style={{ color: '#8fa6a9', fontSize: 13 }}>
               Sin obras para mostrar.
             </div>
           )}
@@ -7669,12 +7665,12 @@ const dataAnio =
     {errorPersonal && (
       <div
         style={{
-          background: '#ef444422',
-          border: '1px solid #ef444444',
+          background: '#ff5f5f22',
+          border: '1px solid #ff5f5f44',
           borderRadius: 8,
           padding: '10px 16px',
           fontSize: 13,
-          color: '#f87171',
+          color: '#ff7a7a',
         }}
       >
         {errorPersonal}
@@ -7696,16 +7692,16 @@ const dataAnio =
           Personal de Operaciones
         </h2>
 
-        <p style={{ margin: '8px 0 0', color: '#9ca3af', fontSize: 13 }}>
+        <p style={{ margin: '8px 0 0', color: '#b9c7c9', fontSize: 13 }}>
           Dotación actual, bajas de los últimos 12 meses y rotación del
           personal operativo.
         </p>
 
         {personalOperaciones.resumen?.periodo_inicio &&
           personalOperaciones.resumen?.periodo_fin && (
-            <p style={{ margin: '8px 0 0', color: '#6b7280', fontSize: 12 }}>
+            <p style={{ margin: '8px 0 0', color: '#8fa6a9', fontSize: 12 }}>
               Período analizado:{' '}
-              <strong style={{ color: '#e5e7eb' }}>
+              <strong style={{ color: '#e3eaea' }}>
                 {personalOperaciones.resumen.periodo_inicio} al{' '}
                 {personalOperaciones.resumen.periodo_fin}
               </strong>
@@ -7722,7 +7718,7 @@ const dataAnio =
         }}
       >
         {lastUpdatePersonal && (
-          <div style={{ color: '#6b7280', fontSize: 11 }}>
+          <div style={{ color: '#8fa6a9', fontSize: 11 }}>
             Actualizado: {lastUpdatePersonal}
           </div>
         )}
@@ -7744,7 +7740,7 @@ const dataAnio =
           value:
             personalOperaciones.resumen?.cantidad_actual_operaciones ?? 0,
           sub: 'operaciones empresa',
-          color: '#22c55e',
+          color: '#95de1d',
           icon: RiTeamLine,
           accent: 'bg-emerald-500/10 text-emerald-400',
         },
@@ -7753,7 +7749,7 @@ const dataAnio =
           value:
             personalOperaciones.resumen?.cantidad_bajas_operaciones ?? 0,
           sub: 'bajas del período',
-          color: '#ef4444',
+          color: '#ff5f5f',
           icon: RiAlarmWarningLine,
           accent: 'bg-red-500/10 text-red-400',
         },
@@ -7766,7 +7762,7 @@ const dataAnio =
               : `${rotacionCalculada.bajas} bajas ÷ ${rotacionCalculada.dotacionPromedio
                   .toFixed(1)
                   .replace('.0', '')} personas de dotación promedio`,
-          color: '#fbbf24',
+          color: '#ffc933',
           icon: RiTimerFlashLine,
           accent: 'bg-amber-500/10 text-amber-400',
         },
@@ -7774,7 +7770,7 @@ const dataAnio =
           label: 'Recambio completo cada',
           value: formatMeses(rotacionCalculada.recambioEnMeses),
           sub: 'a este ritmo, se renueva un equipo del tamaño actual',
-          color: '#60a5fa',
+          color: '#4fc3f7',
           icon: RiCalendarLine,
           accent: 'bg-sky-500/10 text-sky-400',
         },
@@ -7784,7 +7780,7 @@ const dataAnio =
             <div
               style={{
                 fontSize: 11,
-                color: '#6b7280',
+                color: '#8fa6a9',
                 textTransform: 'uppercase',
                 letterSpacing: '0.07em',
                 marginBottom: 6,
@@ -7806,7 +7802,7 @@ const dataAnio =
             {k.value}
           </div>
 
-          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 2 }}>
             {k.sub}
           </div>
         </div>
@@ -7827,7 +7823,7 @@ const dataAnio =
           <div style={{ ...S.cardTitle, marginBottom: 4 }}>
             Dotación promedio mensual — Operaciones
           </div>
-          <div style={{ color: '#6b7280', fontSize: 12 }}>
+          <div style={{ color: '#8fa6a9', fontSize: 12 }}>
             Cantidad promedio de personal del área Operaciones mes a mes.
           </div>
         </div>
@@ -7860,11 +7856,11 @@ const dataAnio =
             left: 10,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
 
           <XAxis
             dataKey="mes_label"
-            tick={{ fill: '#9ca3af', fontSize: 11 }}
+            tick={{ fill: '#b9c7c9', fontSize: 11 }}
             angle={
               anioPersonalSeleccionado === PERSONAL_TODOS_LOS_MESES ? -35 : 0
             }
@@ -7877,7 +7873,7 @@ const dataAnio =
           />
 
           <YAxis
-            tick={{ fill: '#9ca3af', fontSize: 11 }}
+            tick={{ fill: '#b9c7c9', fontSize: 11 }}
             allowDecimals={false}
           />
 
@@ -7900,18 +7896,18 @@ const dataAnio =
             }}
             labelFormatter={(label) => `Mes: ${label}`}
             contentStyle={{
-              background: '#1f2937',
-              border: '1px solid #374151',
+              background: '#2c5059',
+              border: '1px solid #3b5d65',
               borderRadius: 8,
               fontSize: 12,
-              color: '#e5e7eb',
+              color: '#e3eaea',
             }}
           />
 
           {promedioDotacionPersonal !== null && (
             <ReferenceLine
               y={promedioDotacionPersonal}
-              stroke="#fbbf24"
+              stroke="#ffc933"
               strokeDasharray="6 3"
               strokeWidth={1.5}
               label={{
@@ -7919,7 +7915,7 @@ const dataAnio =
                   .toFixed(1)
                   .replace('.0', '')}`,
                 position: 'insideTopRight',
-                fill: '#fbbf24',
+                fill: '#ffc933',
                 fontSize: 11,
               }}
             />
@@ -7927,21 +7923,21 @@ const dataAnio =
 
           <Bar
             dataKey="dotacion_promedio"
-            fill="#60a5fa"
+            fill="#4fc3f7"
             radius={[4, 4, 0, 0]}
           >
             <LabelList
               dataKey="dotacion_promedio"
               position="top"
               formatter={(v) => Number(v).toFixed(1).replace('.0', '')}
-              style={{ fill: '#9ca3af', fontSize: 10, fontWeight: 600 }}
+              style={{ fill: '#b9c7c9', fontSize: 10, fontWeight: 600 }}
             />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
 
       {dotacionMensualPersonal.length === 0 && !loadingPersonal && (
-        <div style={{ textAlign: 'center', color: '#4b5563', padding: 30 }}>
+        <div style={{ textAlign: 'center', color: '#55787f', padding: 30 }}>
           Sin datos de dotación mensual de operaciones para mostrar.
         </div>
       )}
@@ -7951,7 +7947,7 @@ const dataAnio =
       <div style={{ ...S.cardTitle, marginBottom: 4 }}>
         Altas y bajas por mes
       </div>
-      <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
+      <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 10 }}>
         Ingresos y egresos de cada mes junto con la dotación a fin de mes. Sirve
         para ver en qué meses se concentran las bajas.
       </div>
@@ -7962,20 +7958,20 @@ const dataAnio =
           gap: 18,
           flexWrap: 'wrap',
           fontSize: 12,
-          color: '#9ca3af',
+          color: '#b9c7c9',
           margin: '0 0 8px 4px',
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#22c55e' }} />
+          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#95de1d' }} />
           Altas del mes
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#ef4444' }} />
+          <span style={{ width: 12, height: 12, borderRadius: 2, background: '#ff5f5f' }} />
           Bajas del mes
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 16, height: 3, borderRadius: 2, background: '#fbbf24' }} />
+          <span style={{ width: 16, height: 3, borderRadius: 2, background: '#ffc933' }} />
           Dotación a fin de mes (personas)
         </span>
       </div>
@@ -7991,11 +7987,11 @@ const dataAnio =
             left: 0,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
 
           <XAxis
             dataKey="mes_label"
-            tick={{ fill: '#9ca3af', fontSize: 11 }}
+            tick={{ fill: '#b9c7c9', fontSize: 11 }}
             angle={
               anioPersonalSeleccionado === PERSONAL_TODOS_LOS_MESES ? -35 : 0
             }
@@ -8010,7 +8006,7 @@ const dataAnio =
           <YAxis
             yAxisId="movimientos"
             allowDecimals={false}
-            tick={{ fill: '#9ca3af', fontSize: 11 }}
+            tick={{ fill: '#b9c7c9', fontSize: 11 }}
           />
 
           <YAxis
@@ -8018,18 +8014,18 @@ const dataAnio =
             orientation="right"
             allowDecimals={false}
             domain={[0, (max) => Math.max(4, Math.ceil(max * 1.25))]}
-            tick={{ fill: '#fbbf24', fontSize: 11 }}
+            tick={{ fill: '#ffc933', fontSize: 11 }}
           />
 
           <Tooltip
             formatter={(value, name) => [value, name]}
             labelFormatter={(label) => `Mes: ${label}`}
             contentStyle={{
-              background: '#1f2937',
-              border: '1px solid #374151',
+              background: '#2c5059',
+              border: '1px solid #3b5d65',
               borderRadius: 8,
               fontSize: 12,
-              color: '#e5e7eb',
+              color: '#e3eaea',
             }}
           />
 
@@ -8037,14 +8033,14 @@ const dataAnio =
             yAxisId="movimientos"
             dataKey="altas_mes"
             name="Altas"
-            fill="#22c55e"
+            fill="#95de1d"
             radius={[4, 4, 0, 0]}
           >
             <LabelList
               dataKey="altas_mes"
               position="top"
               formatter={(v) => (Number(v) > 0 ? v : '')}
-              style={{ fill: '#22c55e', fontSize: 11, fontWeight: 700 }}
+              style={{ fill: '#95de1d', fontSize: 11, fontWeight: 700 }}
             />
           </Bar>
 
@@ -8052,14 +8048,14 @@ const dataAnio =
             yAxisId="movimientos"
             dataKey="bajas_mes"
             name="Bajas"
-            fill="#ef4444"
+            fill="#ff5f5f"
             radius={[4, 4, 0, 0]}
           >
             <LabelList
               dataKey="bajas_mes"
               position="top"
               formatter={(v) => (Number(v) > 0 ? v : '')}
-              style={{ fill: '#ef4444', fontSize: 11, fontWeight: 700 }}
+              style={{ fill: '#ff5f5f', fontSize: 11, fontWeight: 700 }}
             />
           </Bar>
 
@@ -8068,9 +8064,9 @@ const dataAnio =
             type="monotone"
             dataKey="dotacion_final"
             name="Dotación a fin de mes"
-            stroke="#fbbf24"
+            stroke="#ffc933"
             strokeWidth={2.5}
-            dot={{ r: 3, fill: '#fbbf24', stroke: '#111827', strokeWidth: 1 }}
+            dot={{ r: 3, fill: '#ffc933', stroke: '#1d3c44', strokeWidth: 1 }}
             connectNulls
           />
         </ComposedChart>
@@ -8081,7 +8077,7 @@ const dataAnio =
       <div style={{ ...S.cardTitle, marginBottom: 4 }}>
         Evolución de la rotación (12 meses móviles)
       </div>
-      <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
+      <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 10 }}>
         Cada punto es la rotación de los 12 meses que terminan en ese mes:
         bajas ÷ dotación promedio de esos 12 meses. Muestra si la rotación está
         mejorando o empeorando. Solo aparece cuando hay 12 meses de datos.
@@ -8093,16 +8089,16 @@ const dataAnio =
             data={rotacionMovilData}
             margin={{ top: 24, right: 24, bottom: 10, left: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
 
             <XAxis
               dataKey="mes"
-              tick={{ fill: '#9ca3af', fontSize: 11 }}
+              tick={{ fill: '#b9c7c9', fontSize: 11 }}
               interval={0}
             />
 
             <YAxis
-              tick={{ fill: '#9ca3af', fontSize: 11 }}
+              tick={{ fill: '#b9c7c9', fontSize: 11 }}
               tickFormatter={(v) => `${v}%`}
               domain={[0, (max) => Math.max(20, Math.ceil(max * 1.15))]}
             />
@@ -8114,33 +8110,33 @@ const dataAnio =
               ]}
               labelFormatter={(label) => `Hasta ${label}`}
               contentStyle={{
-                background: '#1f2937',
-                border: '1px solid #374151',
+                background: '#2c5059',
+                border: '1px solid #3b5d65',
                 borderRadius: 8,
                 fontSize: 12,
-                color: '#e5e7eb',
+                color: '#e3eaea',
               }}
             />
 
             <Line
               type="monotone"
               dataKey="rotacion_pct"
-              stroke="#fbbf24"
+              stroke="#ffc933"
               strokeWidth={2.5}
-              dot={{ r: 4, fill: '#fbbf24', stroke: '#111827', strokeWidth: 1 }}
+              dot={{ r: 4, fill: '#ffc933', stroke: '#1d3c44', strokeWidth: 1 }}
               activeDot={{ r: 6 }}
             >
               <LabelList
                 dataKey="rotacion_pct"
                 position="top"
                 formatter={(v) => formatRotacion(v)}
-                style={{ fill: '#fbbf24', fontSize: 11, fontWeight: 700 }}
+                style={{ fill: '#ffc933', fontSize: 11, fontWeight: 700 }}
               />
             </Line>
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <div style={{ textAlign: 'center', color: '#4b5563', padding: 30 }}>
+        <div style={{ textAlign: 'center', color: '#55787f', padding: 30 }}>
           Todavía no hay 12 meses de dotación para calcular la evolución.
         </div>
       )}
@@ -8150,7 +8146,7 @@ const dataAnio =
       <div style={{ ...S.cardTitle, marginBottom: 4 }}>
         Permanencia de las personas dadas de baja
       </div>
-      <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 12 }}>
+      <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 12 }}>
         Cuánto tiempo trabajaron antes de irse (bajas de los últimos 12 meses).
         Muchas bajas tempranas apuntan a la incorporación; las tardías, a la
         retención.
@@ -8169,49 +8165,49 @@ const dataAnio =
             formatMeses(
               personalOperaciones.resumen?.permanencia_promedio_bajas_meses
             ),
-            '#ef4444',
+            '#ff5f5f',
           ],
           [
             'Permanencia promedio de quienes siguen',
             formatMeses(
               personalOperaciones.resumen?.permanencia_promedio_actual_meses
             ),
-            '#22c55e',
+            '#95de1d',
           ],
           [
             'Bajas con menos de 6 meses',
             permanenciaBajas.total
               ? `${permanenciaBajas.menosDe6} de ${permanenciaBajas.total}`
               : '—',
-            '#f97316',
+            '#ff9f4a',
           ],
           [
             'Bajas entre 6 y 12 meses',
             permanenciaBajas.total
               ? `${permanenciaBajas.entre6y12} de ${permanenciaBajas.total}`
               : '—',
-            '#fbbf24',
+            '#ffc933',
           ],
           [
             'Bajas con 12 meses o más',
             permanenciaBajas.total
               ? `${permanenciaBajas.masDe12} de ${permanenciaBajas.total}`
               : '—',
-            '#60a5fa',
+            '#4fc3f7',
           ],
         ].map(([label, value, color]) => (
           <div
             key={label}
             style={{
-              background: '#0f172a',
-              border: '1px solid #1f2937',
+              background: '#16323a',
+              border: '1px solid #2c5059',
               borderRadius: 10,
               padding: 14,
             }}
           >
             <div
               style={{
-                color: '#6b7280',
+                color: '#8fa6a9',
                 fontSize: 10,
                 textTransform: 'uppercase',
                 letterSpacing: '0.07em',
@@ -8239,7 +8235,7 @@ const dataAnio =
     <div style={{ ...S.cardTitle, marginBottom: 4 }}>
       Filtro de tablas de personal
     </div>
-    <div style={{ color: '#6b7280', fontSize: 12 }}>
+    <div style={{ color: '#8fa6a9', fontSize: 12 }}>
   Filtra personal activo durante el año seleccionado y bajas por año de baja.
 </div>
   </div>
@@ -8262,7 +8258,7 @@ const dataAnio =
 </div>
     <div style={S.row2}>
       <div style={S.card}>
-        <div style={{ ...S.cardTitle, color: '#22c55e' }}>
+        <div style={{ ...S.cardTitle, color: '#95de1d' }}>
         {anioTablaPersonalSeleccionado === PERSONAL_TODOS_LOS_ANIOS
   ? 'Personal actual de operaciones'
   : `Personal activo en operaciones ${anioTablaPersonalSeleccionado}`}
@@ -8286,7 +8282,7 @@ const dataAnio =
                   <td style={S.td}>{p.profesion || '—'}</td>
                   <td style={S.td}>{p.fecha_alta || '—'}</td>
                   <td style={S.td}>
-                    <strong style={{ color: '#22c55e' }}>
+                    <strong style={{ color: '#95de1d' }}>
                       {formatMeses(p.meses_trabajados)}
                     </strong>
                   </td>
@@ -8301,7 +8297,7 @@ const dataAnio =
                       style={{
                         ...S.td,
                         textAlign: 'center',
-                        color: '#6b7280',
+                        color: '#8fa6a9',
                         padding: 28,
                       }}
                     >
@@ -8315,7 +8311,7 @@ const dataAnio =
       </div>
 
       <div style={S.card}>
-        <div style={{ ...S.cardTitle, color: '#ef4444' }}>
+        <div style={{ ...S.cardTitle, color: '#ff5f5f' }}>
         {anioTablaPersonalSeleccionado === PERSONAL_TODOS_LOS_ANIOS
   ? 'Bajas de operaciones últimos 12 meses'
   : `Bajas de operaciones ${anioTablaPersonalSeleccionado}`}
@@ -8341,7 +8337,7 @@ const dataAnio =
                   <td style={S.td}>{p.fecha_alta || '—'}</td>
                   <td style={S.td}>{p.fecha_baja || '—'}</td>
                   <td style={S.td}>
-                    <strong style={{ color: '#ef4444' }}>
+                    <strong style={{ color: '#ff5f5f' }}>
                       {formatMeses(p.meses_trabajados)}
                     </strong>
                   </td>
@@ -8356,7 +8352,7 @@ const dataAnio =
                       style={{
                         ...S.td,
                         textAlign: 'center',
-                        color: '#6b7280',
+                        color: '#8fa6a9',
                         padding: 28,
                       }}
                     >
@@ -8371,11 +8367,11 @@ const dataAnio =
     </div>
 
     <div style={S.card}>
-      <div style={{ ...S.cardTitle, color: '#fbbf24' }}>
+      <div style={{ ...S.cardTitle, color: '#ffc933' }}>
         Criterio de cálculo de rotación
       </div>
 
-      <div style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.6 }}>
+      <div style={{ color: '#d5dfe0', fontSize: 13, lineHeight: 1.6 }}>
         Es la rotación por bajas: solo cuenta egresos, no ingresos. Se calcula
         con personal del área Operaciones Ecovatio (sin tercerizados), tomando
         los últimos 12 meses. La fórmula usada es:{' '}
@@ -8433,15 +8429,15 @@ const dataAnio =
           <div
             key={label}
             style={{
-              background: '#0f172a',
-              border: '1px solid #1f2937',
+              background: '#16323a',
+              border: '1px solid #2c5059',
               borderRadius: 10,
               padding: 14,
             }}
           >
             <div
               style={{
-                color: '#6b7280',
+                color: '#8fa6a9',
                 fontSize: 10,
                 textTransform: 'uppercase',
                 letterSpacing: '0.07em',
@@ -8468,12 +8464,12 @@ const dataAnio =
     {errorComparativaMO && (
       <div
         style={{
-          background: '#ef444422',
-          border: '1px solid #ef444444',
+          background: '#ff5f5f22',
+          border: '1px solid #ff5f5f44',
           borderRadius: 8,
           padding: '10px 16px',
           fontSize: 13,
-          color: '#f87171',
+          color: '#ff7a7a',
         }}
       >
         {errorComparativaMO}
@@ -8494,7 +8490,7 @@ const dataAnio =
         <h2 style={{ margin: 0, fontSize: 24, letterSpacing: '-0.01em' }}>
           Mano de obra: previsto vs real
         </h2>
-        <p style={{ margin: '6px 0 0', color: '#9ca3af', fontSize: 13 }}>
+        <p style={{ margin: '6px 0 0', color: '#b9c7c9', fontSize: 13 }}>
           ¿Las obras se ejecutan en los días y al costo previstos? Los días son
           días-hombre; los importes, USD.
         </p>
@@ -8502,7 +8498,7 @@ const dataAnio =
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         {lastUpdateComparativaMO && (
-          <span style={{ color: '#6b7280', fontSize: 11 }}>
+          <span style={{ color: '#8fa6a9', fontSize: 11 }}>
             Actualizado: {lastUpdateComparativaMO}
           </span>
         )}
@@ -8528,7 +8524,7 @@ const dataAnio =
       }}
     >
       <div>
-        <label style={{ ...S.label, color: '#9ca3af', fontWeight: 500 }}>
+        <label style={{ ...S.label, color: '#b9c7c9', fontWeight: 500 }}>
           Mostrar desvíos en
         </label>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -8544,7 +8540,7 @@ const dataAnio =
                 ...S.btn,
                 height: 32,
                 ...(metricaMO === clave
-                  ? { background: '#d97706', borderColor: '#f59e0b', color: '#fff' }
+                  ? { background: '#e5a91c', borderColor: '#ffc933', color: '#fff' }
                   : {}),
               }}
             >
@@ -8555,7 +8551,7 @@ const dataAnio =
       </div>
 
       <div>
-        <label style={{ ...S.label, color: '#9ca3af', fontWeight: 500 }}>
+        <label style={{ ...S.label, color: '#b9c7c9', fontWeight: 500 }}>
           Días reales contra lo
         </label>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -8571,7 +8567,7 @@ const dataAnio =
                 ...S.btn,
                 height: 32,
                 ...(refComparativaMO === clave
-                  ? { background: '#d97706', borderColor: '#f59e0b', color: '#fff' }
+                  ? { background: '#e5a91c', borderColor: '#ffc933', color: '#fff' }
                   : {}),
               }}
             >
@@ -8582,7 +8578,7 @@ const dataAnio =
       </div>
 
       <div>
-        <label style={{ ...S.label, color: '#9ca3af', fontWeight: 500 }}>Desde</label>
+        <label style={{ ...S.label, color: '#b9c7c9', fontWeight: 500 }}>Desde</label>
         <input
           type="date"
           value={fechaDesdeComparativaMO}
@@ -8592,7 +8588,7 @@ const dataAnio =
       </div>
 
       <div>
-        <label style={{ ...S.label, color: '#9ca3af', fontWeight: 500 }}>Hasta</label>
+        <label style={{ ...S.label, color: '#b9c7c9', fontWeight: 500 }}>Hasta</label>
         <input
           type="date"
           value={fechaHastaComparativaMO}
@@ -8602,7 +8598,7 @@ const dataAnio =
       </div>
 
       <div>
-        <label style={{ ...S.label, color: '#9ca3af', fontWeight: 500 }}>Potencia</label>
+        <label style={{ ...S.label, color: '#b9c7c9', fontWeight: 500 }}>Potencia</label>
         <MultiSelectFilter
           allLabel="Todas las potencias"
           options={OPCIONES_POTENCIA_LABELS}
@@ -8613,7 +8609,7 @@ const dataAnio =
       </div>
 
       <div>
-        <label style={{ ...S.label, color: '#9ca3af', fontWeight: 500 }}>
+        <label style={{ ...S.label, color: '#b9c7c9', fontWeight: 500 }}>
           Excluir obras
         </label>
         <MultiSelectFilter
@@ -8641,7 +8637,7 @@ const dataAnio =
     </div>
 
     {analisisMO.obras.length === 0 ? (
-      <div style={{ ...S.card, textAlign: 'center', color: '#6b7280', padding: 40 }}>
+      <div style={{ ...S.card, textAlign: 'center', color: '#8fa6a9', padding: 40 }}>
         {loadingComparativaMO
           ? 'Cargando comparativa de mano de obra...'
           : comparativaMO.length === 0
@@ -8662,8 +8658,8 @@ const dataAnio =
             style={{
               borderRadius: 16,
               padding: '22px 26px',
-              border: `1px solid ${resultadoFavorMO ? '#22c55e55' : '#ef444455'}`,
-              background: `linear-gradient(135deg, #0f172a 0%, #111827 55%, ${
+              border: `1px solid ${resultadoFavorMO ? '#95de1d55' : '#ff5f5f55'}`,
+              background: `linear-gradient(135deg, #16323a 0%, #1d3c44 55%, ${
                 resultadoFavorMO ? '#052e1a' : '#3b0d0d'
               } 100%)`,
               display: 'flex',
@@ -8676,7 +8672,7 @@ const dataAnio =
               <div
                 style={{
                   fontSize: 11,
-                  color: '#9ca3af',
+                  color: '#b9c7c9',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                   fontWeight: 700,
@@ -8691,7 +8687,7 @@ const dataAnio =
                   fontWeight: 800,
                   lineHeight: 1.1,
                   marginTop: 8,
-                  color: resultadoFavorMO ? '#22c55e' : '#ef4444',
+                  color: resultadoFavorMO ? '#95de1d' : '#ff5f5f',
                   letterSpacing: '-0.02em',
                 }}
               >
@@ -8700,7 +8696,7 @@ const dataAnio =
                   : formatUsdAbs(Math.abs(analisisMO.costo.saldo))}
               </div>
 
-              <div style={{ fontSize: 15, color: '#e5e7eb', marginTop: 4 }}>
+              <div style={{ fontSize: 15, color: '#e3eaea', marginTop: 4 }}>
                 {analisisMO.costo.n === 0
                   ? 'sin datos de costo'
                   : `${resultadoFavorMO ? 'por debajo' : 'por encima'} del presupuesto (${Math.abs(
@@ -8716,7 +8712,7 @@ const dataAnio =
                 ['Obras analizadas', analisisMO.costo.n],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <div style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <div style={{ fontSize: 10, color: '#8fa6a9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {label}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700 }}>{value}</div>
@@ -8738,14 +8734,14 @@ const dataAnio =
                     gap: 10,
                     fontSize: 13,
                     lineHeight: 1.55,
-                    color: '#e5e7eb',
+                    color: '#e3eaea',
                   }}
                 >
                   <span
                     style={{
                       flex: '0 0 6px',
                       borderRadius: 3,
-                      background: i === 0 ? '#d97706' : '#374151',
+                      background: i === 0 ? '#e5a91c' : '#3b5d65',
                     }}
                   />
                   <span>{texto}</span>
@@ -8770,8 +8766,8 @@ const dataAnio =
                   ? '—'
                   : `${Math.round(analisisMO.cumplimientoPct)}%`,
               sub: `${analisisMO.cumplen} de ${analisisMO.conDias.length} usaron hasta +10% de días`,
-              color: '#f9fafb',
-              accent: '#60a5fa',
+              color: '#f4f8f8',
+              accent: '#4fc3f7',
             },
             {
               label: 'Días de mano de obra',
@@ -8787,15 +8783,15 @@ const dataAnio =
               label: 'Sobrecostos acumulados',
               value: formatUsdAbs(analisisMO.costo.sobrecostos),
               sub: `${analisisMO.costo.nSobre} obras gastaron más de lo presupuestado`,
-              color: '#ef4444',
-              accent: '#ef4444',
+              color: '#ff5f5f',
+              accent: '#ff5f5f',
             },
             {
               label: 'Ahorros acumulados',
               value: formatUsdAbs(analisisMO.costo.ahorros),
               sub: `${analisisMO.costo.nAhorro} obras gastaron menos de lo presupuestado`,
-              color: '#22c55e',
-              accent: '#22c55e',
+              color: '#95de1d',
+              accent: '#95de1d',
             },
             {
               label: 'Costo de MO por kWp',
@@ -8807,8 +8803,8 @@ const dataAnio =
                 analisisMO.costo.usdKwpPres === null
                   ? 'sin datos'
                   : `real · presupuestado USD ${Math.round(analisisMO.costo.usdKwpPres).toLocaleString('es-AR')} por kWp`,
-              color: '#f9fafb',
-              accent: '#a78bfa',
+              color: '#f4f8f8',
+              accent: '#9b7bff',
             },
           ].map((k) => (
             <div
@@ -8816,13 +8812,13 @@ const dataAnio =
               style={{
                 ...S.kpi,
                 borderTop: `3px solid ${k.accent}`,
-                background: 'linear-gradient(180deg, #131c2e 0%, #111827 100%)',
+                background: 'linear-gradient(180deg, #131c2e 0%, #1d3c44 100%)',
               }}
             >
               <div
                 style={{
                   fontSize: 11,
-                  color: '#6b7280',
+                  color: '#8fa6a9',
                   textTransform: 'uppercase',
                   letterSpacing: '0.07em',
                   marginBottom: 6,
@@ -8833,19 +8829,19 @@ const dataAnio =
               <div style={{ fontSize: 32, fontWeight: 800, color: k.color }}>
                 {k.value}
               </div>
-              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4, lineHeight: 1.4 }}>
+              <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: 4, lineHeight: 1.4 }}>
                 {k.sub}
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{ fontSize: 11, color: '#6b7280', marginTop: -6 }}>
+        <div style={{ fontSize: 11, color: '#8fa6a9', marginTop: -6 }}>
           Desvío = (real − previsto) ÷ previsto. En los gráficos, hacia la
           derecha es peor (más días o más costo de lo previsto).{' '}
-          <span style={{ color: '#ef4444' }}>Rojo</span>: más de +10%.{' '}
-          <span style={{ color: '#60a5fa' }}>Azul</span>: dentro de ±10%.{' '}
-          <span style={{ color: '#22c55e' }}>Verde</span>: más de 10% por debajo.
+          <span style={{ color: '#ff5f5f' }}>Rojo</span>: más de +10%.{' '}
+          <span style={{ color: '#4fc3f7' }}>Azul</span>: dentro de ±10%.{' '}
+          <span style={{ color: '#95de1d' }}>Verde</span>: más de 10% por debajo.
         </div>
 
         {/* Puente + distribución */}
@@ -8860,7 +8856,7 @@ const dataAnio =
             <div style={{ ...S.cardTitle, marginBottom: 4 }}>
               ¿De dónde sale el resultado?
             </div>
-            <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
+            <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 10 }}>
               Del presupuesto total se suman los sobrecostos de las obras que
               se pasaron y se restan los ahorros de las que gastaron menos, hasta
               llegar al gasto real.
@@ -8872,14 +8868,14 @@ const dataAnio =
                   data={puenteMO}
                   margin={{ top: 28, right: 20, bottom: 10, left: 0 }}
                 >
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#1f2937" />
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#2c5059" />
                   <XAxis
                     dataKey="nombre"
                     interval={0}
-                    tick={{ fill: '#d1d5db', fontSize: 12 }}
+                    tick={{ fill: '#d5dfe0', fontSize: 12 }}
                   />
                   <YAxis
-                    tick={{ fill: '#9ca3af', fontSize: 11 }}
+                    tick={{ fill: '#b9c7c9', fontSize: 11 }}
                     tickFormatter={formatUsdK}
                     domain={[0, ejePuenteMO.tope]}
                     ticks={ejePuenteMO.marcas}
@@ -8894,17 +8890,17 @@ const dataAnio =
                       return (
                         <div
                           style={{
-                            background: '#1f2937',
-                            border: '1px solid #374151',
+                            background: '#2c5059',
+                            border: '1px solid #3b5d65',
                             borderRadius: 8,
                             padding: '8px 12px',
                             fontSize: 12,
                           }}
                         >
-                          <div style={{ fontWeight: 800, color: '#f9fafb' }}>{r.nombre}</div>
+                          <div style={{ fontWeight: 800, color: '#f4f8f8' }}>{r.nombre}</div>
                           <div style={{ color: r.color }}>{r.texto}</div>
                           {r.detalle && (
-                            <div style={{ color: '#9ca3af', marginTop: 2 }}>{r.detalle}</div>
+                            <div style={{ color: '#b9c7c9', marginTop: 2 }}>{r.detalle}</div>
                           )}
                         </div>
                       );
@@ -8922,7 +8918,7 @@ const dataAnio =
                           x={x + width / 2}
                           y={y - 8}
                           textAnchor="middle"
-                          fill="#f9fafb"
+                          fill="#f4f8f8"
                           fontSize={13}
                           fontWeight={700}
                         >
@@ -8934,7 +8930,7 @@ const dataAnio =
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ color: '#6b7280', padding: 30, textAlign: 'center' }}>
+              <div style={{ color: '#8fa6a9', padding: 30, textAlign: 'center' }}>
                 Sin obras con presupuesto y gasto de MO cargados.
               </div>
             )}
@@ -8944,7 +8940,7 @@ const dataAnio =
             <div style={{ ...S.cardTitle, marginBottom: 4 }}>
               Cómo se reparten las obras
             </div>
-            <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 6 }}>
+            <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 6 }}>
               Según los días de mano de obra usados y su efecto en USD.
             </div>
 
@@ -8969,12 +8965,12 @@ const dataAnio =
                   <Tooltip
                     formatter={(v, name) => [`${v} obras`, name]}
                     contentStyle={{
-                      background: '#1f2937',
-                      border: '1px solid #374151',
+                      background: '#2c5059',
+                      border: '1px solid #3b5d65',
                       borderRadius: 8,
                       fontSize: 12,
                     }}
-                    itemStyle={{ color: '#f9fafb' }}
+                    itemStyle={{ color: '#f4f8f8' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -8993,7 +8989,7 @@ const dataAnio =
                 <div style={{ fontSize: 30, fontWeight: 800 }}>
                   {analisisMO.conDias.length}
                 </div>
-                <div style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 10, color: '#8fa6a9', textTransform: 'uppercase' }}>
                   obras
                 </div>
               </div>
@@ -9012,10 +9008,10 @@ const dataAnio =
                   }}
                 >
                   <span style={{ width: 10, height: 10, borderRadius: 3, background: g.color }} />
-                  <span style={{ color: '#d1d5db' }}>
+                  <span style={{ color: '#d5dfe0' }}>
                     {g.label} · <strong>{g.n}</strong>
                   </span>
-                  <span style={{ color: g.usd > 0 ? '#ef4444' : g.usd < 0 ? '#22c55e' : '#9ca3af', fontWeight: 700 }}>
+                  <span style={{ color: g.usd > 0 ? '#ff5f5f' : g.usd < 0 ? '#95de1d' : '#b9c7c9', fontWeight: 700 }}>
                     {formatUsdSigned(g.usd)}
                   </span>
                 </div>
@@ -9036,13 +9032,13 @@ const dataAnio =
             {
               titulo: 'Mayores sobrecostos',
               lista: analisisMO.topSobrecostos,
-              color: '#ef4444',
+              color: '#ff5f5f',
               vacio: 'Ninguna obra gastó más de lo presupuestado.',
             },
             {
               titulo: 'Mayores ahorros',
               lista: analisisMO.topAhorros,
-              color: '#22c55e',
+              color: '#95de1d',
               vacio: 'Ninguna obra gastó menos de lo presupuestado.',
             },
           ].map(({ titulo, lista, color, vacio }) => {
@@ -9055,7 +9051,7 @@ const dataAnio =
                 <div style={{ ...S.cardTitle, color, marginBottom: 10 }}>{titulo}</div>
 
                 {lista.length === 0 && (
-                  <div style={{ color: '#6b7280', fontSize: 12 }}>{vacio}</div>
+                  <div style={{ color: '#8fa6a9', fontSize: 12 }}>{vacio}</div>
                 )}
 
                 {lista.map((o) => (
@@ -9085,7 +9081,7 @@ const dataAnio =
                       </span>
                     </div>
 
-                    <div style={{ height: 6, background: '#1f2937', borderRadius: 3 }}>
+                    <div style={{ height: 6, background: '#2c5059', borderRadius: 3 }}>
                       <div
                         style={{
                           width: `${(Math.abs(o.desvioUsd) / maximo) * 100}%`,
@@ -9096,7 +9092,7 @@ const dataAnio =
                       />
                     </div>
 
-                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 3 }}>
+                    <div style={{ fontSize: 10, color: '#8fa6a9', marginTop: 3 }}>
                       {o.diasReales !== null
                         ? `${formatDias(o.diasReales)} reales vs ${formatDias(o.diasRef)} · ${formatSignedDias(o.diasExtra)}`
                         : 'sin días cargados'}
@@ -9124,7 +9120,7 @@ const dataAnio =
               <div style={{ ...S.cardTitle, marginBottom: 4 }}>
                 Desvío de cada obra
               </div>
-              <div style={{ color: '#6b7280', fontSize: 12 }}>
+              <div style={{ color: '#8fa6a9', fontSize: 12 }}>
                 {metricaMO === 'usd'
                   ? 'Cuánto gastó de más (derecha) o de menos (izquierda) cada obra respecto de su presupuesto de MO, en USD.'
                   : `Cuánto se pasó (derecha) o cuánto ahorró (izquierda) cada obra en días de mano de obra respecto de lo ${
@@ -9133,7 +9129,7 @@ const dataAnio =
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: '#9ca3af' }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, color: '#b9c7c9' }}>
               <span>Ordenar por</span>
               {[
                 ['desvio', 'Mayor desvío'],
@@ -9146,7 +9142,7 @@ const dataAnio =
                   style={{
                     ...S.btn,
                     ...(ordenGraficoMO === clave
-                      ? { background: '#d97706', borderColor: '#f59e0b', color: '#fff' }
+                      ? { background: '#e5a91c', borderColor: '#ffc933', color: '#fff' }
                       : {}),
                   }}
                 >
@@ -9166,13 +9162,13 @@ const dataAnio =
                 data={datosGraficoMO}
                 margin={{ top: 18, right: 30, bottom: 8, left: 0 }}
               >
-                <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#1f2937" />
+                <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#2c5059" />
 
                 <XAxis
                   type="number"
                   domain={[ejeGraficoMO.min, ejeGraficoMO.max]}
                   allowDataOverflow
-                  tick={{ fill: '#9ca3af', fontSize: 11 }}
+                  tick={{ fill: '#b9c7c9', fontSize: 11 }}
                   tickFormatter={(v) => (metricaMO === 'usd' ? formatUsdK(v) : `${v}%`)}
                 />
 
@@ -9181,24 +9177,24 @@ const dataAnio =
                   dataKey="etiqueta"
                   width={350}
                   interval={0}
-                  tick={{ fill: '#d1d5db', fontSize: 11 }}
+                  tick={{ fill: '#d5dfe0', fontSize: 11 }}
                 />
 
                 <ReferenceLine x={0} stroke="#cbd5e1" strokeWidth={1.4} />
                 {metricaMO === 'pct' && (
                   <ReferenceLine
                     x={10}
-                    stroke="#6b7280"
+                    stroke="#8fa6a9"
                     strokeDasharray="4 4"
-                    label={{ value: '+10%', position: 'top', fill: '#6b7280', fontSize: 10 }}
+                    label={{ value: '+10%', position: 'top', fill: '#8fa6a9', fontSize: 10 }}
                   />
                 )}
                 {metricaMO === 'pct' && (
                   <ReferenceLine
                     x={-10}
-                    stroke="#6b7280"
+                    stroke="#8fa6a9"
                     strokeDasharray="4 4"
-                    label={{ value: '−10%', position: 'top', fill: '#6b7280', fontSize: 10 }}
+                    label={{ value: '−10%', position: 'top', fill: '#8fa6a9', fontSize: 10 }}
                   />
                 )}
 
@@ -9212,28 +9208,28 @@ const dataAnio =
                     return (
                       <div
                         style={{
-                          background: '#1f2937',
-                          border: '1px solid #374151',
+                          background: '#2c5059',
+                          border: '1px solid #3b5d65',
                           borderRadius: 8,
                           padding: '10px 12px',
                           fontSize: 12,
                           minWidth: 250,
                         }}
                       >
-                        <div style={{ fontWeight: 800, color: '#f9fafb' }}>{r.obra}</div>
-                        <div style={{ color: '#6b7280', marginBottom: 6 }}>
+                        <div style={{ fontWeight: 800, color: '#f4f8f8' }}>{r.obra}</div>
+                        <div style={{ color: '#8fa6a9', marginBottom: 6 }}>
                           Inicio: {r.fecha_inicio || 'sin fecha'}
                           {r.kwp !== null ? ` · ${formatKwp(r.kwp)}` : ''}
                         </div>
                         {r.desvioUsd !== null && (
                           <>
-                            <div style={{ color: '#9ca3af' }}>
+                            <div style={{ color: '#b9c7c9' }}>
                               Presupuestado: {formatUsdAbs(r.presupuestoUsd)} · Gastado:{' '}
                               {formatUsdAbs(r.gastoUsd)}
                             </div>
                             <div
                               style={{
-                                color: r.desvioUsd > 0 ? '#ef4444' : '#22c55e',
+                                color: r.desvioUsd > 0 ? '#ff5f5f' : '#95de1d',
                                 fontWeight: 800,
                                 marginTop: 2,
                               }}
@@ -9244,7 +9240,7 @@ const dataAnio =
                           </>
                         )}
                         {r.desvioDias !== null && (
-                          <div style={{ color: '#9ca3af', marginTop: 4 }}>
+                          <div style={{ color: '#b9c7c9', marginTop: 4 }}>
                             Días: {formatDias(r.diasReales)} reales vs {formatDias(r.diasRef)}{' '}
                             {refComparativaMO === 'planificado' ? 'planificados' : 'presupuestados'}{' '}
                             ({formatSignedDias(r.diasExtra)})
@@ -9263,13 +9259,13 @@ const dataAnio =
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ textAlign: 'center', color: '#6b7280', padding: 40 }}>
+            <div style={{ textAlign: 'center', color: '#8fa6a9', padding: 40 }}>
               No hay obras con datos para comparar.
             </div>
           )}
 
           {ejeGraficoMO.recortado && (
-            <div style={{ color: '#6b7280', fontSize: 11, marginTop: 6 }}>
+            <div style={{ color: '#8fa6a9', fontSize: 11, marginTop: 6 }}>
               Las barras más largas se cortan en +150% para que se puedan
               comparar las demás; el valor real está escrito junto al nombre.
             </div>
@@ -9279,13 +9275,13 @@ const dataAnio =
         {/* Evolución */}
         <div style={S.card}>
           <div style={{ ...S.cardTitle, marginBottom: 4 }}>Evolución en el tiempo</div>
-          <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
+          <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 10 }}>
             Las obras se agrupan según el trimestre en que empezaron. Cada barra
             muestra el desvío de ese grupo{' '}
             {metricaMO === 'usd' ? 'en USD' : 'en días de mano de obra'}:{' '}
-            <strong style={{ color: '#ef4444' }}>sobre el 0</strong>{' '}
+            <strong style={{ color: '#ff5f5f' }}>sobre el 0</strong>{' '}
             {metricaMO === 'usd' ? 'gastó más de lo presupuestado' : 'usó más días de lo previsto'},{' '}
-            <strong style={{ color: '#22c55e' }}>bajo el 0</strong>{' '}
+            <strong style={{ color: '#95de1d' }}>bajo el 0</strong>{' '}
             {metricaMO === 'usd' ? 'gastó menos' : 'usó menos'}.
           </div>
 
@@ -9295,7 +9291,7 @@ const dataAnio =
                 data={analisisMO.trimestres}
                 margin={{ top: 26, right: 12, bottom: 20, left: 0 }}
               >
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#1f2937" />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#2c5059" />
                 <XAxis
                   dataKey="label"
                   interval={0}
@@ -9307,13 +9303,13 @@ const dataAnio =
 
                     return (
                       <g transform={`translate(${x},${y})`}>
-                        <text x={0} y={0} dy={14} textAnchor="middle" fill="#d1d5db" fontSize={11}>
+                        <text x={0} y={0} dy={14} textAnchor="middle" fill="#d5dfe0" fontSize={11}>
                           {t ? t.periodo : payload.value}
                         </text>
-                        <text x={0} y={0} dy={28} textAnchor="middle" fill="#9ca3af" fontSize={10}>
+                        <text x={0} y={0} dy={28} textAnchor="middle" fill="#b9c7c9" fontSize={10}>
                           {t ? t.anio : ''}
                         </text>
-                        <text x={0} y={0} dy={42} textAnchor="middle" fill="#6b7280" fontSize={10}>
+                        <text x={0} y={0} dy={42} textAnchor="middle" fill="#8fa6a9" fontSize={10}>
                           {t ? `${t.obras} ${t.obras === 1 ? 'obra' : 'obras'}` : ''}
                         </text>
                       </g>
@@ -9321,15 +9317,15 @@ const dataAnio =
                   }}
                 />
                 <YAxis
-                  tick={{ fill: '#9ca3af', fontSize: 11 }}
+                  tick={{ fill: '#b9c7c9', fontSize: 11 }}
                   tickFormatter={(v) => (metricaMO === 'usd' ? formatUsdK(v) : `${v}%`)}
                 />
                 <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={1.4} />
                 {metricaMO === 'pct' && (
-                  <ReferenceLine y={10} stroke="#6b7280" strokeDasharray="4 4" />
+                  <ReferenceLine y={10} stroke="#8fa6a9" strokeDasharray="4 4" />
                 )}
                 {metricaMO === 'pct' && (
-                  <ReferenceLine y={-10} stroke="#6b7280" strokeDasharray="4 4" />
+                  <ReferenceLine y={-10} stroke="#8fa6a9" strokeDasharray="4 4" />
                 )}
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
@@ -9341,25 +9337,25 @@ const dataAnio =
                     return (
                       <div
                         style={{
-                          background: '#1f2937',
-                          border: '1px solid #374151',
+                          background: '#2c5059',
+                          border: '1px solid #3b5d65',
                           borderRadius: 8,
                           padding: '10px 12px',
                           fontSize: 12,
                           minWidth: 230,
                         }}
                       >
-                        <div style={{ fontWeight: 800, color: '#f9fafb' }}>
+                        <div style={{ fontWeight: 800, color: '#f4f8f8' }}>
                           Obras iniciadas en {t.label}
                         </div>
-                        <div style={{ color: '#6b7280', marginBottom: 6 }}>
+                        <div style={{ color: '#8fa6a9', marginBottom: 6 }}>
                           {t.obras} {t.obras === 1 ? 'obra' : 'obras'}
                         </div>
                         <div style={{ color: colorDesvioMO(t.costo), fontWeight: 800 }}>
                           Costo MO: {t.usd === null ? '—' : formatUsdSigned(t.usd)} (
                           {formatSignedPercent(t.costo)})
                         </div>
-                        <div style={{ color: '#9ca3af', marginTop: 2 }}>
+                        <div style={{ color: '#b9c7c9', marginTop: 2 }}>
                           Días: {Math.round(t.diasReales).toLocaleString('es-AR')} reales vs{' '}
                           {Math.round(t.diasPrevistos).toLocaleString('es-AR')}{' '}
                           {refComparativaMO === 'planificado' ? 'planificados' : 'presupuestados'} (
@@ -9390,13 +9386,13 @@ const dataAnio =
                         ? formatUsdSigned(v)
                         : formatSignedPercent(v)
                     }
-                    style={{ fill: '#e5e7eb', fontSize: 12, fontWeight: 700 }}
+                    style={{ fill: '#e3eaea', fontSize: 12, fontWeight: 700 }}
                   />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ color: '#6b7280', padding: 30, textAlign: 'center' }}>
+            <div style={{ color: '#8fa6a9', padding: 30, textAlign: 'center' }}>
               Sin fechas de inicio para armar la evolución.
             </div>
           )}
@@ -9405,7 +9401,7 @@ const dataAnio =
         {/* Por tamaño */}
         <div style={S.card}>
           <div style={{ ...S.cardTitle, marginBottom: 4 }}>Por tamaño de obra</div>
-          <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 10 }}>
+          <div style={{ color: '#8fa6a9', fontSize: 12, marginBottom: 10 }}>
             ¿Se desvían más las obras chicas o las grandes?
           </div>
 
@@ -9462,7 +9458,7 @@ const dataAnio =
           <div
             style={{
               padding: '12px 16px',
-              borderBottom: '1px solid #1f2937',
+              borderBottom: '1px solid #2c5059',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -9472,7 +9468,7 @@ const dataAnio =
           >
             <span style={{ ...S.cardTitle, marginBottom: 0 }}>
               Detalle por obra{' '}
-              <span style={{ color: '#6b7280', fontWeight: 400, textTransform: 'none' }}>
+              <span style={{ color: '#8fa6a9', fontWeight: 400, textTransform: 'none' }}>
                 ({tablaMO.length} de {analisisMO.obras.length})
               </span>
             </span>
@@ -9569,7 +9565,7 @@ const dataAnio =
                   <tr>
                     <td
                       colSpan={9}
-                      style={{ ...S.td, textAlign: 'center', color: '#6b7280', padding: 28 }}
+                      style={{ ...S.td, textAlign: 'center', color: '#8fa6a9', padding: 28 }}
                     >
                       Sin obras para mostrar.
                     </td>
@@ -9580,7 +9576,7 @@ const dataAnio =
           </div>
         </div>
 
-        <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: '#8fa6a9', lineHeight: 1.6 }}>
           Notas: los importes son USD de mano de obra. "Sobrecosto" = gastado −
           presupuestado (positivo, peor); "ahorro" = lo contrario. Una obra solo
           entra en un cálculo si tiene días reales y de referencia (o
@@ -9613,7 +9609,7 @@ const dataAnio =
                 label: 'Obras totales',
                 value: obras.length,
                 sub: 'proyectos registrados',
-                color: '#f9fafb',
+                color: '#f4f8f8',
                 icon: RiBuilding2Line,
                 accent: 'bg-blue-500/10 text-blue-400',
               },
@@ -9621,7 +9617,7 @@ const dataAnio =
                 label: 'Obras activas',
                 value: stats.activas,
                 sub: 'en obra o parte solar finalizada',
-                color: '#22c55e',
+                color: '#95de1d',
                 icon: RiFlashlightLine,
                 accent: 'bg-emerald-500/10 text-emerald-400',
               },
@@ -9631,7 +9627,7 @@ const dataAnio =
                 sub: `${formatKwp(
                   Math.round(stats.kwpInstalado)
                 )} instalados desde marzo de 2025`,
-                color: '#fbbf24',
+                color: '#ffc933',
                 icon: RiSunLine,
                 accent: 'bg-amber-500/10 text-amber-400',
               },
@@ -9639,7 +9635,7 @@ const dataAnio =
                 label: 'Prom. HS MO/kWp',
                 value: stats.avgHs !== '-' ? stats.avgHs : '—',
                 sub: 'promedio general',
-                color: '#f9fafb',
+                color: '#f4f8f8',
                 isHs: true,
                 icon: RiDashboardLine,
                 accent: 'bg-violet-500/10 text-violet-400',
@@ -9680,7 +9676,7 @@ const dataAnio =
             {[
               {
                 title: 'Mejores indicadores — Obra completa',
-                color: '#22c55e',
+                color: '#95de1d',
                 barClass: 'bg-emerald-500',
                 accent: 'bg-emerald-500/10 text-emerald-400',
                 icon: RiTrophyLine,
@@ -9688,7 +9684,7 @@ const dataAnio =
               },
               {
                 title: 'Peores indicadores — Obra completa',
-                color: '#ef4444',
+                color: '#ff5f5f',
                 barClass: 'bg-red-500',
                 accent: 'bg-red-500/10 text-red-400',
                 icon: RiAlarmWarningLine,
@@ -9765,7 +9761,7 @@ const dataAnio =
                 <div className="text-4xl font-extrabold tracking-tight">
                   <HsLabel
                     value={INDICADOR_ESTRUCTURA_BIPOSTE.toFixed(2)}
-                    color="#38bdf8"
+                    color="#4fc3f7"
                   />
                 </div>
                 <div className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
@@ -9790,15 +9786,15 @@ const dataAnio =
                   data={barData}
                   margin={{ top: 0, right: 0, bottom: 90, left: -10 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#6b7280', fontSize: 9 }}
+                    tick={{ fill: '#8fa6a9', fontSize: 9 }}
                     angle={-45}
                     textAnchor="end"
                     interval={0}
                   />
-                  <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
+                  <YAxis tick={{ fill: '#8fa6a9', fontSize: 10 }} />
                   <Tooltip
                     content={<CustomTooltip />}
                     cursor={{ fill: 'rgba(255,255,255,0.04)' }}
@@ -9812,11 +9808,11 @@ const dataAnio =
               </ResponsiveContainer>
               <div className="mt-2 flex flex-wrap gap-3">
                 {[
-                  ['≤5', '#22c55e', 'Óptimo'],
-                  ['5–8', '#86efac', 'Bueno'],
-                  ['8–12', '#fbbf24', 'Regular'],
-                  ['12–18', '#f97316', 'Alto'],
-                  ['>18', '#ef4444', 'Crítico'],
+                  ['≤5', '#95de1d', 'Óptimo'],
+                  ['5–8', '#c7ee8a', 'Bueno'],
+                  ['8–12', '#ffc933', 'Regular'],
+                  ['12–18', '#ff9f4a', 'Alto'],
+                  ['>18', '#ff5f5f', 'Crítico'],
                 ].map(([r, c, l]) => (
                   <div
                     key={r}
@@ -9866,14 +9862,14 @@ const dataAnio =
                     dataKey="value"
                   >
                     {pieData.map((e, i) => (
-                      <Cell key={i} fill={TIPO_COLORS[e.name] || '#6b7280'} />
+                      <Cell key={i} fill={TIPO_COLORS[e.name] || '#8fa6a9'} />
                     ))}
                   </Pie>
                   <Tooltip
                     formatter={(v) => [`${v} kWp`]}
                     contentStyle={{
-                      background: '#1f2937',
-                      border: '1px solid #374151',
+                      background: '#2c5059',
+                      border: '1px solid #3b5d65',
                       borderRadius: 8,
                       fontSize: 12,
                     }}
@@ -9899,11 +9895,11 @@ const dataAnio =
           width: 10,
           height: 10,
           borderRadius: 2,
-          background: TIPO_COLORS[d.name] || '#6b7280',
+          background: TIPO_COLORS[d.name] || '#8fa6a9',
         }}
       />
 
-      <span style={{ color: '#9ca3af' }}>
+      <span style={{ color: '#b9c7c9' }}>
         {d.name}
       </span>
     </div>
@@ -10025,7 +10021,7 @@ const dataAnio =
                 style={{
                   ...S.trow,
                   background: i % 2 === 0 ? 'transparent' : '#ffffff05',
-                  borderBottom: '1px solid #1f2937',
+                  borderBottom: '1px solid #2c5059',
                 }}
               >
                 <span
@@ -10038,7 +10034,7 @@ const dataAnio =
                 >
                   {o.nombre}
                 </span>
-                <span style={{ color: '#9ca3af' }}>{o.kwp} kWp</span>
+                <span style={{ color: '#b9c7c9' }}>{o.kwp} kWp</span>
                 <span>
                   <EstadoBadge estado={o.estado} />
                 </span>
@@ -10047,7 +10043,7 @@ const dataAnio =
                     style={{
                       width: 32,
                       height: 5,
-                      background: '#1f2937',
+                      background: '#2c5059',
                       borderRadius: 3,
                       overflow: 'hidden',
                     }}
@@ -10056,12 +10052,12 @@ const dataAnio =
                       style={{
                         width: `${o.avance}%`,
                         height: 5,
-                        background: '#3b82f6',
+                        background: '#4fc3f7',
                         borderRadius: 3,
                       }}
                     />
                   </div>
-                  <span style={{ fontSize: 10, color: '#6b7280' }}>
+                  <span style={{ fontSize: 10, color: '#8fa6a9' }}>
                     {o.avance}%
                   </span>
                 </div>
@@ -10080,18 +10076,18 @@ const dataAnio =
                       />
                     </span>
                   ) : (
-                    <span style={{ color: '#4b5563' }}>—</span>
+                    <span style={{ color: '#55787f' }}>—</span>
                   )}
                 </span>
-                <span style={{ color: '#9ca3af' }}>
+                <span style={{ color: '#b9c7c9' }}>
                   {o.tipo_cliente || '—'}
                 </span>
                 <span>
                   <span
                     style={{
-                      color: TIPO_COLORS[o.implantacion] || '#9ca3af',
+                      color: TIPO_COLORS[o.implantacion] || '#b9c7c9',
                       background:
-                        (TIPO_COLORS[o.implantacion] || '#9ca3af') + '22',
+                        (TIPO_COLORS[o.implantacion] || '#b9c7c9') + '22',
                       fontSize: 11,
                       padding: '1px 7px',
                       borderRadius: 4,
@@ -10100,24 +10096,24 @@ const dataAnio =
                     {o.implantacion || '—'}
                   </span>
                 </span>
-                <span style={{ color: '#9ca3af' }}>{o.estructura || '—'}</span>
+                <span style={{ color: '#b9c7c9' }}>{o.estructura || '—'}</span>
               </div>
             ))}
             {obrasFiltradas.length > 0 && (
               <div
                 style={{
                   ...S.trow,
-                  background: '#0f172a',
-                  borderTop: '1px solid #374151',
+                  background: '#16323a',
+                  borderTop: '1px solid #3b5d65',
                   fontWeight: 700,
                 }}
               >
-                <span style={{ color: '#f9fafb' }}>TOTAL / PROMEDIO</span>
-                <span style={{ color: '#fbbf24' }}>
+                <span style={{ color: '#f4f8f8' }}>TOTAL / PROMEDIO</span>
+                <span style={{ color: '#ffc933' }}>
                   {formatKwp(resumenTabla.totalKwpTabla)}
                 </span>
-                <span style={{ color: '#6b7280' }}>—</span>
-                <span style={{ color: '#6b7280' }}>—</span>
+                <span style={{ color: '#8fa6a9' }}>—</span>
+                <span style={{ color: '#8fa6a9' }}>—</span>
                 <span>
                   {resumenTabla.promedioHsTabla !== null ? (
                     <span
@@ -10134,17 +10130,17 @@ const dataAnio =
                       />
                     </span>
                   ) : (
-                    <span style={{ color: '#4b5563' }}>—</span>
+                    <span style={{ color: '#55787f' }}>—</span>
                   )}
                 </span>
-                <span style={{ color: '#6b7280' }}>—</span>
-                <span style={{ color: '#6b7280' }}>—</span>
-                <span style={{ color: '#6b7280' }}>—</span>
+                <span style={{ color: '#8fa6a9' }}>—</span>
+                <span style={{ color: '#8fa6a9' }}>—</span>
+                <span style={{ color: '#8fa6a9' }}>—</span>
               </div>
             )}
             {obrasFiltradas.length === 0 && (
               <div
-                style={{ textAlign: 'center', padding: 40, color: '#4b5563' }}
+                style={{ textAlign: 'center', padding: 40, color: '#55787f' }}
               >
                 Sin resultados
               </div>
@@ -10155,7 +10151,7 @@ const dataAnio =
             style={{
               textAlign: 'center',
               fontSize: 11,
-              color: '#374151',
+              color: '#3b5d65',
               paddingBottom: 16,
             }}
           >

@@ -6,6 +6,19 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* Grises teñidos de teal Ecovatio (los componentes usan la escala gray) */
+  --color-gray-50: #f6f9f9;
+  --color-gray-100: #eef3f3;
+  --color-gray-200: #e3eaea;
+  --color-gray-300: #d5dfe0;
+  --color-gray-400: #b9c7c9;
+  --color-gray-500: #8fa6a9;
+  --color-gray-600: #55787f;
+  --color-gray-700: #3b5d65;
+  --color-gray-800: #2c5059;
+  --color-gray-900: #1d3c44;
+  --color-gray-950: #16323a;
+  --color-brand: #95de1d;
   --animate-hide: hide 150ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slide-down-and-fade: slideDownAndFade 150ms
     cubic-bezier(0.16, 1, 0.3, 1);
@@ -133,6 +146,10 @@ body {
   @apply antialiased;
   @apply bg-white dark:bg-gray-950;
   color-scheme: dark;
+  background-image:
+    radial-gradient(900px 500px at 5% -5%, rgba(149, 222, 29, 0.13), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, rgba(34, 211, 197, 0.13), transparent 60%),
+    radial-gradient(900px 600px at 50% 110%, rgba(155, 123, 255, 0.09), transparent 60%);
   font-family:
     system-ui,
     -apple-system,

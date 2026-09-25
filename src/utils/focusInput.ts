@@ -4,7 +4,7 @@ export const focusInput = [
   // base
   "focus:ring-2",
   // ring color
-  "focus:ring-blue-200 dark:focus:ring-blue-700/30",
+  "focus:ring-[#95de1d]/30 dark:focus:ring-[#95de1d]/25",
   // border color
-  "focus:border-blue-500 dark:focus:border-blue-700",
+  "focus:border-[#95de1d] dark:focus:border-[#95de1d]",
 ]
