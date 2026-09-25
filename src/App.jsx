@@ -1052,9 +1052,9 @@ const pctFmt = (a, b) =>
 // (los demás se atenúan) y el centro muestra su nombre, valor y porcentaje.
 const DonutInteractivo = ({
   data,
-  height = 220,
-  innerRadius = 62,
-  outerRadius = 88,
+  height = 250,
+  innerRadius = 60,
+  outerRadius = 84,
   fmtValor,
   centroBig,
   centroSmall,
@@ -1091,8 +1091,8 @@ const DonutInteractivo = ({
             activeShape={(props) => (
               <Sector
                 {...props}
-                outerRadius={props.outerRadius + 12}
-                innerRadius={props.innerRadius - 3}
+                outerRadius={props.outerRadius + 22}
+                innerRadius={props.innerRadius}
                 style={{
                   filter: `drop-shadow(0 0 10px ${props.fill}aa)`,
                   cursor: 'pointer',
@@ -1125,43 +1125,17 @@ const DonutInteractivo = ({
           padding: '0 24%',
         }}
       >
-        {d ? (
-          <>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: d.fill,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                lineHeight: 1.15,
-              }}
-            >
-              {d.name}
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.15 }}>
-              {pctDe(d)}
-            </div>
-            <div style={{ fontSize: 11, color: '#b9c7c9' }}>
-              {fmtValor(d.value)}
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1 }}>
-              {centroBig}
-            </div>
-            <div
-              style={{
-                fontSize: 10,
-                color: '#8fa6a9',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {centroSmall}
-            </div>
-          </>
+        {d && (
+          <div
+            style={{
+              fontSize: 22,
+              fontWeight: 800,
+              lineHeight: 1,
+              color: d.fill,
+            }}
+          >
+            {pctDe(d)}
+          </div>
         )}
       </div>
     </div>
@@ -6636,12 +6610,9 @@ const dataAnio =
                       ? '#ff5f5f'
                       : '#8fa6a9',
                 }))}
-                height={230}
-                innerRadius={64}
-                outerRadius={90}
-                fmtValor={(v) => `${v} ${v === 1 ? 'proyecto' : 'proyectos'}`}
-                centroBig={estadoProyectoData.reduce((t, e) => t + e.value, 0)}
-                centroSmall="proyectos"
+                height={250}
+                innerRadius={60}
+                outerRadius={84}
               />
               <div
                 style={{
@@ -9287,12 +9258,9 @@ const dataAnio =
               data={analisisMO.grupos
                 .filter((g) => g.n > 0)
                 .map((g) => ({ name: g.label, value: g.n, fill: g.color }))}
-              height={210}
+              height={250}
               innerRadius={60}
-              outerRadius={86}
-              fmtValor={(v) => `${v} ${v === 1 ? 'obra' : 'obras'}`}
-              centroBig={analisisMO.conDias.length}
-              centroSmall="obras"
+              outerRadius={84}
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
@@ -10412,10 +10380,7 @@ const dataAnio =
 
   <DonutInteractivo
     data={pieData.map((d) => ({ ...d, fill: TIPO_COLORS[d.name] || '#8fa6a9' }))}
-    height={220}
-    fmtValor={(v) => formatKwp(v)}
-    centroBig={formatKwp(pieData.reduce((t, d) => t + d.value, 0))}
-    centroSmall="kWp totales"
+    height={250}
   />
               <div className="mt-2 flex flex-col gap-1.5">
                 {pieData.map((d) => (
