@@ -6827,10 +6827,70 @@ const dataAnio =
                 </span>
               </span>
 
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  marginLeft: 'auto',
+                  flexWrap: 'wrap',
+                }}
+              >
+              {/* Interruptor: oculta / muestra los proyectos finalizados */}
+              {(() => {
+                const finalizados = estadosTablaProyecto.filter(
+                  (e) => normalizeKey(e) === 'finalizado'
+                );
+                if (finalizados.length === 0) return null;
+                const ocultos = finalizados.every((e) =>
+                  filtrosEstadoTablaProyecto.includes(e)
+                );
+                return (
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      color: ocultos ? '#f4f8f8' : '#b9c7c9',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <span>Ocultar finalizados</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={ocultos}
+                      aria-label="Ocultar los proyectos finalizados"
+                      onClick={() =>
+                        setFiltrosEstadoTablaProyecto((sel) =>
+                          ocultos
+                            ? sel.filter((e) => !finalizados.includes(e))
+                            : [
+                                ...sel,
+                                ...finalizados.filter((e) => !sel.includes(e)),
+                              ]
+                        )
+                      }
+                      className="relative h-7 w-12 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#95de1d]"
+                      style={{
+                        background: ocultos ? '#95de1d' : '#3b5d65',
+                        borderColor: ocultos ? '#7bc410' : '#55787f',
+                      }}
+                    >
+                      <span
+                        className="absolute top-0.5 size-[22px] rounded-full bg-white shadow-md shadow-black/40 transition-all duration-200"
+                        style={{ left: ocultos ? 22 : 2 }}
+                      />
+                    </button>
+                  </label>
+                );
+              })()}
+
               <details
   style={{
     position: 'relative',
-    marginLeft: 'auto',
   }}
 >
   <summary
@@ -6930,6 +6990,7 @@ const dataAnio =
     ))}
   </div>
 </details>
+              </div>
               {/* Leyenda colores */}
               <div
                 style={{
