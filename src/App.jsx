@@ -9867,6 +9867,17 @@ const dataAnio =
                 color: '#f4f8f8',
                 icon: RiBuilding2Line,
                 accent: 'bg-blue-500/10 text-blue-400',
+                onClick: () => {
+                  const el = document.getElementById('detalle-obras');
+                  if (!el) return;
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  el.classList.remove('destello-seccion');
+                  // reinicia la animación aunque se toque varias veces
+                  void el.offsetWidth;
+                  el.classList.add('destello-seccion');
+                  setTimeout(() => el.classList.remove('destello-seccion'), 2400);
+                },
+                hint: 'Ir al detalle de obras',
               },
               {
                 label: 'Obras activas',
@@ -10417,7 +10428,10 @@ const dataAnio =
             </Card>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+          <div
+            id="detalle-obras"
+            className="scroll-mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-gray-200 p-3 dark:border-gray-800">
               <span className="text-[11px] font-semibold uppercase tracking-wider">
                 Detalle de obras{' '}
