@@ -41,7 +41,7 @@ const {
   PieChart,
   Pie,
   ReferenceLine,
-  ReferenceDot,
+  ReferenceArea,
   LabelList,
   ComposedChart,
   Area,
@@ -2868,6 +2868,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [criterioGraficoKwp, setCriterioGraficoKwp] =
   useState('implantacion');
 
+  // Obra de referencia resaltada al pasar el mouse por una barra de la campana.
+  const [refHover, setRefHover] = useState(null);
   const [formEstimacion, setFormEstimacion] = useState({
     nombre: '',
     potencia: '',
@@ -5331,6 +5333,31 @@ const dataAnio =
       Cómo se calculó el sugerido — {indicadorSugerido.cantidad}{' '}
       obras similares (promedio ponderado por kWp)
     </div>
+    <div
+      style={{
+        height: 18,
+        fontSize: 12,
+        color: '#b9c7c9',
+        marginBottom: 2,
+      }}
+    >
+      {refHover !== null && indicadorSugerido.referencias[refHover] ? (
+        <>
+          <strong style={{ color: '#f4f8f8' }}>
+            {indicadorSugerido.referencias[refHover].nombre}
+          </strong>
+          {' · '}
+          {indicadorSugerido.referencias[refHover].valor.toFixed(2)} HS MO /
+          kWp{' · '}
+          {indicadorSugerido.referencias[refHover].kwp.toFixed(0)} kWp
+        </>
+      ) : (
+        <span style={{ color: '#8fa6a9', fontSize: 11 }}>
+          Las barras grises son las obras de referencia: pasá el mouse para
+          ver cuál es.
+        </span>
+      )}
+    </div>
     <ResponsiveContainer width="100%" height={170}>
       <AreaChart
         data={indicadorSugerido.curva}
@@ -5369,24 +5396,59 @@ const dataAnio =
           isAnimationActive={false}
         />
         {(() => {
+          // Una barra translúcida por obra de referencia: su posición es el
+          // indicador de la obra y su altura, el peso (kWp) que tiene en el
+          // promedio. Van al fondo, sin competir con la campana.
           const maxDens = Math.max(
             ...indicadorSugerido.curva.map((c) => c.densidad),
             0
           );
-          return indicadorSugerido.referencias.map((r, i) => (
-            <ReferenceDot
-              key={`ref-${r.nombre}-${i}`}
-              x={r.valor}
-              y={maxDens * (0.07 + 0.08 * (i % 3))}
-              ifOverflow="visible"
-              shape={({ cx, cy }) => (
-                <g>
-                  <circle cx={cx} cy={cy} r={3.5} fill="#b9c7c9" fillOpacity={0.5} />
-                  <title>{`${r.nombre}: ${r.valor.toFixed(2)} HS MO/kWp · ${r.kwp.toFixed(0)} kWp`}</title>
-                </g>
-              )}
-            />
-          ));
+          const xs = indicadorSugerido.curva.map((c) => c.x);
+          const ancho = (Math.max(...xs) - Math.min(...xs)) / 55;
+          const maxKwp = Math.max(
+            ...indicadorSugerido.referencias.map((r) => r.kwp),
+            1
+          );
+          return indicadorSugerido.referencias.map((r, i) => {
+            const alto = maxDens * (0.25 + 0.6 * (r.kwp / maxKwp));
+            const activa = refHover === i;
+            return (
+              <ReferenceArea
+                key={`ref-${r.nombre}-${i}`}
+                x1={r.valor - ancho / 2}
+                x2={r.valor + ancho / 2}
+                y1={0}
+                y2={alto}
+                ifOverflow="visible"
+                shape={({ x, y, width, height }) => (
+                  <g
+                    onMouseEnter={() => setRefHover(i)}
+                    onMouseLeave={() => setRefHover(null)}
+                    style={{ cursor: 'default' }}
+                  >
+                    {/* zona de contacto más ancha que la barra visible */}
+                    <rect
+                      x={x - 4}
+                      y={y}
+                      width={width + 8}
+                      height={height}
+                      fill="transparent"
+                    />
+                    <rect
+                      x={x}
+                      y={y}
+                      width={Math.max(width, 5)}
+                      height={height}
+                      rx={1.5}
+                      fill="#b9c7c9"
+                      fillOpacity={activa ? 0.85 : 0.35}
+                      stroke={activa ? '#ffffff' : 'none'}
+                    />
+                  </g>
+                )}
+              />
+            );
+          });
         })()}
         <ReferenceLine
           x={indicadorSugerido.mejor}
@@ -5422,8 +5484,8 @@ const dataAnio =
       <strong style={{ color: '#e3eaea' }}>"Sugerido"</strong> es el promedio
       ponderado por kWp de las obras similares: cada obra pesa según su
       potencia (equivale a las Hs MO totales divididas por los kWp totales).
-      Los puntos grises sobre la curva son las obras históricas usadas como
-      referencia (pasá el mouse para ver cuál es cada una).
+      Las barras grises de fondo son las obras históricas usadas como
+      referencia: su posición es su indicador y su altura, su peso (kWp).
     </div>
     <details style={{ marginTop: 6 }}>
       <summary
