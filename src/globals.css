@@ -195,3 +195,9 @@ select,
 .destello-seccion {
   animation: destelloSeccion 1.1s ease-out 2;
 }
+
+/* Donuts interactivos: que el resplandor del sector activo no se recorte */
+.donut-int svg,
+.donut-int .recharts-wrapper {
+  overflow: visible !important;
+}

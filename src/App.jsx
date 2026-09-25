@@ -42,6 +42,7 @@ const {
   Pie,
   ReferenceLine,
   ReferenceArea,
+  Sector,
   LabelList,
   ComposedChart,
   Area,
@@ -1046,6 +1047,126 @@ const renderPiePercentLabel = ({
 
 const pctFmt = (a, b) =>
   b > 0 ? `${((a / b) * 100).toFixed(1)}%` : '—';
+
+// Donut interactivo: al pasar el mouse por un sector, ese sector se agranda
+// (los demás se atenúan) y el centro muestra su nombre, valor y porcentaje.
+const DonutInteractivo = ({
+  data,
+  height = 220,
+  innerRadius = 62,
+  outerRadius = 88,
+  fmtValor,
+  centroBig,
+  centroSmall,
+}) => {
+  const [activo, setActivo] = useState(null);
+  const total = data.reduce((t, d) => t + (Number(d.value) || 0), 0);
+  const d = activo !== null ? data[activo] : null;
+  const pctDe = (x) =>
+    x.porcentajeEntero != null
+      ? `${x.porcentajeEntero}%`
+      : total > 0
+      ? `${Math.round((x.value / total) * 100)}%`
+      : '—';
+
+  return (
+    <div
+      className="donut-int"
+      style={{ position: 'relative' }}
+      onMouseLeave={() => setActivo(null)}
+    >
+      <ResponsiveContainer width="100%" height={height}>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
+            paddingAngle={4}
+            cornerRadius={7}
+            stroke="none"
+            isAnimationActive={false}
+            activeIndex={activo === null ? undefined : activo}
+            activeShape={(props) => (
+              <Sector
+                {...props}
+                outerRadius={props.outerRadius + 12}
+                innerRadius={props.innerRadius - 3}
+                style={{
+                  filter: `drop-shadow(0 0 10px ${props.fill}aa)`,
+                  cursor: 'pointer',
+                }}
+              />
+            )}
+            onMouseEnter={(_, i) => setActivo(i)}
+          >
+            {data.map((e, i) => (
+              <Cell
+                key={`${e.name}-${i}`}
+                fill={e.fill}
+                fillOpacity={activo === null || activo === i ? 1 : 0.3}
+                style={{ transition: 'fill-opacity 150ms' }}
+              />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          textAlign: 'center',
+          padding: '0 24%',
+        }}
+      >
+        {d ? (
+          <>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: d.fill,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                lineHeight: 1.15,
+              }}
+            >
+              {d.name}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.15 }}>
+              {pctDe(d)}
+            </div>
+            <div style={{ fontSize: 11, color: '#b9c7c9' }}>
+              {fmtValor(d.value)}
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1 }}>
+              {centroBig}
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                color: '#8fa6a9',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {centroSmall}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Ventana emergente reutilizable para las tarjetas de KPIs.
 const VentanaKpi = ({ titulo, subtitulo, onClose, children }) => (
@@ -6501,64 +6622,27 @@ const dataAnio =
             </div>
             <div style={S.card}>
               <div style={S.cardTitle}>Proyectos por estado</div>
-              <ResponsiveContainer width="100%" height={230}>
-                <PieChart>
-                <Pie
-  data={estadoProyectoData}
-  cx="50%"
-  cy="50%"
-  innerRadius={54}
-  outerRadius={86}
-  paddingAngle={3}
-  dataKey="value"
-  nameKey="name"
-  labelLine={false}
-  label={renderPiePercentLabel}
->
-  {estadoProyectoData.map((e, i) => (
-    <Cell
-      key={`${e.name}-${i}`}
-      fill={
-        normalizeKey(e.name) === 'finalizado'
-          ? '#95de1d'
-          : normalizeKey(e.name).includes('ejecucion')
-          ? '#4fc3f7'
-          : normalizeKey(e.name) === 'pendiente'
-          ? '#ffc933'
-          : normalizeKey(e.name) === 'demorado'
-          ? '#ff5f5f'
-          : '#8fa6a9'
-      }
-    />
-  ))}
-</Pie>
-<Tooltip
-  formatter={(value, name) => [
-    `${value} proyectos`,
-    name,
-  ]}
-  contentStyle={{
-    background: '#334155',
-    border: '1px solid #64748b',
-    borderRadius: 8,
-    padding: '9px 12px',
-    fontSize: 12,
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.35)',
-  }}
-  itemStyle={{
-    color: '#f8fafc',
-    fontWeight: 600,
-  }}
-  labelStyle={{
-    color: '#f8fafc',
-    fontWeight: 700,
-  }}
-  cursor={{
-    fill: 'transparent',
-  }}
-/>
-                </PieChart>
-              </ResponsiveContainer>
+              <DonutInteractivo
+                data={estadoProyectoData.map((e) => ({
+                  ...e,
+                  fill:
+                    normalizeKey(e.name) === 'finalizado'
+                      ? '#95de1d'
+                      : normalizeKey(e.name).includes('ejecucion')
+                      ? '#4fc3f7'
+                      : normalizeKey(e.name) === 'pendiente'
+                      ? '#ffc933'
+                      : normalizeKey(e.name) === 'demorado'
+                      ? '#ff5f5f'
+                      : '#8fa6a9',
+                }))}
+                height={230}
+                innerRadius={64}
+                outerRadius={90}
+                fmtValor={(v) => `${v} ${v === 1 ? 'proyecto' : 'proyectos'}`}
+                centroBig={estadoProyectoData.reduce((t, e) => t + e.value, 0)}
+                centroSmall="proyectos"
+              />
               <div
                 style={{
                   display: 'flex',
@@ -9199,56 +9283,17 @@ const dataAnio =
               Según los días de mano de obra usados y su efecto en USD.
             </div>
 
-            <div style={{ position: 'relative' }}>
-              <ResponsiveContainer width="100%" height={190}>
-                <PieChart>
-                  <Pie
-                    data={analisisMO.grupos.filter((g) => g.n > 0)}
-                    dataKey="n"
-                    nameKey="label"
-                    innerRadius={56}
-                    outerRadius={82}
-                    paddingAngle={3}
-                    stroke="none"
-                  >
-                    {analisisMO.grupos
-                      .filter((g) => g.n > 0)
-                      .map((g) => (
-                        <Cell key={g.clave} fill={g.color} />
-                      ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v, name) => [`${v} obras`, name]}
-                    contentStyle={{
-                      background: '#2c5059',
-                      border: '1px solid #3b5d65',
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                    itemStyle={{ color: '#f4f8f8' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
-                <div style={{ fontSize: 30, fontWeight: 800 }}>
-                  {analisisMO.conDias.length}
-                </div>
-                <div style={{ fontSize: 10, color: '#8fa6a9', textTransform: 'uppercase' }}>
-                  obras
-                </div>
-              </div>
-            </div>
+            <DonutInteractivo
+              data={analisisMO.grupos
+                .filter((g) => g.n > 0)
+                .map((g) => ({ name: g.label, value: g.n, fill: g.color }))}
+              height={210}
+              innerRadius={60}
+              outerRadius={86}
+              fmtValor={(v) => `${v} ${v === 1 ? 'obra' : 'obras'}`}
+              centroBig={analisisMO.conDias.length}
+              centroSmall="obras"
+            />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
               {analisisMO.grupos.map((g) => (
@@ -10365,32 +10410,13 @@ const dataAnio =
     </SelectNative>
   </div>
 
-  <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((e, i) => (
-                      <Cell key={i} fill={TIPO_COLORS[e.name] || '#8fa6a9'} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v) => [`${v} kWp`]}
-                    contentStyle={{
-                      background: '#2c5059',
-                      border: '1px solid #3b5d65',
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+  <DonutInteractivo
+    data={pieData.map((d) => ({ ...d, fill: TIPO_COLORS[d.name] || '#8fa6a9' }))}
+    height={220}
+    fmtValor={(v) => formatKwp(v)}
+    centroBig={formatKwp(pieData.reduce((t, d) => t + d.value, 0))}
+    centroSmall="kWp totales"
+  />
               <div className="mt-2 flex flex-col gap-1.5">
                 {pieData.map((d) => (
   <div
