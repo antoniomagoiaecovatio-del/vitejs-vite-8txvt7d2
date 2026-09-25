@@ -1048,19 +1048,54 @@ const renderPiePercentLabel = ({
 const pctFmt = (a, b) =>
   b > 0 ? `${((a / b) * 100).toFixed(1)}%` : '—';
 
-// Donut interactivo: al pasar el mouse por un sector, ese sector se agranda
-// (los demás se atenúan) y el centro muestra su nombre, valor y porcentaje.
+// Donut interactivo dibujado en SVG (grosor de cada sector según su peso, como
+// en los gráficos radiales de referencia): al pasar el mouse por un sector,
+// ese sector se agranda, los demás se atenúan y el centro muestra su nombre y
+// porcentaje. Sin selección, el centro muestra el total.
 const DonutInteractivo = ({
   data,
   height = 250,
-  innerRadius = 60,
-  outerRadius = 84,
   fmtValor,
   centroBig,
   centroSmall,
 }) => {
   const [activo, setActivo] = useState(null);
   const total = data.reduce((t, d) => t + (Number(d.value) || 0), 0);
+  const maxV = Math.max(...data.map((d) => Number(d.value) || 0), 1);
+  const R_INT = 54;
+  const GROSOR_MIN = 20;
+  const GROSOR_EXTRA = 34;
+  const CRECE = 12;
+  const GAP = data.length > 1 ? 3 : 0; // grados entre sectores
+  const rad = (g) => (g * Math.PI) / 180;
+  const pt = (r, g) => [r * Math.cos(rad(g)), r * Math.sin(rad(g))];
+
+  // ángulos de cada sector (arrancando arriba, sentido horario)
+  let acum = -90;
+  const arcos = data.map((d) => {
+    const frac = total > 0 ? (Number(d.value) || 0) / total : 0;
+    const ini = acum;
+    const fin = acum + frac * 360;
+    acum = fin;
+    return { ini, fin, frac };
+  });
+
+  const camino = (a, rOut, rIn) => {
+    let g0 = a.ini + GAP / 2;
+    let g1 = a.fin - GAP / 2;
+    if (g1 - g0 < 1) {
+      g0 = a.ini;
+      g1 = a.fin;
+    }
+    if (g1 - g0 >= 359.99) g1 = g0 + 359.99;
+    const grande = g1 - g0 > 180 ? 1 : 0;
+    const [x0, y0] = pt(rOut, g0);
+    const [x1, y1] = pt(rOut, g1);
+    const [x2, y2] = pt(rIn, g1);
+    const [x3, y3] = pt(rIn, g0);
+    return `M${x0} ${y0} A${rOut} ${rOut} 0 ${grande} 1 ${x1} ${y1} L${x2} ${y2} A${rIn} ${rIn} 0 ${grande} 0 ${x3} ${y3} Z`;
+  };
+
   const d = activo !== null ? data[activo] : null;
   const pctDe = (x) =>
     x.porcentajeEntero != null
@@ -1071,47 +1106,42 @@ const DonutInteractivo = ({
 
   return (
     <div
-      className="donut-int"
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', height }}
       onMouseLeave={() => setActivo(null)}
     >
-      <ResponsiveContainer width="100%" height={height}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            innerRadius={innerRadius}
-            outerRadius={outerRadius}
-            paddingAngle={4}
-            cornerRadius={7}
-            stroke="none"
-            isAnimationActive={false}
-            activeIndex={activo === null ? undefined : activo}
-            activeShape={(props) => (
-              <Sector
-                {...props}
-                outerRadius={props.outerRadius + 22}
-                innerRadius={props.innerRadius}
-                style={{
-                  filter: `drop-shadow(0 0 10px ${props.fill}aa)`,
-                  cursor: 'pointer',
-                }}
-              />
-            )}
-            onMouseEnter={(_, i) => setActivo(i)}
-          >
-            {data.map((e, i) => (
-              <Cell
-                key={`${e.name}-${i}`}
-                fill={e.fill}
-                fillOpacity={activo === null || activo === i ? 1 : 0.3}
-                style={{ transition: 'fill-opacity 150ms' }}
-              />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
+      <svg
+        viewBox="-150 -125 300 250"
+        width="100%"
+        height="100%"
+        style={{ overflow: 'visible' }}
+      >
+        {data.map((e, i) => {
+          const ratio = (Number(e.value) || 0) / maxV;
+          const rOut =
+            R_INT + GROSOR_MIN + GROSOR_EXTRA * ratio + (activo === i ? CRECE : 0);
+          const rIn = activo === i ? R_INT - 2 : R_INT;
+          return (
+            <path
+              key={`${e.name}-${i}`}
+              d={camino(arcos[i], rOut, rIn)}
+              fill={e.fill}
+              stroke={e.fill}
+              strokeWidth={5}
+              strokeLinejoin="round"
+              fillOpacity={activo === null || activo === i ? 1 : 0.3}
+              strokeOpacity={activo === null || activo === i ? 1 : 0.3}
+              style={{
+                cursor: 'pointer',
+                transition: 'fill-opacity 150ms, stroke-opacity 150ms',
+                filter:
+                  activo === i ? `drop-shadow(0 0 8px ${e.fill}aa)` : 'none',
+              }}
+              onMouseEnter={() => setActivo(i)}
+              onClick={() => setActivo(activo === i ? null : i)}
+            />
+          );
+        })}
+      </svg>
       <div
         style={{
           position: 'absolute',
@@ -1122,20 +1152,45 @@ const DonutInteractivo = ({
           justifyContent: 'center',
           pointerEvents: 'none',
           textAlign: 'center',
-          padding: '0 24%',
+          padding: '0 30%',
         }}
       >
-        {d && (
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 800,
-              lineHeight: 1,
-              color: d.fill,
-            }}
-          >
-            {pctDe(d)}
-          </div>
+        {d ? (
+          <>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: d.fill,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                lineHeight: 1.15,
+              }}
+            >
+              {d.name}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>
+              {pctDe(d)}
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.1 }}>
+              {centroBig}
+            </div>
+            {centroSmall && (
+              <div
+                style={{
+                  fontSize: 9,
+                  color: '#8fa6a9',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {centroSmall}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -6611,8 +6666,8 @@ const dataAnio =
                       : '#8fa6a9',
                 }))}
                 height={250}
-                innerRadius={60}
-                outerRadius={84}
+                centroBig={estadoProyectoData.reduce((t, e) => t + e.value, 0)}
+                centroSmall="proyectos"
               />
               <div
                 style={{
@@ -9259,8 +9314,8 @@ const dataAnio =
                 .filter((g) => g.n > 0)
                 .map((g) => ({ name: g.label, value: g.n, fill: g.color }))}
               height={250}
-              innerRadius={60}
-              outerRadius={84}
+              centroBig={analisisMO.conDias.length}
+              centroSmall="obras"
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
@@ -10381,6 +10436,7 @@ const dataAnio =
   <DonutInteractivo
     data={pieData.map((d) => ({ ...d, fill: TIPO_COLORS[d.name] || '#8fa6a9' }))}
     height={250}
+    centroBig={formatKwp(pieData.reduce((t, d) => t + d.value, 0))}
   />
               <div className="mt-2 flex flex-col gap-1.5">
                 {pieData.map((d) => (
