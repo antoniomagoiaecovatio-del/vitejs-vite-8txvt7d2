@@ -156,3 +156,14 @@ body {
     "Segoe UI",
     sans-serif;
 }
+
+/* Sin cursor de texto parpadeante en títulos y textos (solo visible en campos editables) */
+* {
+  caret-color: transparent;
+}
+input,
+textarea,
+select,
+[contenteditable='true'] {
+  caret-color: auto;
+}
