@@ -2870,6 +2870,16 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
 
   // Obra de referencia resaltada al pasar el mouse por una barra de la campana.
   const [refHover, setRefHover] = useState(null);
+  // Ventana con el detalle de las obras activas (tarjeta "Obras activas").
+  const [modalActivas, setModalActivas] = useState(false);
+  useEffect(() => {
+    if (!modalActivas) return undefined;
+    const alTeclear = (e) => {
+      if (e.key === 'Escape') setModalActivas(false);
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, [modalActivas]);
   const [formEstimacion, setFormEstimacion] = useState({
     nombre: '',
     potencia: '',
@@ -3416,9 +3426,16 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   }, [obrasFiltradas]);
 
   const stats = useMemo(() => {
-    const activas = obras.filter(
-      (o) => o.estado === 'En obra' || o.estado === 'Parte solar finalizada'
-    ).length;
+    const listaActivas = obras
+      .filter(
+        (o) => o.estado === 'En obra' || o.estado === 'Parte solar finalizada'
+      )
+      .sort(
+        (a, b) =>
+          (Number(b.avance) || 0) - (Number(a.avance) || 0) ||
+          (Number(b.kwp) || 0) - (Number(a.kwp) || 0)
+      );
+    const activas = listaActivas.length;
     const totalKwp = obras.reduce((s, o) => s + (Number(o.kwp) || 0), 0);
     const kwpInstalado = obras
       .filter((o) => o.avance === 100)
@@ -3429,7 +3446,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
           conHs.reduce((s, o) => s + Number(o.hs_mo_kwp), 0) / conHs.length
         ).toFixed(1)
       : '-';
-    return { activas, totalKwp, kwpInstalado, avgHs };
+    return { activas, listaActivas, totalKwp, kwpInstalado, avgHs };
   }, [obras]);
 
   const barData = useMemo(
@@ -9755,6 +9772,8 @@ const dataAnio =
                 color: '#95de1d',
                 icon: RiFlashlightLine,
                 accent: 'bg-emerald-500/10 text-emerald-400',
+                onClick: () => setModalActivas(true),
+                hint: 'Ver cuáles son',
               },
               {
                 label: 'Capacidad total',
@@ -9776,7 +9795,27 @@ const dataAnio =
                 accent: 'bg-violet-500/10 text-violet-400',
               },
             ].map((k) => (
-              <Card key={k.label} className="p-5">
+              <Card
+                key={k.label}
+                className={cx(
+                  'p-5',
+                  k.onClick &&
+                    'cursor-pointer transition-all hover:-translate-y-0.5 hover:border-[#95de1d]/50 hover:shadow-xl',
+                )}
+                {...(k.onClick
+                  ? {
+                      role: 'button',
+                      tabIndex: 0,
+                      onClick: k.onClick,
+                      onKeyDown: (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          k.onClick();
+                        }
+                      },
+                    }
+                  : {})}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
                     {k.label}
@@ -9803,9 +9842,110 @@ const dataAnio =
                 <div className="mt-1.5 text-xs text-gray-500 dark:text-gray-500">
                   {k.sub}
                 </div>
+                {k.hint && (
+                  <div className="mt-2 text-[11px] font-semibold text-[#95de1d]">
+                    {k.hint} →
+                  </div>
+                )}
               </Card>
             ))}
           </div>
+
+          {modalActivas && (
+            <div
+              className="fixed inset-0 z-50 flex animate-dialog-overlay-show items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+              onClick={() => setModalActivas(false)}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Obras activas"
+                onClick={(e) => e.stopPropagation()}
+                className="modal-pop max-h-[80vh] w-full max-w-[640px] overflow-hidden rounded-2xl border border-white/10 bg-gray-900 shadow-2xl shadow-black/60"
+              >
+                <div
+                  className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4"
+                  style={{
+                    background:
+                      'linear-gradient(110deg, #123138 0%, #1d4a50 60%, #24604f 100%)',
+                  }}
+                >
+                  <div>
+                    <div className="text-base font-bold">Obras activas</div>
+                    <div className="text-xs text-gray-400">
+                      {stats.activas} en obra o con la parte solar finalizada ·{' '}
+                      {formatKwp(
+                        Math.round(
+                          stats.listaActivas.reduce(
+                            (s, o) => s + (Number(o.kwp) || 0),
+                            0
+                          )
+                        )
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setModalActivas(false)}
+                    aria-label="Cerrar"
+                    className="flex size-8 items-center justify-center rounded-lg text-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="max-h-[calc(80vh-72px)] space-y-2 overflow-y-auto p-4">
+                  {stats.listaActivas.length === 0 && (
+                    <div className="py-6 text-center text-sm text-gray-400">
+                      No hay obras activas en este momento.
+                    </div>
+                  )}
+                  {stats.listaActivas.map((o, i) => {
+                    const enObra = o.estado === 'En obra';
+                    const color = enObra ? '#ffc933' : '#4fc3f7';
+                    return (
+                      <div
+                        key={`${o.nombre}-${i}`}
+                        className="rounded-xl border border-white/5 bg-gray-800/60 p-3"
+                        style={{
+                          animation: `slideUpAndFade 260ms ${i * 45}ms both cubic-bezier(0.16, 1, 0.3, 1)`,
+                        }}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0 truncate text-sm font-semibold">
+                            {o.nombre}
+                          </div>
+                          <span
+                            className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                            style={{ background: color + '26', color }}
+                          >
+                            {o.estado}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-3">
+                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-950">
+                            <div
+                              className="h-2 rounded-full"
+                              style={{
+                                width: `${Math.max(0, Math.min(100, Number(o.avance) || 0))}%`,
+                                background: color,
+                              }}
+                            />
+                          </div>
+                          <div className="w-10 text-right text-xs font-semibold">
+                            {Math.round(Number(o.avance) || 0)}%
+                          </div>
+                        </div>
+                        <div className="mt-1.5 text-xs text-gray-400">
+                          {formatKwp(Math.round(Number(o.kwp) || 0))}
+                          {o.tipo_cliente ? ` · ${o.tipo_cliente}` : ''}
+                          {o.implantacion ? ` · ${o.implantacion}` : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {[
