@@ -10,6 +10,7 @@ import { Input } from './components/Input/Input';
 import { Checkbox } from './components/Checkbox/Checkbox';
 import { TabNavigation, TabNavigationLink } from './components/TabNavigation/TabNavigation';
 import { cx } from './utils/cx';
+import { VEHICULOS_FLOTA, CATEGORIAS_VEHICULOS } from './data/vehiculosCombustible';
 import {
   RiBuilding2Line,
   RiFlashlightLine,
@@ -1715,6 +1716,7 @@ const generarPlanObra = (
   let descansoEnLugar = 0;
   let domingosEnLugar = 0;
   let nochesFueraDeCasa = 0;
+  let viajesRedondos = 0;
   let horasEfectivas = 0;
   let diasSoloViaje = 0;
   let desplazamiento = 0;
@@ -1797,6 +1799,9 @@ const generarPlanObra = (
       // Toda noche entre un día "fuera de casa" y el siguiente, salvo la del
       // día en que vuelven a casa (ese día duermen en su casa).
       if (tipo !== 'vuelta' && tipo !== 'idavuelta') nochesFueraDeCasa += 1;
+      // Un "viaje redondo" (ida y vuelta entre el obrador y la obra) por cada
+      // vez que salen de su casa hacia la obra.
+      if (tipo === 'ida' || tipo === 'idavuelta') viajesRedondos += 1;
 
       const horasBase = dia === 6 ? HORAS_SABADO : HORAS_JORNADA_DIA;
       const perdida =
@@ -1900,6 +1905,8 @@ const generarPlanObra = (
     domingosEnLugar,
     // Noches fuera de casa: base del alojamiento.
     nochesFueraDeCasa,
+    // Viajes redondos (obrador ↔ obra): base del combustible.
+    viajesRedondos,
     diasCorridos,
     fechaInicio: conFecha ? primerDia : null,
     fechaFin: conFecha ? ultimoTrabajo : null,
@@ -2116,13 +2123,37 @@ const calcularPlanObra = (p) => {
     const alojamiento = Number.isFinite(p.alojamiento)
       ? personas * p.alojamiento * calendario.nochesFueraDeCasa
       : null;
-    const total = totalMO + (viaticos || 0) + (alojamiento || 0);
+
+    // Combustible: 2 × distancia (ida y vuelta) × viajes redondos = km
+    // totales del trayecto obrador ↔ obra. Cada vehículo elegido gasta según
+    // su propio consumo (km/l) y el precio de su combustible; si viajan N
+    // unidades del mismo vehículo, gastan N veces esos litros.
+    const kmTotales =
+      Number.isFinite(p.distanciaKm) && p.vehiculos && p.vehiculos.length
+        ? 2 * p.distanciaKm * calendario.viajesRedondos
+        : 0;
+    const combustibleDetalle =
+      kmTotales > 0
+        ? p.vehiculos.map((v) => {
+            const litros = (kmTotales / v.kmPorLitro) * v.cantidad;
+            return { ...v, litros, costo: litros * v.precioLitroUsd };
+          })
+        : [];
+    const combustible = combustibleDetalle.length
+      ? combustibleDetalle.reduce((s, v) => s + v.costo, 0)
+      : null;
+
+    const total =
+      totalMO + (viaticos || 0) + (alojamiento || 0) + (combustible || 0);
 
     costo = {
       instaladores,
       supervisor,
       viaticos,
       alojamiento,
+      combustible,
+      combustibleDetalle,
+      kmTotales,
       totalMO,
       total,
       porKwpMO: totalMO / p.B,
@@ -2131,6 +2162,7 @@ const calcularPlanObra = (p) => {
       tarifaSupervisor: p.supervisor ? p.tarifaSupervisor : null,
       tarifaViatico: Number.isFinite(p.viatico) ? p.viatico : null,
       tarifaAlojamiento: Number.isFinite(p.alojamiento) ? p.alojamiento : null,
+      distanciaKm: Number.isFinite(p.distanciaKm) ? p.distanciaKm : null,
       personas,
     };
   }
@@ -2515,6 +2547,19 @@ const construirHtmlInforme = (r) => {
               )
             : ''
         }
+        ${
+          costo.combustible !== null
+            ? fila(
+                'Combustible',
+                `${costo.combustibleDetalle.length} ${plural(
+                  costo.combustibleDetalle.length,
+                  'vehículo',
+                  'vehículos'
+                )} × ${ent(costo.kmTotales)} km totales`,
+                usd(costo.combustible)
+              )
+            : ''
+        }
 
         ${fila('Total estimado', '', usd(costo.total), 'total')}
 
@@ -2547,14 +2592,17 @@ const construirHtmlInforme = (r) => {
     ? `Mano de obra ${
         r.conSupervisor ? 'de instaladores y supervisor' : 'de instaladores'
       }: solo los ${ent(cal.diasTrabajados)} días efectivos de trabajo (los de descanso en el lugar no se pagan).${
-        costo.viaticos !== null || costo.alojamiento !== null
+        costo.viaticos !== null ||
+        costo.alojamiento !== null ||
+        costo.combustible !== null
           ? ` Incluye también ${[
               costo.viaticos !== null ? 'viáticos' : '',
               costo.alojamiento !== null ? 'alojamiento' : '',
+              costo.combustible !== null ? 'combustible' : '',
             ]
               .filter(Boolean)
               .join(' y ')}.`
-          : ' No incluye materiales, viáticos ni alojamiento.'
+          : ' No incluye materiales, viáticos, alojamiento ni combustible.'
       }`
     : 'Plazo de ejecución estimado.';
 
@@ -3154,6 +3202,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     tarifaSupervisor: '',
     viaticoPorDia: '',
     alojamientoPorNoche: '',
+    distanciaKm: '',
+    vehiculos: {},
     fechaInicio: '',
     tipoClienteRef: 'Todos los clientes',
     implantacionRef: 'Todas las implantaciones',
@@ -5224,6 +5274,25 @@ const dataAnio =
     setErrorEstimacion('');
   };
 
+  // Vehículos elegidos para calcular el combustible: un mapa patente →
+  // cantidad. Tildar agrega el vehículo con cantidad 1; destildar lo quita.
+  const toggleVehiculo = (patente) => {
+    setFormEstimacion((p) => {
+      const vehiculos = { ...p.vehiculos };
+      if (vehiculos[patente]) delete vehiculos[patente];
+      else vehiculos[patente] = 1;
+      return { ...p, vehiculos };
+    });
+    setErrorEstimacion('');
+  };
+
+  const setCantidadVehiculo = (patente, cantidad) => {
+    setFormEstimacion((p) => ({
+      ...p,
+      vehiculos: { ...p.vehiculos, [patente]: Math.max(1, Math.round(cantidad) || 1) },
+    }));
+  };
+
   const resetFormEstimacion = () => {
     setResultadoEstimacion(null);
     setErrorEstimacion('');
@@ -5244,6 +5313,8 @@ const dataAnio =
       tarifaSupervisor: '',
       viaticoPorDia: '',
       alojamientoPorNoche: '',
+      distanciaKm: '',
+      vehiculos: {},
       fechaInicio: '',
       tipoClienteRef: 'Todos los clientes',
       implantacionRef: 'Todas las implantaciones',
@@ -5287,6 +5358,15 @@ const dataAnio =
     const tarifaSupervisor = textoTarifaSup ? parseNum(textoTarifaSup) : null;
     const viatico = textoViatico ? parseNum(textoViatico) : null;
     const alojamiento = textoAlojamiento ? parseNum(textoAlojamiento) : null;
+    const textoDistancia = String(formEstimacion.distanciaKm).trim();
+    const distanciaKm = textoDistancia ? parseNum(textoDistancia) : null;
+    const vehiculosElegidos = Object.entries(formEstimacion.vehiculos)
+      .filter(([, cantidad]) => Number(cantidad) > 0)
+      .map(([patente, cantidad]) => {
+        const v = VEHICULOS_FLOTA.find((x) => x.patente === patente);
+        return v ? { ...v, cantidad: Number(cantidad) } : null;
+      })
+      .filter(Boolean);
 
     if (!A || !E) {
       setErrorEstimacion('Completá el nombre y el lugar.');
@@ -5318,6 +5398,20 @@ const dataAnio =
       setErrorEstimacion('Los valores de viáticos y alojamiento deben ser números positivos.');
       return;
     }
+    if (distanciaKm !== null && (Number.isNaN(distanciaKm) || distanciaKm < 0)) {
+      setErrorEstimacion('La distancia obrador ↔ obra debe ser un número positivo.');
+      return;
+    }
+    if (distanciaKm !== null && vehiculosElegidos.length === 0) {
+      setErrorEstimacion('Elegí al menos un vehículo para calcular el combustible.');
+      return;
+    }
+    if (distanciaKm === null && vehiculosElegidos.length > 0) {
+      setErrorEstimacion(
+        'Ingresá la distancia obrador ↔ obra para calcular el combustible.'
+      );
+      return;
+    }
     if (tarifaInstalador === null && tarifaSupervisor !== null) {
       setErrorEstimacion('Ingresá también el valor de mano de obra del instalador.');
       return;
@@ -5343,6 +5437,8 @@ const dataAnio =
       tarifaSupervisor,
       viatico,
       alojamiento,
+      distanciaKm,
+      vehiculos: vehiculosElegidos,
       fechaInicio: formEstimacion.fechaInicio,
     });
 
@@ -6269,6 +6365,124 @@ const dataAnio =
                     no hay noches fuera, así que da 0.
                   </div>
                 </div>
+
+                <div style={{ gridColumn: 'span 3' }}>
+                  <label style={S.label}>Distancia obrador ↔ obra (km)</label>
+                  <input
+                    style={{ ...S.estimatorInput, maxWidth: 220 }}
+                    value={formEstimacion.distanciaKm}
+                    onChange={(e) => updateForm('distanciaKm', e.target.value)}
+                    placeholder="Ej: 180"
+                  />
+                  <div style={S.help}>
+                    Opcional, un solo tramo (ida). Con los vehículos que
+                    elijas abajo se calcula el combustible de todos los
+                    viajes de ida y vuelta entre el obrador y la obra.
+                  </div>
+                </div>
+
+                <div style={{ gridColumn: 'span 3' }}>
+                  <label style={S.label}>
+                    Vehículos que viajan todas las semanas (combustible)
+                  </label>
+                  <div style={{ display: 'grid', gap: 10, marginTop: 6 }}>
+                    {CATEGORIAS_VEHICULOS.map((cat) => (
+                      <div key={cat}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: '#8fa6a9',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: 6,
+                          }}
+                        >
+                          {cat}
+                        </div>
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: 6,
+                          }}
+                        >
+                          {VEHICULOS_FLOTA.filter((v) => v.categoria === cat).map(
+                            (v) => {
+                              const cantidad =
+                                formEstimacion.vehiculos[v.patente] || 0;
+                              const elegido = cantidad > 0;
+
+                              return (
+                                <div
+                                  key={v.patente}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    background: elegido ? '#1d3c44' : 'transparent',
+                                    border: `1px solid ${
+                                      elegido ? '#95de1d55' : '#2c5059'
+                                    }`,
+                                    borderRadius: 8,
+                                    padding: '6px 10px',
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={elegido}
+                                    onChange={() => toggleVehiculo(v.patente)}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.3 }}>
+                                    <div style={{ fontWeight: 600 }}>
+                                      {v.nombre}{' '}
+                                      <span style={{ color: '#8fa6a9' }}>
+                                        · {v.patente}
+                                      </span>
+                                    </div>
+                                    <div style={{ color: '#8fa6a9', fontSize: 11 }}>
+                                      {v.kmPorLitro} km/l · {v.combustible} · USD{' '}
+                                      {v.precioLitroUsd.toFixed(2)}/l
+                                    </div>
+                                  </div>
+                                  {elegido && (
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={cantidad}
+                                      onChange={(e) =>
+                                        setCantidadVehiculo(
+                                          v.patente,
+                                          Number(e.target.value)
+                                        )
+                                      }
+                                      style={{
+                                        width: 48,
+                                        background: '#0f2227',
+                                        border: '1px solid #3b5d65',
+                                        borderRadius: 6,
+                                        color: '#f4f8f8',
+                                        textAlign: 'center',
+                                        padding: '3px 2px',
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ ...S.help, marginTop: 8 }}>
+                    Opcional. Si viajan varias unidades del mismo vehículo,
+                    poné la cantidad (por defecto 1). Precios de combustible
+                    fijos en USD (tipo de cambio 1.545), actualizados al
+                    01/10/2026 — no se vuelven a traer solos.
+                  </div>
+                </div>
               </div>
             </div>
             <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
@@ -6473,6 +6687,14 @@ const dataAnio =
                       'Noches fuera de casa (base del alojamiento)',
                       `${resultadoEstimacion.calendario.nochesFueraDeCasa} noches`,
                     ],
+                    [
+                      'Viajes redondos obrador ↔ obra (base del combustible)',
+                      `${resultadoEstimacion.calendario.viajesRedondos} ${
+                        resultadoEstimacion.calendario.viajesRedondos === 1
+                          ? 'viaje'
+                          : 'viajes'
+                      }`,
+                    ],
                   ].map(([k, v]) => (
                     <tr key={k}>
                       <td style={S.td}>{k}</td>
@@ -6560,6 +6782,21 @@ const dataAnio =
                           </td>
                         </tr>
                       )}
+                      {resultadoEstimacion.costo.combustible !== null && (
+                        <tr>
+                          <td style={S.td}>
+                            Combustible: {resultadoEstimacion.costo.combustibleDetalle.length}{' '}
+                            {resultadoEstimacion.costo.combustibleDetalle.length === 1
+                              ? 'vehículo'
+                              : 'vehículos'}{' '}
+                            × {Math.round(resultadoEstimacion.costo.kmTotales)} km
+                            totales
+                          </td>
+                          <td style={S.td}>
+                            {formatUsdAbs(resultadoEstimacion.costo.combustible)}
+                          </td>
+                        </tr>
+                      )}
                       <tr>
                         <td style={{ ...S.td, fontWeight: 800 }}>Total estimado</td>
                         <td style={{ ...S.td, fontWeight: 800, color: '#ffc933' }}>
@@ -6580,7 +6817,8 @@ const dataAnio =
                     {resultadoEstimacion.calendario.diasTrabajados}); los días de
                     descanso en el lugar no se pagan.
                     {resultadoEstimacion.costo.viaticos !== null ||
-                    resultadoEstimacion.costo.alojamiento !== null
+                    resultadoEstimacion.costo.alojamiento !== null ||
+                    resultadoEstimacion.costo.combustible !== null
                       ? ` Incluye también ${[
                           resultadoEstimacion.costo.viaticos !== null
                             ? 'viáticos'
@@ -6588,11 +6826,27 @@ const dataAnio =
                           resultadoEstimacion.costo.alojamiento !== null
                             ? 'alojamiento'
                             : '',
+                          resultadoEstimacion.costo.combustible !== null
+                            ? 'combustible'
+                            : '',
                         ]
                           .filter(Boolean)
                           .join(' y ')}.`
-                      : ' No incluye materiales, viáticos ni alojamiento.'}
+                      : ' No incluye materiales, viáticos, alojamiento ni combustible.'}
                   </div>
+                  {resultadoEstimacion.costo.combustible !== null && (
+                    <div style={{ ...S.help, marginTop: 6 }}>
+                      Combustible por vehículo ({resultadoEstimacion.costo.distanciaKm}{' '}
+                      km por tramo × {resultadoEstimacion.calendario.viajesRedondos}{' '}
+                      viajes × 2 = {Math.round(resultadoEstimacion.costo.kmTotales)} km
+                      totales): {resultadoEstimacion.costo.combustibleDetalle
+                        .map(
+                          (v) =>
+                            `${v.cantidad > 1 ? v.cantidad + '× ' : ''}${v.nombre} (${v.patente}): ${v.litros.toFixed(1)} l · ${formatUsdAbs(v.costo)}`
+                        )
+                        .join(' · ')}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div style={{ color: '#8fa6a9', fontSize: 13 }}>
