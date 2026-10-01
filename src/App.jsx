@@ -1601,9 +1601,11 @@ const OPCIONES_POTENCIA_LABELS = [
 
 // ── Estimador de obras: jornadas, calendario y costo de mano de obra ──
 const HORAS_JORNADA_DIA = 8; // 8 a 17 hs con 1 h de almuerzo
-const HORAS_SABADO = 4; // sábado 8 a 12 hs
-// Los domingos que pasan en el lugar se pagan al doble aunque no trabajen.
-const PAGO_DOMINGO_EN_LUGAR = 2;
+const HORAS_SABADO = 5; // sábado 8 a 13 hs
+// La mano de obra se presupuesta solo por los días EFECTIVOS de trabajo: los
+// días de descanso (sábado o domingo en el lugar) no se cobran. Un sábado
+// trabajado (HORAS_SABADO) se paga como un día completo, igual que uno de
+// lunes a viernes: el costo es "por día", no por hora.
 
 // Reglas de las jornadas:
 // - Se trabaja de lunes a viernes de 8 a 17 hs (8 hs efectivas).
@@ -1621,22 +1623,22 @@ const JORNADAS_OBRA = {
   lv_descanso: {
     label: 'Lunes a viernes, 8 a 17 hs, con fin de semana de descanso en el lugar',
     detalle:
-      'Se quedan en el lugar dos semanas seguidas (el fin de semana descansan allí; el domingo se paga doble) y vuelven el viernes de la 2ª semana.',
+      'Se quedan en el lugar dos semanas seguidas (el fin de semana descansan allí, sin cobrar esos días) y vuelven el viernes de la 2ª semana.',
     trabajaSabado: false,
     seQuedaEnLugar: true,
   },
   lv_sab: {
-    label: 'Lunes a viernes, 8 a 17 hs + sábado 8 a 12 hs, en el lugar',
+    label: 'Lunes a viernes, 8 a 17 hs + sábado 8 a 13 hs, en el lugar',
     detalle:
-      'Trabajan también el sábado de la 1ª semana de 8 a 12 hs; el domingo descansan en el lugar (se paga doble) y vuelven el viernes de la 2ª semana.',
+      'Trabajan también el sábado de la 1ª semana de 8 a 13 hs; el domingo descansan en el lugar (sin cobrar) y vuelven el viernes de la 2ª semana.',
     trabajaSabado: true,
     seQuedaEnLugar: true,
   },
   lv_sab_vuelta_sab: {
     label:
-      'Lunes a viernes, 8 a 17 hs + sábado 8 a 12 hs, en el lugar, con vuelta el sábado al finalizar',
+      'Lunes a viernes, 8 a 17 hs + sábado 8 a 13 hs, en el lugar, con vuelta el sábado al finalizar',
     detalle:
-      'Igual que la 3, pero si la obra termina un sábado vuelven ese mismo sábado (dentro de las 4 hs de 8 a 12) en vez de esperar al lunes. Solo es posible si el viaje de vuelta más el traslado al alojamiento entra en esas 4 hs.',
+      'Igual que la 3, pero si la obra termina un sábado vuelven ese mismo sábado (dentro de las 5 hs de 8 a 13) en vez de esperar al lunes. Solo es posible si el viaje de vuelta más el traslado al alojamiento entra en esas 5 hs.',
     trabajaSabado: true,
     seQuedaEnLugar: true,
     vueltaSabado: true,
@@ -1712,6 +1714,7 @@ const generarPlanObra = (
   let pagados = 0;
   let descansoEnLugar = 0;
   let domingosEnLugar = 0;
+  let nochesFueraDeCasa = 0;
   let horasEfectivas = 0;
   let diasSoloViaje = 0;
   let desplazamiento = 0;
@@ -1791,6 +1794,10 @@ const generarPlanObra = (
           ? 'vuelta'
           : 'trabajo';
 
+      // Toda noche entre un día "fuera de casa" y el siguiente, salvo la del
+      // día en que vuelven a casa (ese día duermen en su casa).
+      if (tipo !== 'vuelta' && tipo !== 'idavuelta') nochesFueraDeCasa += 1;
+
       const horasBase = dia === 6 ? HORAS_SABADO : HORAS_JORNADA_DIA;
       const perdida =
         tipo === 'idavuelta' ? 2 * G : tipo === 'trabajo' ? 2 * H : G + H;
@@ -1801,7 +1808,11 @@ const generarPlanObra = (
       if (horasBase - perdida <= 1e-9) diasSoloViaje += 1;
 
       if (conDetalle) {
-        const base = dia === 6 ? 'Trabajo 8 a 12 hs' : 'Trabajo';
+        const base = dia === 6 ? 'Trabajo 8 a 13 hs' : 'Trabajo';
+        // Si el traslado empresa ↔ obra de ese día supera las 7 hs, casi no
+        // queda tiempo para trabajar: se muestra solo "Viaje", sin sumarle
+        // "+ trabajo".
+        const viajeLargo = G > 7;
 
         celda = {
           tipo,
@@ -1814,9 +1825,13 @@ const generarPlanObra = (
               : tipo === 'idavuelta'
               ? `Ida, ${base.toLowerCase()} y vuelta`
               : tipo === 'ida'
-              ? `Ida + ${base.toLowerCase()}`
+              ? viajeLargo
+                ? 'Viaje'
+                : `Ida + ${base.toLowerCase()}`
               : tipo === 'vuelta'
-              ? `${base} + vuelta a casa`
+              ? viajeLargo
+                ? 'Viaje'
+                : `${base} + vuelta a casa`
               : base,
         };
       }
@@ -1830,9 +1845,12 @@ const generarPlanObra = (
       (dia === 6 || dia === 0)
     ) {
       // Fin de semana entre la 1ª y la 2ª semana: descansan en el lugar.
+      // No se cobra como mano de obra (sea sábado o domingo), pero sí cuenta
+      // para los viáticos y el alojamiento: siguen fuera de casa.
       pagados += 1;
       descansoEnLugar += 1;
       if (dia === 0) domingosEnLugar += 1;
+      nochesFueraDeCasa += 1;
 
       if (conDetalle) {
         celda = {
@@ -1840,7 +1858,7 @@ const generarPlanObra = (
           dia,
           bloqueId,
           semana: semanaEnBloque,
-          texto: dia === 0 ? 'Descanso (se paga doble)' : 'Descanso en el lugar',
+          texto: 'Descanso en el lugar',
         };
       }
     } else if (conDetalle) {
@@ -1872,12 +1890,16 @@ const generarPlanObra = (
   const resultado = {
     horasEfectivas,
     diasSoloViaje,
-    diasPagados: pagados,
+    // Días efectivos de trabajo: es lo único que se presupuesta como mano de
+    // obra. Los días de descanso en el lugar no se cobran.
+    diasTrabajados: trabajados,
+    // "Fuera de casa" = días de trabajo + descanso en el lugar (no cuenta los
+    // fines de semana en casa entre estadías). Base de los viáticos.
+    diasFueraDeCasa: pagados,
     diasDescansoEnLugar: descansoEnLugar,
     domingosEnLugar,
-    // Días de pago: el domingo en el lugar cuenta doble.
-    diasPagoEquivalentes:
-      pagados + domingosEnLugar * (PAGO_DOMINGO_EN_LUGAR - 1),
+    // Noches fuera de casa: base del alojamiento.
+    nochesFueraDeCasa,
     diasCorridos,
     fechaInicio: conFecha ? primerDia : null,
     fechaFin: conFecha ? ultimoTrabajo : null,
@@ -1984,7 +2006,7 @@ const errorDeCabida = (jornada, modalidad, G, H) => {
   }
   if (2 * H > horasDiaCorto) {
     return `El traslado diario alojamiento ↔ obra no cabe en la jornada${
-      jornada.trabajaSabado ? ' del sábado (4 hs)' : ''
+      jornada.trabajaSabado ? ` del sábado (${HORAS_SABADO} hs)` : ''
     }.`;
   }
 
@@ -2058,39 +2080,58 @@ const calcularPlanObra = (p) => {
   const diasConSeguridad = Math.ceil(diasNecesarios * factorSeguridad);
   const diasHombre = diasConSeguridad * p.C;
 
-  // Entre las variantes que cubren las horas se elige la de menos días de pago
-  // y, a igualdad, la más corta en el calendario.
+  // Entre las variantes que cubren las horas se elige la que termina antes en
+  // el calendario (menos días corridos): la mano de obra ya se paga igual en
+  // todas (solo días efectivos de trabajo), así que terminar antes solo suma
+  // beneficios — ahorra viáticos y noches de alojamiento.
   const candidatos = variantes.map((v) => generar(diasConSeguridad, true, v));
   const suficientes = candidatos.filter(
     (c) => c.horasEfectivas + 1e-9 >= horasPorOperario
   );
   const calendario = (suficientes.length ? suficientes : candidatos).reduce(
-    (mejor, c) =>
-      c.diasPagoEquivalentes < mejor.diasPagoEquivalentes ||
-      (c.diasPagoEquivalentes === mejor.diasPagoEquivalentes &&
-        c.diasCorridos < mejor.diasCorridos)
-        ? c
-        : mejor
+    (mejor, c) => (c.diasCorridos < mejor.diasCorridos ? c : mejor)
   );
 
   let costo = null;
 
   if (Number.isFinite(p.tarifaInstalador)) {
-    const instaladores =
-      p.C * p.tarifaInstalador * calendario.diasPagoEquivalentes;
+    // Mano de obra: solo los días efectivos de trabajo (ni los de descanso
+    // en el lugar). Un sábado trabajado paga el mismo día completo que uno
+    // de lunes a viernes.
+    const instaladores = p.C * p.tarifaInstalador * calendario.diasTrabajados;
     const supervisor =
       p.supervisor && Number.isFinite(p.tarifaSupervisor)
-        ? p.tarifaSupervisor * calendario.diasPagoEquivalentes
+        ? p.tarifaSupervisor * calendario.diasTrabajados
         : 0;
-    const total = instaladores + supervisor;
+    const totalMO = instaladores + supervisor;
+
+    // Viáticos y alojamiento: por persona (instaladores + supervisor, si
+    // viaja con ellos), para todos los días/noches fuera de casa — incluye
+    // los de descanso en el lugar, que no se pagan como mano de obra pero sí
+    // generan ese gasto.
+    const personas = p.C + (p.supervisor ? 1 : 0);
+    const viaticos = Number.isFinite(p.viatico)
+      ? personas * p.viatico * calendario.diasFueraDeCasa
+      : null;
+    const alojamiento = Number.isFinite(p.alojamiento)
+      ? personas * p.alojamiento * calendario.nochesFueraDeCasa
+      : null;
+    const total = totalMO + (viaticos || 0) + (alojamiento || 0);
 
     costo = {
       instaladores,
       supervisor,
+      viaticos,
+      alojamiento,
+      totalMO,
       total,
+      porKwpMO: totalMO / p.B,
       porKwp: total / p.B,
       tarifaInstalador: p.tarifaInstalador,
       tarifaSupervisor: p.supervisor ? p.tarifaSupervisor : null,
+      tarifaViatico: Number.isFinite(p.viatico) ? p.viatico : null,
+      tarifaAlojamiento: Number.isFinite(p.alojamiento) ? p.alojamiento : null,
+      personas,
     };
   }
 
@@ -2123,11 +2164,11 @@ const descripcionViaje = (clave, modalidad) => {
   }
 
   if (clave === 'lv_sab') {
-    return 'Ida el lunes de la 1ª semana y vuelta el viernes de la 2ª semana, dentro del horario de 8 a 17 hs. El sábado de la 1ª semana trabajan de 8 a 12 hs y el domingo descansan en el lugar. Si la obra dura más, el ciclo se repite.';
+    return 'Ida el lunes de la 1ª semana y vuelta el viernes de la 2ª semana, dentro del horario de 8 a 17 hs. El sábado de la 1ª semana trabajan de 8 a 13 hs y el domingo descansan en el lugar. Si la obra dura más, el ciclo se repite.';
   }
 
   if (clave === 'lv_sab_vuelta_sab') {
-    return 'Ida el lunes de la 1ª semana y vuelta el viernes de la 2ª semana, dentro del horario de 8 a 17 hs. El sábado de la 1ª semana trabajan de 8 a 12 hs y el domingo descansan en el lugar. Si la obra termina un sábado, vuelven ese mismo sábado (dentro de las 4 hs de 8 a 12) en lugar de esperar al lunes. Si la obra dura más, el ciclo se repite.';
+    return 'Ida el lunes de la 1ª semana y vuelta el viernes de la 2ª semana, dentro del horario de 8 a 17 hs. El sábado de la 1ª semana trabajan de 8 a 13 hs y el domingo descansan en el lugar. Si la obra termina un sábado, vuelven ese mismo sábado (dentro de las 5 hs de 8 a 13) en lugar de esperar al lunes. Si la obra dura más, el ciclo se repite.';
   }
 
   return modalidad === '1'
@@ -2145,76 +2186,70 @@ const TIPOS_CRONOGRAMA = {
   fin: { color: '#3b5d65', leyenda: 'Fuera de la obra' },
 };
 
-// Semanas de la jornada, día por día (lunes a domingo).
-const cronogramaJornada = (clave, modalidad) => {
+// Semanas de la jornada, día por día (lunes a domingo). G es el traslado
+// empresa ↔ obra de ese día: si supera las 7 hs, el viaje consume casi toda
+// la jornada y se muestra solo "Viaje", sin sumarle "+ trabajo".
+const cronogramaJornada = (clave, modalidad, G) => {
+  const viajeLargo = Number.isFinite(Number(G)) && Number(G) > 7;
   const c = (tipo, texto) => ({ tipo, texto });
   const trabajo = c('trabajo', 'Trabajo');
   const casa = c('casa', 'En casa');
+  const ida = c('ida', viajeLargo ? 'Viaje' : 'Ida + trabajo');
+  const vuelta = c('vuelta', viajeLargo ? 'Viaje' : 'Trabajo + vuelta a casa');
 
   if (clave === 'lv_descanso') {
     return [
       [
-        c('ida', 'Ida + trabajo'),
+        ida,
         trabajo,
         trabajo,
         trabajo,
         trabajo,
         c('descanso', 'Descanso en el lugar'),
-        c('descanso', 'Descanso (se paga doble)'),
+        c('descanso', 'Descanso en el lugar'),
       ],
-      [
-        trabajo,
-        trabajo,
-        trabajo,
-        trabajo,
-        c('vuelta', 'Trabajo + vuelta a casa'),
-        casa,
-        casa,
-      ],
+      [trabajo, trabajo, trabajo, trabajo, vuelta, casa, casa],
     ];
   }
 
   if (clave === 'lv_sab') {
     return [
       [
-        c('ida', 'Ida + trabajo'),
+        ida,
         trabajo,
         trabajo,
         trabajo,
         trabajo,
-        c('trabajo', 'Trabajo 8 a 12 hs'),
-        c('descanso', 'Descanso (se paga doble)'),
+        c('trabajo', 'Trabajo 8 a 13 hs'),
+        c('descanso', 'Descanso en el lugar'),
       ],
-      [
-        trabajo,
-        trabajo,
-        trabajo,
-        trabajo,
-        c('vuelta', 'Trabajo + vuelta a casa'),
-        casa,
-        casa,
-      ],
+      [trabajo, trabajo, trabajo, trabajo, vuelta, casa, casa],
     ];
   }
 
   if (clave === 'lv_sab_vuelta_sab') {
     return [
       [
-        c('ida', 'Ida + trabajo'),
+        ida,
         trabajo,
         trabajo,
         trabajo,
         trabajo,
-        c('trabajo', 'Trabajo 8 a 12 hs'),
-        c('descanso', 'Descanso (se paga doble)'),
+        c('trabajo', 'Trabajo 8 a 13 hs'),
+        c('descanso', 'Descanso en el lugar'),
       ],
       [
         trabajo,
         trabajo,
         trabajo,
         trabajo,
-        c('vuelta', 'Trabajo + vuelta a casa'),
-        c('vuelta', 'Si la obra termina: trabajo 8 a 12 hs + vuelta'),
+        vuelta,
+        c(
+          'vuelta',
+          viajeLargo
+            ? 'Si la obra termina: viaje'
+            : 'Si la obra termina: trabajo 8 a 13 hs + vuelta'
+        ),
         casa,
       ],
     ];
@@ -2226,17 +2261,7 @@ const cronogramaJornada = (clave, modalidad) => {
     return [[idaVuelta, idaVuelta, idaVuelta, idaVuelta, idaVuelta, casa, casa]];
   }
 
-  return [
-    [
-      c('ida', 'Ida + trabajo'),
-      trabajo,
-      trabajo,
-      trabajo,
-      c('vuelta', 'Trabajo + vuelta a casa'),
-      casa,
-      casa,
-    ],
-  ];
+  return [[ida, trabajo, trabajo, trabajo, vuelta, casa, casa]];
 };
 
 const formatFechaCorta = (fecha) =>
@@ -2252,9 +2277,9 @@ const formatFechaCorta = (fecha) =>
 const NOMBRES_CORTOS_JORNADA = {
   lv: 'Lunes a viernes, 8 a 17 hs',
   lv_descanso: 'L–V 8 a 17 hs · estadía de 2 semanas, descanso en el lugar',
-  lv_sab: 'L–V 8 a 17 hs + sábado 8 a 12 hs · estadía de 2 semanas',
+  lv_sab: 'L–V 8 a 17 hs + sábado 8 a 13 hs · estadía de 2 semanas',
   lv_sab_vuelta_sab:
-    'L–V 8 a 17 hs + sábado 8 a 12 hs · estadía de 2 semanas, vuelta el sábado al finalizar',
+    'L–V 8 a 17 hs + sábado 8 a 13 hs · estadía de 2 semanas, vuelta el sábado al finalizar',
 };
 
 // Resumen breve de cuándo se viaja (el detalle está en el calendario).
@@ -2411,14 +2436,12 @@ const construirHtmlInforme = (r) => {
     .join('');
 
   // ── Costo ──
-  const diasTrabajo = cal.diasPagados - cal.diasDescansoEnLugar;
-  const recargoDomingos = cal.domingosEnLugar * (PAGO_DOMINGO_EN_LUGAR - 1);
-  const totalPago = cal.diasPagoEquivalentes;
-
+  // "Días fuera de casa" (base de los viáticos) se compone de los días
+  // efectivos de trabajo (los únicos que se pagan como mano de obra) más los
+  // de descanso en el lugar (no se pagan, pero sí generan gasto de viáticos).
   const segmentos = [
-    ['Días de trabajo', diasTrabajo, '#95de1d'],
-    ['Descanso en el lugar', cal.diasDescansoEnLugar, '#ffc933'],
-    ['Recargo domingos (pago doble)', recargoDomingos, '#ff9f4a'],
+    ['Días de trabajo', cal.diasTrabajados, '#95de1d'],
+    ['Descanso en el lugar (sin cobrar)', cal.diasDescansoEnLugar, '#ffc933'],
   ].filter((seg) => seg[1] > 0);
 
   const barraPago = segmentos
@@ -2435,63 +2458,104 @@ const construirHtmlInforme = (r) => {
     )
     .join('');
 
+  const fila = (nombre, detalle, importe, clase) =>
+    `<div class="fila${clase ? ' ' + clase : ''}"><div class="f-nombre">${esc(
+      nombre
+    )}</div><div class="f-det">${esc(detalle)}</div><div class="f-imp">${importe}</div></div>`;
+
   const seccionCosto = costo
     ? `
     <section class="sec costo">
-      <div class="sec-t">Costo estimado de mano de obra</div>
+      <div class="sec-t">Costo estimado</div>
 
       <div class="caja">
-        <div class="fila">
-          <div class="f-nombre">Instaladores</div>
-          <div class="f-det">${ent(r.operarios)} ${plural(r.operarios, 'persona', 'personas')} × ${usd(
-        costo.tarifaInstalador
-      )} por día × ${ent(totalPago)} días de pago</div>
-          <div class="f-imp">${usd(costo.instaladores)}</div>
-        </div>
+        ${fila(
+          'Instaladores',
+          `${ent(r.operarios)} ${plural(r.operarios, 'persona', 'personas')} × ${usd(
+            costo.tarifaInstalador
+          )} por día × ${ent(cal.diasTrabajados)} días de trabajo`,
+          usd(costo.instaladores)
+        )}
+        ${fila(
+          'Supervisor',
+          r.conSupervisor
+            ? `1 persona × ${usd(costo.tarifaSupervisor)} por día × ${ent(
+                cal.diasTrabajados
+              )} días de trabajo`
+            : 'No incluido',
+          r.conSupervisor ? usd(costo.supervisor) : '—'
+        )}
+        ${
+          costo.viaticos !== null
+            ? fila(
+                'Viáticos',
+                `${ent(costo.personas)} ${plural(
+                  costo.personas,
+                  'persona',
+                  'personas'
+                )} × ${usd(costo.tarifaViatico)} por día × ${ent(
+                  cal.diasFueraDeCasa
+                )} días fuera de casa`,
+                usd(costo.viaticos)
+              )
+            : ''
+        }
+        ${
+          costo.alojamiento !== null
+            ? fila(
+                'Alojamiento',
+                `${ent(costo.personas)} ${plural(
+                  costo.personas,
+                  'persona',
+                  'personas'
+                )} × ${usd(costo.tarifaAlojamiento)} por noche × ${ent(
+                  cal.nochesFueraDeCasa
+                )} noches`,
+                usd(costo.alojamiento)
+              )
+            : ''
+        }
 
-        <div class="fila">
-          <div class="f-nombre">Supervisor</div>
-          <div class="f-det">${
-            r.conSupervisor
-              ? `1 persona × ${usd(costo.tarifaSupervisor)} por día × ${ent(
-                  totalPago
-                )} días de pago`
-              : 'No incluido'
-          }</div>
-          <div class="f-imp">${r.conSupervisor ? usd(costo.supervisor) : '—'}</div>
-        </div>
+        ${fila('Total estimado', '', usd(costo.total), 'total')}
 
-        <div class="fila total">
-          <div class="f-nombre">Total mano de obra</div>
-          <div class="f-det"></div>
-          <div class="f-imp">${usd(costo.total)}</div>
-        </div>
-
-        <div class="fila">
-          <div class="f-nombre">Costo por kWp</div>
-          <div class="f-det">${usd(costo.total)} ÷ ${num(r.potencia, 2)} kWp</div>
-          <div class="f-imp">${usd(costo.porKwp)} / kWp</div>
-        </div>
+        ${fila(
+          'Costo por kWp',
+          `${usd(costo.total)} ÷ ${num(r.potencia, 2)} kWp`,
+          `${usd(costo.porKwp)} / kWp`
+        )}
       </div>
 
-      <div class="pago">
-        <div class="pago-t">De dónde salen los <b>${ent(totalPago)} días de pago</b></div>
+      ${
+        segmentos.length > 1
+          ? `<div class="pago">
+        <div class="pago-t">De dónde salen los <b>${ent(
+          cal.diasFueraDeCasa
+        )} días fuera de casa</b> (base de los viáticos)</div>
         <div class="barra">${barraPago}</div>
         <div class="pago-l">${detallePago}</div>
-      </div>
+      </div>`
+          : ''
+      }
     </section>`
     : `
     <section class="sec costo">
-      <div class="sec-t">Costo estimado de mano de obra</div>
+      <div class="sec-t">Costo estimado</div>
       <div class="aviso">No se calculó el costo: falta ingresar el valor de mano de obra por día en la calculadora.</div>
     </section>`;
 
   const incluye = costo
     ? `Mano de obra ${
         r.conSupervisor ? 'de instaladores y supervisor' : 'de instaladores'
-      }: días trabajados y de descanso en el lugar${
-        cal.domingosEnLugar > 0 ? ', con los domingos en el lugar al doble' : ''
-      }.`
+      }: solo los ${ent(cal.diasTrabajados)} días efectivos de trabajo (los de descanso en el lugar no se pagan).${
+        costo.viaticos !== null || costo.alojamiento !== null
+          ? ` Incluye también ${[
+              costo.viaticos !== null ? 'viáticos' : '',
+              costo.alojamiento !== null ? 'alojamiento' : '',
+            ]
+              .filter(Boolean)
+              .join(' y ')}.`
+          : ' No incluye materiales, viáticos ni alojamiento.'
+      }`
     : 'Plazo de ejecución estimado.';
 
   return `<!DOCTYPE html>
@@ -3088,6 +3152,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     supervisor: 'no',
     tarifaInstalador: '',
     tarifaSupervisor: '',
+    viaticoPorDia: '',
+    alojamientoPorNoche: '',
     fechaInicio: '',
     tipoClienteRef: 'Todos los clientes',
     implantacionRef: 'Todas las implantaciones',
@@ -5176,6 +5242,8 @@ const dataAnio =
       supervisor: 'no',
       tarifaInstalador: '',
       tarifaSupervisor: '',
+      viaticoPorDia: '',
+      alojamientoPorNoche: '',
       fechaInicio: '',
       tipoClienteRef: 'Todos los clientes',
       implantacionRef: 'Todas las implantaciones',
@@ -5213,8 +5281,12 @@ const dataAnio =
 
     const textoTarifaInst = String(formEstimacion.tarifaInstalador).trim();
     const textoTarifaSup = String(formEstimacion.tarifaSupervisor).trim();
+    const textoViatico = String(formEstimacion.viaticoPorDia).trim();
+    const textoAlojamiento = String(formEstimacion.alojamientoPorNoche).trim();
     const tarifaInstalador = textoTarifaInst ? parseNum(textoTarifaInst) : null;
     const tarifaSupervisor = textoTarifaSup ? parseNum(textoTarifaSup) : null;
+    const viatico = textoViatico ? parseNum(textoViatico) : null;
+    const alojamiento = textoAlojamiento ? parseNum(textoAlojamiento) : null;
 
     if (!A || !E) {
       setErrorEstimacion('Completá el nombre y el lugar.');
@@ -5237,6 +5309,13 @@ const dataAnio =
         (Number.isNaN(tarifaSupervisor) || tarifaSupervisor < 0))
     ) {
       setErrorEstimacion('Los valores de mano de obra deben ser números positivos.');
+      return;
+    }
+    if (
+      (viatico !== null && (Number.isNaN(viatico) || viatico < 0)) ||
+      (alojamiento !== null && (Number.isNaN(alojamiento) || alojamiento < 0))
+    ) {
+      setErrorEstimacion('Los valores de viáticos y alojamiento deben ser números positivos.');
       return;
     }
     if (tarifaInstalador === null && tarifaSupervisor !== null) {
@@ -5262,6 +5341,8 @@ const dataAnio =
       supervisor: conSupervisor,
       tarifaInstalador,
       tarifaSupervisor,
+      viatico,
+      alojamiento,
       fechaInicio: formEstimacion.fechaInicio,
     });
 
@@ -6002,7 +6083,7 @@ const dataAnio =
                   fontWeight: 700,
                 }}
               >
-                Jornada de trabajo y costo de mano de obra
+                Jornada de trabajo, mano de obra, viáticos y alojamiento
               </div>
 
               <div style={S.formGrid}>
@@ -6055,7 +6136,8 @@ const dataAnio =
                         <CronogramaSemanas
                           semanas={cronogramaJornada(
                             formEstimacion.jornada,
-                            modalidadEfectiva
+                            modalidadEfectiva,
+                            parseNum(formEstimacion.trasladoEmpresa)
                           ).map((celdas) => ({ celdas }))}
                         />
 
@@ -6149,7 +6231,42 @@ const dataAnio =
                     placeholder="Ej: 120"
                   />
                   <div style={S.help}>
-                    Cobra los mismos días que la cuadrilla (domingos al doble).
+                    Cobra los mismos días efectivos de trabajo que la cuadrilla
+                    (no los de descanso en el lugar).
+                  </div>
+                </div>
+
+                <div>
+                  <label style={S.label}>Viáticos (USD por persona por día)</label>
+                  <input
+                    style={S.estimatorInput}
+                    value={formEstimacion.viaticoPorDia}
+                    onChange={(e) => updateForm('viaticoPorDia', e.target.value)}
+                    placeholder="Ej: 15"
+                  />
+                  <div style={S.help}>
+                    Opcional. Se paga por cada día fuera de casa (trabajo y
+                    descanso en el lugar incluidos) y por cada persona
+                    (instaladores y, si viaja, el supervisor).
+                  </div>
+                </div>
+
+                <div>
+                  <label style={S.label}>
+                    Alojamiento (USD por persona por noche)
+                  </label>
+                  <input
+                    style={S.estimatorInput}
+                    value={formEstimacion.alojamientoPorNoche}
+                    onChange={(e) =>
+                      updateForm('alojamientoPorNoche', e.target.value)
+                    }
+                    placeholder="Ej: 20"
+                  />
+                  <div style={S.help}>
+                    Opcional. Se paga por cada noche fuera de casa y por cada
+                    persona. En la jornada diaria (ida y vuelta el mismo día)
+                    no hay noches fuera, así que da 0.
                   </div>
                 </div>
               </div>
@@ -6317,7 +6434,7 @@ const dataAnio =
                           [
                             'Vuelta el sábado',
                             !resultadoEstimacion.vueltaSabadoDisponible
-                              ? 'No disponible con este traslado (vuelta + alojamiento superan las 4 hs del sábado): se vuelve el lunes'
+                              ? `No disponible con este traslado (vuelta + alojamiento superan las ${HORAS_SABADO} hs del sábado): se vuelve el lunes`
                               : resultadoEstimacion.calendario.terminaEnSabado
                               ? 'Sí: la obra termina un sábado y vuelven ese mismo día'
                               : 'Disponible, pero la obra no termina en sábado',
@@ -6333,21 +6450,29 @@ const dataAnio =
                         ]
                       : []),
                     [
-                      'Días pagados a la cuadrilla',
-                      `${resultadoEstimacion.calendario.diasPagados} días${
-                        resultadoEstimacion.calendario.diasDescansoEnLugar > 0
-                          ? ` (incluye ${resultadoEstimacion.calendario.diasDescansoEnLugar} de descanso en el lugar, ${resultadoEstimacion.calendario.domingosEnLugar} de ellos domingos)`
-                          : ''
-                      }`,
+                      'Días efectivos de trabajo (se pagan)',
+                      `${resultadoEstimacion.calendario.diasTrabajados} días`,
                     ],
-                    ...(resultadoEstimacion.calendario.domingosEnLugar > 0
+                    ...(resultadoEstimacion.calendario.diasDescansoEnLugar > 0
                       ? [
                           [
-                            'Días de pago (domingo en el lugar al doble)',
-                            `${resultadoEstimacion.calendario.diasPagoEquivalentes} días`,
+                            'Días de descanso en el lugar (no se pagan)',
+                            `${resultadoEstimacion.calendario.diasDescansoEnLugar} días${
+                              resultadoEstimacion.calendario.domingosEnLugar > 0
+                                ? ` (${resultadoEstimacion.calendario.domingosEnLugar} de ellos domingos)`
+                                : ''
+                            }`,
+                          ],
+                          [
+                            'Días fuera de casa (base de los viáticos)',
+                            `${resultadoEstimacion.calendario.diasFueraDeCasa} días`,
                           ],
                         ]
                       : []),
+                    [
+                      'Noches fuera de casa (base del alojamiento)',
+                      `${resultadoEstimacion.calendario.nochesFueraDeCasa} noches`,
+                    ],
                   ].map(([k, v]) => (
                     <tr key={k}>
                       <td style={S.td}>{k}</td>
@@ -6383,7 +6508,7 @@ const dataAnio =
                 <CronogramaSemanas semanas={resultadoEstimacion.calendario.cronograma} />
               </div>
 
-              <h3 style={{ marginTop: 22 }}>💰 Costo estimado de mano de obra</h3>
+              <h3 style={{ marginTop: 22 }}>💰 Costo estimado</h3>
               {resultadoEstimacion.costo ? (
                 <>
                   <table style={S.table}>
@@ -6392,7 +6517,7 @@ const dataAnio =
                         <td style={S.td}>
                           Instaladores: {resultadoEstimacion.operarios} × USD{' '}
                           {resultadoEstimacion.costo.tarifaInstalador} por día ×{' '}
-                          {resultadoEstimacion.calendario.diasPagoEquivalentes} días de pago
+                          {resultadoEstimacion.calendario.diasTrabajados} días de trabajo
                         </td>
                         <td style={S.td}>
                           {formatUsdAbs(resultadoEstimacion.costo.instaladores)}
@@ -6403,21 +6528,46 @@ const dataAnio =
                           <td style={S.td}>
                             Supervisor: 1 × USD{' '}
                             {resultadoEstimacion.costo.tarifaSupervisor} por día ×{' '}
-                            {resultadoEstimacion.calendario.diasPagoEquivalentes} días de pago
+                            {resultadoEstimacion.calendario.diasTrabajados} días de trabajo
                           </td>
                           <td style={S.td}>
                             {formatUsdAbs(resultadoEstimacion.costo.supervisor)}
                           </td>
                         </tr>
                       )}
+                      {resultadoEstimacion.costo.viaticos !== null && (
+                        <tr>
+                          <td style={S.td}>
+                            Viáticos: {resultadoEstimacion.costo.personas} × USD{' '}
+                            {resultadoEstimacion.costo.tarifaViatico} por día ×{' '}
+                            {resultadoEstimacion.calendario.diasFueraDeCasa} días fuera
+                            de casa
+                          </td>
+                          <td style={S.td}>
+                            {formatUsdAbs(resultadoEstimacion.costo.viaticos)}
+                          </td>
+                        </tr>
+                      )}
+                      {resultadoEstimacion.costo.alojamiento !== null && (
+                        <tr>
+                          <td style={S.td}>
+                            Alojamiento: {resultadoEstimacion.costo.personas} × USD{' '}
+                            {resultadoEstimacion.costo.tarifaAlojamiento} por noche ×{' '}
+                            {resultadoEstimacion.calendario.nochesFueraDeCasa} noches
+                          </td>
+                          <td style={S.td}>
+                            {formatUsdAbs(resultadoEstimacion.costo.alojamiento)}
+                          </td>
+                        </tr>
+                      )}
                       <tr>
-                        <td style={{ ...S.td, fontWeight: 800 }}>Total de mano de obra</td>
+                        <td style={{ ...S.td, fontWeight: 800 }}>Total estimado</td>
                         <td style={{ ...S.td, fontWeight: 800, color: '#ffc933' }}>
                           {formatUsdAbs(resultadoEstimacion.costo.total)}
                         </td>
                       </tr>
                       <tr>
-                        <td style={S.td}>Costo de MO por kWp</td>
+                        <td style={S.td}>Costo total por kWp</td>
                         <td style={S.td}>
                           USD {Math.round(resultadoEstimacion.costo.porKwp).toLocaleString('es-AR')}{' '}
                           por kWp
@@ -6426,9 +6576,22 @@ const dataAnio =
                     </tbody>
                   </table>
                   <div style={S.help}>
-                    Solo mano de obra: se pagan los días trabajados y los días de
-                    descanso en el lugar (los domingos, al doble). No incluye
-                    materiales, alojamiento ni viáticos.
+                    Mano de obra: solo los días efectivos de trabajo (
+                    {resultadoEstimacion.calendario.diasTrabajados}); los días de
+                    descanso en el lugar no se pagan.
+                    {resultadoEstimacion.costo.viaticos !== null ||
+                    resultadoEstimacion.costo.alojamiento !== null
+                      ? ` Incluye también ${[
+                          resultadoEstimacion.costo.viaticos !== null
+                            ? 'viáticos'
+                            : '',
+                          resultadoEstimacion.costo.alojamiento !== null
+                            ? 'alojamiento'
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' y ')}.`
+                      : ' No incluye materiales, viáticos ni alojamiento.'}
                   </div>
                 </>
               ) : (
