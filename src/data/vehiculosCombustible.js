@@ -47,13 +47,11 @@ export const VEHICULOS_FLOTA = [
   { nombre: 'Iveco Tector', patente: 'NQH984', kmPorLitro: 4, combustible: 'Diesel Infinia', categoria: 'Camiones' },
   { nombre: 'Mercedes-Benz Atego', patente: 'AC892EQ', kmPorLitro: 4, combustible: 'Diesel Infinia', categoria: 'Camiones' },
 
-  // ── Vehículos particulares ──
-  { nombre: 'Chevrolet Corsa', patente: 'GOG235', kmPorLitro: 12.5, combustible: 'Nafta Súper', categoria: 'Particulares' },
-  { nombre: 'Ford Focus', patente: 'HBU804', kmPorLitro: 12.5, combustible: 'Nafta Súper', categoria: 'Particulares' },
-  { nombre: 'VW Gol Trend', patente: 'AB923AH', kmPorLitro: 12, combustible: 'Nafta Infinia', categoria: 'Particulares' },
+  // No se incluyen los vehículos particulares (Chevrolet Corsa GOG235, Ford
+  // Focus HBU804, VW Gol Trend AB923AH): no entran en esta calculadora.
 ].map((v) => ({
   ...v,
   precioLitroUsd: PRECIO_COMBUSTIBLE_USD_LITRO[v.combustible],
 }));
 
-export const CATEGORIAS_VEHICULOS = ['Utilitarios', 'Camiones', 'Particulares'];
+export const CATEGORIAS_VEHICULOS = ['Utilitarios', 'Camiones'];
