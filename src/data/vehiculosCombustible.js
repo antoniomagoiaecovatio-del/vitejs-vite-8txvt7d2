@@ -9,6 +9,13 @@
 // Para actualizar: copiar los valores de "US$ / litro" de la tabla de precios
 // de combustible de ese documento y el "km/l" y "Combustible" de cada
 // vehículo en la tabla de la flota.
+//
+// Generalizado por modelo: los vehículos con la misma marca/modelo, el mismo
+// consumo y el mismo combustible se muestran una sola vez (ej. las 3 Fiat
+// Fiorino son un solo ítem); "cantidad" en el formulario reemplaza a elegir
+// cada patente. "unidades" es solo informativo: cuántas hay en la flota.
+// No se incluyen los vehículos particulares (Chevrolet Corsa, Ford Focus,
+// VW Gol Trend): no entran en esta calculadora.
 
 // Precio del combustible en USD por litro (tipo de cambio 1.545, fijo).
 export const PRECIO_COMBUSTIBLE_USD_LITRO = {
@@ -19,36 +26,24 @@ export const PRECIO_COMBUSTIBLE_USD_LITRO = {
   GNC: 0.407,
 };
 
-// No incluye "Bidón de Nafta" (grupo electrógeno: se pide en litros, no
-// tiene km/l ni viaja).
 export const VEHICULOS_FLOTA = [
   // ── Utilitarios ──
-  { nombre: 'Fiat Fiorino', patente: 'AB666JB', kmPorLitro: 12, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Fiat Fiorino', patente: 'AB929RE', kmPorLitro: 12, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Fiat Fiorino', patente: 'NNS221', kmPorLitro: 12, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Fiat Uno', patente: 'NMQ238', kmPorLitro: 13, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Ford F-100', patente: 'BJP664', kmPorLitro: 9, combustible: 'Diesel Común', categoria: 'Utilitarios' },
-  { nombre: 'Ford Ranger', patente: 'OAO960', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
-  { nombre: 'Renault Clio', patente: 'PLS555', kmPorLitro: 13, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Renault Kangoo', patente: 'AB412MK', kmPorLitro: 11, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Renault Kangoo', patente: 'AB412ML', kmPorLitro: 11, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Renault Kangoo', patente: 'AB853XI', kmPorLitro: 11, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
-  { nombre: 'Toyota Hilux', patente: 'AA053EX', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
-  { nombre: 'Toyota Hilux', patente: 'AG138OO', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
-  { nombre: 'Toyota Hilux', patente: 'AG303HR', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
-  { nombre: 'Toyota Hilux', patente: 'AG672WD', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
+  { id: 'fiat-fiorino', nombre: 'Fiat Fiorino', unidades: 3, kmPorLitro: 12, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
+  { id: 'fiat-uno', nombre: 'Fiat Uno', unidades: 1, kmPorLitro: 13, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
+  { id: 'ford-f100', nombre: 'Ford F-100', unidades: 1, kmPorLitro: 9, combustible: 'Diesel Común', categoria: 'Utilitarios' },
+  { id: 'ford-ranger', nombre: 'Ford Ranger', unidades: 1, kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
+  { id: 'renault-clio', nombre: 'Renault Clio', unidades: 1, kmPorLitro: 13, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
+  { id: 'renault-kangoo', nombre: 'Renault Kangoo', unidades: 3, kmPorLitro: 11, combustible: 'Nafta Súper', categoria: 'Utilitarios' },
+  { id: 'toyota-hilux', nombre: 'Toyota Hilux', unidades: 4, kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Utilitarios' },
 
   // ── Camiones ──
-  { nombre: 'Ford F-4000', patente: 'PHM752', kmPorLitro: 6, combustible: 'Diesel Común', categoria: 'Camiones' },
-  { nombre: 'Iveco Daily', patente: 'AA316TH', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Camiones' },
-  { nombre: 'Iveco Daily', patente: 'AB352DT', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Camiones' },
-  { nombre: 'Iveco Daily', patente: 'AG220DI', kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Camiones' },
-  { nombre: 'Iveco Daily', patente: 'GLY209', kmPorLitro: 10, combustible: 'Diesel Común', categoria: 'Camiones' },
-  { nombre: 'Iveco Tector', patente: 'NQH984', kmPorLitro: 4, combustible: 'Diesel Infinia', categoria: 'Camiones' },
-  { nombre: 'Mercedes-Benz Atego', patente: 'AC892EQ', kmPorLitro: 4, combustible: 'Diesel Infinia', categoria: 'Camiones' },
-
-  // No se incluyen los vehículos particulares (Chevrolet Corsa GOG235, Ford
-  // Focus HBU804, VW Gol Trend AB923AH): no entran en esta calculadora.
+  { id: 'ford-f4000', nombre: 'Ford F-4000', unidades: 1, kmPorLitro: 6, combustible: 'Diesel Común', categoria: 'Camiones' },
+  // Iveco Daily: 3 unidades andan con Diesel Infinia y 1 con Diesel Común
+  // (distinto gasto por litro) — quedan como dos ítems separados.
+  { id: 'iveco-daily-infinia', nombre: 'Iveco Daily', unidades: 3, kmPorLitro: 10, combustible: 'Diesel Infinia', categoria: 'Camiones' },
+  { id: 'iveco-daily-comun', nombre: 'Iveco Daily', unidades: 1, kmPorLitro: 10, combustible: 'Diesel Común', categoria: 'Camiones' },
+  { id: 'iveco-tector', nombre: 'Iveco Tector', unidades: 1, kmPorLitro: 4, combustible: 'Diesel Infinia', categoria: 'Camiones' },
+  { id: 'mercedes-atego', nombre: 'Mercedes-Benz Atego', unidades: 1, kmPorLitro: 4, combustible: 'Diesel Infinia', categoria: 'Camiones' },
 ].map((v) => ({
   ...v,
   precioLitroUsd: PRECIO_COMBUSTIBLE_USD_LITRO[v.combustible],

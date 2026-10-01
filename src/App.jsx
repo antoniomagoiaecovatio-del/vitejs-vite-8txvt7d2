@@ -3202,6 +3202,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     tarifaSupervisor: '',
     viaticoPorDia: '',
     alojamientoPorNoche: '',
+    presupuestarCombustible: 'no',
     distanciaKm: '',
     vehiculos: {},
     fechaInicio: '',
@@ -5268,28 +5269,36 @@ const dataAnio =
         siguiente.trasladoAlojamiento = '';
       }
 
+      // Al desactivar "presupuestar combustible" se limpia lo que se haya
+      // completado, para no dejar datos ocultos a mitad de cargar.
+      if (field === 'presupuestarCombustible' && value === 'no') {
+        siguiente.distanciaKm = '';
+        siguiente.vehiculos = {};
+      }
+
       return siguiente;
     });
 
     setErrorEstimacion('');
   };
 
-  // Vehículos elegidos para calcular el combustible: un mapa patente →
-  // cantidad. Tildar agrega el vehículo con cantidad 1; destildar lo quita.
-  const toggleVehiculo = (patente) => {
+  // Vehículos elegidos para calcular el combustible: un mapa id de vehículo
+  // (modelo + combustible) → cantidad. Tildar agrega el vehículo con
+  // cantidad 1; destildar lo quita.
+  const toggleVehiculo = (id) => {
     setFormEstimacion((p) => {
       const vehiculos = { ...p.vehiculos };
-      if (vehiculos[patente]) delete vehiculos[patente];
-      else vehiculos[patente] = 1;
+      if (vehiculos[id]) delete vehiculos[id];
+      else vehiculos[id] = 1;
       return { ...p, vehiculos };
     });
     setErrorEstimacion('');
   };
 
-  const setCantidadVehiculo = (patente, cantidad) => {
+  const setCantidadVehiculo = (id, cantidad) => {
     setFormEstimacion((p) => ({
       ...p,
-      vehiculos: { ...p.vehiculos, [patente]: Math.max(1, Math.round(cantidad) || 1) },
+      vehiculos: { ...p.vehiculos, [id]: Math.max(1, Math.round(cantidad) || 1) },
     }));
   };
 
@@ -5313,6 +5322,7 @@ const dataAnio =
       tarifaSupervisor: '',
       viaticoPorDia: '',
       alojamientoPorNoche: '',
+      presupuestarCombustible: 'no',
       distanciaKm: '',
       vehiculos: {},
       fechaInicio: '',
@@ -5358,15 +5368,22 @@ const dataAnio =
     const tarifaSupervisor = textoTarifaSup ? parseNum(textoTarifaSup) : null;
     const viatico = textoViatico ? parseNum(textoViatico) : null;
     const alojamiento = textoAlojamiento ? parseNum(textoAlojamiento) : null;
+    const presupuestarCombustible =
+      formEstimacion.presupuestarCombustible === 'si';
     const textoDistancia = String(formEstimacion.distanciaKm).trim();
-    const distanciaKm = textoDistancia ? parseNum(textoDistancia) : null;
-    const vehiculosElegidos = Object.entries(formEstimacion.vehiculos)
-      .filter(([, cantidad]) => Number(cantidad) > 0)
-      .map(([patente, cantidad]) => {
-        const v = VEHICULOS_FLOTA.find((x) => x.patente === patente);
-        return v ? { ...v, cantidad: Number(cantidad) } : null;
-      })
-      .filter(Boolean);
+    const distanciaKm =
+      presupuestarCombustible && textoDistancia
+        ? parseNum(textoDistancia)
+        : null;
+    const vehiculosElegidos = presupuestarCombustible
+      ? Object.entries(formEstimacion.vehiculos)
+          .filter(([, cantidad]) => Number(cantidad) > 0)
+          .map(([id, cantidad]) => {
+            const v = VEHICULOS_FLOTA.find((x) => x.id === id);
+            return v ? { ...v, cantidad: Number(cantidad) } : null;
+          })
+          .filter(Boolean)
+      : [];
 
     if (!A || !E) {
       setErrorEstimacion('Completá el nombre y el lugar.');
@@ -6367,6 +6384,26 @@ const dataAnio =
                 </div>
 
                 <div style={{ gridColumn: 'span 3' }}>
+                  <label style={S.label}>Presupuestar combustible</label>
+                  <select
+                    style={{ ...S.estimatorInput, maxWidth: 260 }}
+                    value={formEstimacion.presupuestarCombustible}
+                    onChange={(e) =>
+                      updateForm('presupuestarCombustible', e.target.value)
+                    }
+                  >
+                    <option value="no">No presupuestar combustible</option>
+                    <option value="si">Sí, presupuestar combustible</option>
+                  </select>
+                  <div style={S.help}>
+                    Si elegís "Sí" aparece la distancia y la lista de
+                    vehículos de la flota para calcular el gasto.
+                  </div>
+                </div>
+
+                {formEstimacion.presupuestarCombustible === 'si' && (
+                  <>
+                <div style={{ gridColumn: 'span 3' }}>
                   <label style={S.label}>Distancia obrador ↔ obra (km)</label>
                   <input
                     style={{ ...S.estimatorInput, maxWidth: 220 }}
@@ -6410,12 +6447,12 @@ const dataAnio =
                           {VEHICULOS_FLOTA.filter((v) => v.categoria === cat).map(
                             (v) => {
                               const cantidad =
-                                formEstimacion.vehiculos[v.patente] || 0;
+                                formEstimacion.vehiculos[v.id] || 0;
                               const elegido = cantidad > 0;
 
                               return (
                                 <div
-                                  key={v.patente}
+                                  key={v.id}
                                   style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -6431,19 +6468,20 @@ const dataAnio =
                                   <input
                                     type="checkbox"
                                     checked={elegido}
-                                    onChange={() => toggleVehiculo(v.patente)}
+                                    onChange={() => toggleVehiculo(v.id)}
                                     style={{ cursor: 'pointer' }}
                                   />
                                   <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.3 }}>
                                     <div style={{ fontWeight: 600 }}>
-                                      {v.nombre}{' '}
-                                      <span style={{ color: '#8fa6a9' }}>
-                                        · {v.patente}
-                                      </span>
+                                      {v.nombre}
+                                      {VEHICULOS_FLOTA.filter((x) => x.nombre === v.nombre).length > 1 && (
+                                        <span style={{ color: '#8fa6a9' }}> · {v.combustible}</span>
+                                      )}
                                     </div>
                                     <div style={{ color: '#8fa6a9', fontSize: 11 }}>
                                       {v.kmPorLitro} km/l · {v.combustible} · USD{' '}
                                       {v.precioLitroUsd.toFixed(2)}/l
+                                      {v.unidades > 1 ? ` · hasta ${v.unidades} unidades` : ''}
                                     </div>
                                   </div>
                                   {elegido && (
@@ -6453,7 +6491,7 @@ const dataAnio =
                                       value={cantidad}
                                       onChange={(e) =>
                                         setCantidadVehiculo(
-                                          v.patente,
+                                          v.id,
                                           Number(e.target.value)
                                         )
                                       }
@@ -6483,6 +6521,9 @@ const dataAnio =
                     01/10/2026 — no se vuelven a traer solos.
                   </div>
                 </div>
+                  </>
+                )}
+
               </div>
             </div>
             <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
@@ -6842,7 +6883,7 @@ const dataAnio =
                       totales): {resultadoEstimacion.costo.combustibleDetalle
                         .map(
                           (v) =>
-                            `${v.cantidad > 1 ? v.cantidad + '× ' : ''}${v.nombre} (${v.patente}): ${v.litros.toFixed(1)} l · ${formatUsdAbs(v.costo)}`
+                            `${v.cantidad > 1 ? v.cantidad + '× ' : ''}${v.nombre} (${v.combustible}): ${v.litros.toFixed(1)} l · ${formatUsdAbs(v.costo)}`
                         )
                         .join(' · ')}
                     </div>
