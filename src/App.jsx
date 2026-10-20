@@ -1601,15 +1601,114 @@ const OPCIONES_POTENCIA_LABELS = [
 ].map(getPowerRangeLabel);
 
 // ── Estimador de obras: jornadas, calendario y costo de mano de obra ──
-const HORAS_JORNADA_DIA = 8; // 8 a 17 hs con 1 h de almuerzo
-const HORAS_SABADO = 5; // sábado 8 a 13 hs
+// Horario de trabajo. Por defecto: lunes a viernes de 8 a 17 hs con 1 h de
+// almuerzo (8 hs efectivas) y sábado de 8 a 13 hs (5 hs). Se puede cambiar en
+// el formulario ("Horario de trabajo: Personalizado"); todo el cálculo usa
+// horario.horasDia y horario.horasSabado.
 // La mano de obra se presupuesta solo por los días EFECTIVOS de trabajo: los
-// días de descanso (sábado o domingo en el lugar) no se cobran. Un sábado
-// trabajado (HORAS_SABADO) se paga como un día completo, igual que uno de
-// lunes a viernes: el costo es "por día", no por hora.
+// días de descanso (sábado o domingo en el lugar) no se cobran. Cualquier día
+// trabajado se paga como un día completo, sin importar cuántas horas tenga
+// (un sábado de 5 hs o una jornada de 6 a 12 cuestan igual que un día de 8
+// hs): el costo es "por día", no por hora.
+const HORARIO_ESTANDAR = {
+  inicio: 8,
+  fin: 17,
+  almuerzo: 1,
+  sabInicio: 8,
+  sabFin: 13,
+};
+
+// 6 -> "6", 6.5 -> "6:30"
+const fmtHora = (h) => {
+  const horas = Math.floor(h + 1e-9);
+  const min = Math.round((h - horas) * 60);
+  return min ? `${horas}:${String(min).padStart(2, '0')}` : String(horas);
+};
+
+const construirHorario = (b) => {
+  const horasDia = b.fin - b.inicio - b.almuerzo;
+  const horasSabado = b.sabFin - b.sabInicio;
+
+  return {
+    ...b,
+    horasDia,
+    horasSabado,
+    textoLV: `${fmtHora(b.inicio)} a ${fmtHora(b.fin)} hs`,
+    textoSab: `${fmtHora(b.sabInicio)} a ${fmtHora(b.sabFin)} hs`,
+    estandar:
+      b.inicio === HORARIO_ESTANDAR.inicio &&
+      b.fin === HORARIO_ESTANDAR.fin &&
+      b.almuerzo === HORARIO_ESTANDAR.almuerzo &&
+      b.sabInicio === HORARIO_ESTANDAR.sabInicio &&
+      b.sabFin === HORARIO_ESTANDAR.sabFin,
+  };
+};
+
+const HORARIO_POR_DEFECTO = construirHorario(HORARIO_ESTANDAR);
+
+// Los textos de las jornadas están escritos con el horario estándar ("8 a 17
+// hs", "8 a 13 hs", "{HS}" = horas del sábado): esta función los reemplaza por
+// el horario elegido (una sola pasada, para no pisar un reemplazo con otro).
+const aplicarHorario = (texto, h = HORARIO_POR_DEFECTO) =>
+  String(texto).replace(/8 a 17 hs|8 a 13 hs|\{HS\}/g, (m) =>
+    m === '8 a 17 hs' ? h.textoLV : m === '8 a 13 hs' ? h.textoSab : String(h.horasSabado)
+  );
+
+// "06:30" -> 6.5 (NaN si no es una hora válida)
+const parseHora = (t) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || '').trim());
+  if (!m) return NaN;
+  const h = Number(m[1]) + Number(m[2]) / 60;
+  return h <= 24 ? h : NaN;
+};
+
+// Arma y valida el horario que se cargó en el formulario. Si el modo es
+// "estándar" no mira los campos personalizados.
+const horarioDesdeForm = (form, trabajaSabado) => {
+  if (form.horarioModo !== 'personalizado') {
+    return { horario: HORARIO_POR_DEFECTO, error: null };
+  }
+
+  const inicio = parseHora(form.horaInicio);
+  const fin = parseHora(form.horaFin);
+  const almuerzo = String(form.almuerzo).trim() === '' ? 0 : parseNum(form.almuerzo);
+  let sabInicio = HORARIO_ESTANDAR.sabInicio;
+  let sabFin = HORARIO_ESTANDAR.sabFin;
+
+  if (Number.isNaN(inicio) || Number.isNaN(fin)) {
+    return { horario: HORARIO_POR_DEFECTO, error: 'Completá la hora de inicio y la de fin de la jornada.' };
+  }
+  if (fin <= inicio) {
+    return { horario: HORARIO_POR_DEFECTO, error: 'La hora de fin de la jornada tiene que ser posterior a la de inicio.' };
+  }
+  if (Number.isNaN(almuerzo) || almuerzo < 0) {
+    return { horario: HORARIO_POR_DEFECTO, error: 'El tiempo de almuerzo tiene que ser un número de horas (0 o más).' };
+  }
+  if (fin - inicio - almuerzo < 1) {
+    return { horario: HORARIO_POR_DEFECTO, error: 'La jornada tiene que tener al menos 1 hora efectiva de trabajo.' };
+  }
+
+  if (trabajaSabado) {
+    sabInicio = parseHora(form.sabInicio);
+    sabFin = parseHora(form.sabFin);
+
+    if (Number.isNaN(sabInicio) || Number.isNaN(sabFin)) {
+      return { horario: HORARIO_POR_DEFECTO, error: 'Completá la hora de inicio y la de fin del sábado.' };
+    }
+    if (sabFin - sabInicio < 1) {
+      return { horario: HORARIO_POR_DEFECTO, error: 'El sábado tiene que tener al menos 1 hora de trabajo (fin posterior al inicio).' };
+    }
+  }
+
+  return {
+    horario: construirHorario({ inicio, fin, almuerzo, sabInicio, sabFin }),
+    error: null,
+  };
+};
 
 // Reglas de las jornadas:
-// - Se trabaja de lunes a viernes de 8 a 17 hs (8 hs efectivas).
+// - Se trabaja de lunes a viernes en el horario elegido (por defecto 8 a 17 hs,
+//   8 hs efectivas).
 // - Los viajes (ida y vuelta) se hacen SIEMPRE de lunes a viernes, dentro del
 //   horario de trabajo, y se descuentan de las horas efectivas del día.
 // - Los descansos en el lugar son SIEMPRE sábado o domingo.
@@ -1639,10 +1738,20 @@ const JORNADAS_OBRA = {
     label:
       'Lunes a viernes, 8 a 17 hs + sábado 8 a 13 hs, en el lugar, con vuelta el sábado al finalizar',
     detalle:
-      'Igual que la 3, pero si la obra termina un sábado vuelven ese mismo sábado (dentro de las 5 hs de 8 a 13) en vez de esperar al lunes. Solo es posible si el viaje de vuelta más el traslado al alojamiento entra en esas 5 hs.',
+      'Igual que la 3, pero si la obra termina un sábado vuelven ese mismo sábado (dentro de las {HS} hs de 8 a 13) en vez de esperar al lunes. Solo es posible si el viaje de vuelta más el traslado al alojamiento entra en esas {HS} hs.',
     trabajaSabado: true,
     seQuedaEnLugar: true,
     vueltaSabado: true,
+  },
+  lv_sab_continua: {
+    label:
+      'Lunes a viernes, 8 a 17 hs + sábado 8 a 13 hs, en el lugar hasta finalizar la obra',
+    detalle:
+      'Se quedan en la obra de corrido, trabajando también todos los sábados de 8 a 13 hs, y vuelven recién cuando terminan (sin cortes de 2 semanas). Los domingos descansan en el lugar (sin cobrar mano de obra, pero con viáticos y alojamiento). Si la obra termina un sábado, vuelven ese mismo día solo si el viaje entra en las {HS} hs.',
+    trabajaSabado: true,
+    seQuedaEnLugar: true,
+    vueltaSabado: true,
+    continua: true,
   },
 };
 
@@ -1657,7 +1766,8 @@ const NOMBRES_DIA_SEMANA = [
 ];
 
 // Arma el calendario de la obra día por día a partir del primer día de trabajo
-// y suma las horas efectivas de cada día (8 hs, sábado 4 hs, menos traslados).
+// y suma las horas efectivas de cada día (horario.horasDia, sábado
+// horario.horasSabado, menos traslados).
 //
 // - Jornada 1 (modalidad diaria): ida y vuelta todos los días.
 // - Jornada 1 (modalidad semanal): ida el primer día laborable de la semana y
@@ -1678,7 +1788,8 @@ const generarPlanObra = (
   H,
   fechaInicioTexto,
   conDetalle,
-  usarVueltaSabado = true
+  usarVueltaSabado = true,
+  horario = HORARIO_POR_DEFECTO
 ) => {
   let inicio = null;
 
@@ -1699,12 +1810,13 @@ const generarPlanObra = (
   const primerDia = new Date(cursor);
   const diaInicio = cursor.getDay();
   const seQueda = jornada.seQuedaEnLugar;
-  // Vuelta el sábado: solo si el viaje (vuelta + alojamiento) entra en las 4 hs.
+  // Vuelta el sábado: solo si el viaje (vuelta + alojamiento) entra en las
+  // horas del sábado.
   const permiteVueltaSabado =
     seQueda &&
     jornada.vueltaSabado &&
     usarVueltaSabado &&
-    G + H <= HORAS_SABADO + 1e-9;
+    G + H <= horario.horasSabado + 1e-9;
 
   let dia = diaInicio; // 0 = domingo ... 6 = sábado
   let estado = 'casa'; // 'casa' | 'estadia'
@@ -1735,7 +1847,9 @@ const generarPlanObra = (
     const laborable = dia >= 1 && dia <= 5;
 
     // Lunes: la estadía en curso pasa a su 2ª semana.
-    if (seQueda && dia === 1 && estado === 'estadia') semanaEnBloque = 2;
+    if (seQueda && !jornada.continua && dia === 1 && estado === 'estadia') {
+      semanaEnBloque = 2;
+    }
     if (!seQueda && dia === 1) nuevaSemana = true;
 
     let nuevoBloque = false;
@@ -1803,7 +1917,7 @@ const generarPlanObra = (
       // vez que salen de su casa hacia la obra.
       if (tipo === 'ida' || tipo === 'idavuelta') viajesRedondos += 1;
 
-      const horasBase = dia === 6 ? HORAS_SABADO : HORAS_JORNADA_DIA;
+      const horasBase = dia === 6 ? horario.horasSabado : horario.horasDia;
       const perdida =
         tipo === 'idavuelta' ? 2 * G : tipo === 'trabajo' ? 2 * H : G + H;
 
@@ -1813,11 +1927,11 @@ const generarPlanObra = (
       if (horasBase - perdida <= 1e-9) diasSoloViaje += 1;
 
       if (conDetalle) {
-        const base = dia === 6 ? 'Trabajo 8 a 13 hs' : 'Trabajo';
-        // Si el traslado empresa ↔ obra de ese día supera las 7 hs, casi no
-        // queda tiempo para trabajar: se muestra solo "Viaje", sin sumarle
-        // "+ trabajo".
-        const viajeLargo = G > 7;
+        const base = dia === 6 ? `Trabajo ${horario.textoSab}` : 'Trabajo';
+        // Si el traslado empresa ↔ obra de ese día deja menos de 1 hora de
+        // trabajo (más de 7 hs en una jornada de 8), se muestra solo "Viaje",
+        // sin sumarle "+ trabajo".
+        const viajeLargo = G > horario.horasDia - 1;
 
         celda = {
           tipo,
@@ -1923,7 +2037,7 @@ const generarPlanObra = (
   const trabajos = celdas.filter((c) => ['ida', 'trabajo', 'vuelta', 'idavuelta'].includes(c.tipo));
   const ultimaCelda = trabajos[trabajos.length - 1];
   const ultimoBloqueEsSuelto =
-    seQueda && ultimaCelda && ultimaCelda.semana === 1;
+    seQueda && !jornada.continua && ultimaCelda && ultimaCelda.semana === 1;
   const terminaEnSabado = Boolean(ultimaCelda && ultimaCelda.dia === 6);
   const bloqueCompleto = Boolean(
     ultimaCelda &&
@@ -1938,7 +2052,9 @@ const generarPlanObra = (
     const conBloque = semanaCeldas.find((c) => c.bloqueId);
     let etiqueta = '';
 
-    if (seQueda && conBloque) {
+    if (seQueda && jornada.continua && conBloque) {
+      etiqueta = `Estadía continua · semana ${i / 7 + 1}`;
+    } else if (seQueda && conBloque) {
       etiqueta =
         conBloque.bloqueId === bloqueId && ultimoBloqueEsSuelto
           ? terminaEnSabado
@@ -1954,7 +2070,15 @@ const generarPlanObra = (
 
   let composicion;
 
-  if (seQueda) {
+  if (seQueda && jornada.continua) {
+    composicion = `1 estadía continua de ${cronograma.length} ${
+      cronograma.length === 1 ? 'semana' : 'semanas'
+    } (ida el primer día, vuelta ${
+      terminaEnSabado
+        ? 'el sábado, al terminar la obra'
+        : `el ${NOMBRES_DIA_SEMANA[ultimaCelda ? ultimaCelda.dia : 5]}, al terminar la obra`
+    })`;
+  } else if (seQueda) {
     const completos = bloqueCompleto ? bloqueId : bloqueId - 1;
     const partes = [];
 
@@ -1995,25 +2119,28 @@ const generarPlanObra = (
   };
 };
 
-// Los traslados se hacen siempre dentro del horario de trabajo (8 a 17 hs):
-// tienen que caber en las horas del día en que se realizan.
-const errorDeCabida = (jornada, modalidad, G, H) => {
+// Los traslados se hacen siempre dentro del horario de trabajo: tienen que
+// caber en las horas del día en que se realizan.
+const errorDeCabida = (jornada, modalidad, G, H, horario = HORARIO_POR_DEFECTO) => {
+  const hd = horario.horasDia;
+  const hdTexto = String(Math.round(hd * 100) / 100).replace('.', ',');
+
   if (!jornada.seQuedaEnLugar && modalidad === '1') {
-    return 2 * G > HORAS_JORNADA_DIA
-      ? 'El traslado diario (ida y vuelta) no cabe en la jornada de 8 hs.'
+    return 2 * G > hd
+      ? `El traslado diario (ida y vuelta) no cabe en la jornada de ${hdTexto} hs.`
       : null;
   }
 
-  // El sábado trabajado (4 hs) es un día intermedio: el traslado diario
-  // alojamiento ↔ obra tiene que caber en esas horas.
-  const horasDiaCorto = jornada.trabajaSabado ? HORAS_SABADO : HORAS_JORNADA_DIA;
+  // El sábado trabajado es un día intermedio: el traslado diario alojamiento
+  // ↔ obra tiene que caber en esas horas.
+  const horasDiaCorto = jornada.trabajaSabado ? horario.horasSabado : hd;
 
-  if (G + H > HORAS_JORNADA_DIA) {
-    return 'El día de ida y el de vuelta no alcanzan para viajar y trasladarse al alojamiento dentro de la jornada de 8 hs.';
+  if (G + H > hd) {
+    return `El día de ida y el de vuelta no alcanzan para viajar y trasladarse al alojamiento dentro de la jornada de ${hdTexto} hs.`;
   }
   if (2 * H > horasDiaCorto) {
     return `El traslado diario alojamiento ↔ obra no cabe en la jornada${
-      jornada.trabajaSabado ? ` del sábado (${HORAS_SABADO} hs)` : ''
+      jornada.trabajaSabado ? ` del sábado (${horario.horasSabado} hs)` : ''
     }.`;
   }
 
@@ -2033,7 +2160,8 @@ const calcularPlanObra = (p) => {
   const jornada = JORNADAS_OBRA[p.jornada] || JORNADAS_OBRA.lv;
   const modalidad = jornada.seQuedaEnLugar ? '2' : p.modalidad;
 
-  const errorCabida = errorDeCabida(jornada, modalidad, p.G, p.H);
+  const horario = p.horario || HORARIO_POR_DEFECTO;
+  const errorCabida = errorDeCabida(jornada, modalidad, p.G, p.H, horario);
 
   if (errorCabida) return { error: errorCabida };
 
@@ -2044,7 +2172,7 @@ const calcularPlanObra = (p) => {
   // evalúa el plan con y sin vuelta el sábado y se usa el que convenga
   // (terminar un sábado rinde solo las horas de la mañana, pero ahorra días).
   const variantes =
-    jornada.vueltaSabado && p.G + p.H <= HORAS_SABADO + 1e-9
+    jornada.vueltaSabado && p.G + p.H <= horario.horasSabado + 1e-9
       ? [false, true]
       : [true];
 
@@ -2057,7 +2185,8 @@ const calcularPlanObra = (p) => {
       p.H,
       p.fechaInicio,
       conDetalle,
-      usarVueltaSabado
+      usarVueltaSabado,
+      horario
     );
 
   const horasMaximas = (n) =>
@@ -2183,20 +2312,25 @@ const calcularPlanObra = (p) => {
     costo,
     // Solo para la jornada con vuelta el sábado (null en las demás).
     vueltaSabadoDisponible: jornada.vueltaSabado
-      ? p.G + p.H <= HORAS_SABADO + 1e-9
+      ? p.G + p.H <= horario.horasSabado + 1e-9
       : null,
+    horario,
   };
 };
 
 // Cuándo se viaja de ida y de vuelta según la jornada. Todos los traslados se
 // hacen dentro del horario de trabajo y se descuentan de las horas efectivas.
-const descripcionViaje = (clave, modalidad) => {
+const descripcionViajeBase = (clave, modalidad) => {
   if (clave === 'lv_descanso') {
     return 'Ida el lunes de la 1ª semana y vuelta el viernes de la 2ª semana, dentro del horario de 8 a 17 hs. El sábado y el domingo de la 1ª semana descansan en el lugar. Si la obra dura más, el ciclo se repite.';
   }
 
   if (clave === 'lv_sab') {
     return 'Ida el lunes de la 1ª semana y vuelta el viernes de la 2ª semana, dentro del horario de 8 a 17 hs. El sábado de la 1ª semana trabajan de 8 a 13 hs y el domingo descansan en el lugar. Si la obra dura más, el ciclo se repite.';
+  }
+
+  if (clave === 'lv_sab_continua') {
+    return 'Ida el primer día (lunes a viernes, dentro del horario de 8 a 17 hs) y vuelta recién cuando termina la obra, sin cortes de 2 semanas. Trabajan de lunes a viernes y también los sábados de 8 a 13 hs; los domingos descansan en el lugar. Si la obra termina un sábado, vuelven ese mismo día solo si el viaje entra en las 5 hs; si no, el último día de trabajo es el viernes o el lunes siguiente.';
   }
 
   if (clave === 'lv_sab_vuelta_sab') {
@@ -2207,6 +2341,9 @@ const descripcionViaje = (clave, modalidad) => {
     ? 'Ida y vuelta todos los días, dentro del horario de 8 a 17 hs.'
     : 'Ida el lunes y vuelta el viernes, dentro del horario de 8 a 17 hs. Cada día se viaja entre el alojamiento y la obra. Sábado y domingo en casa.';
 };
+
+const descripcionViaje = (clave, modalidad, horario) =>
+  aplicarHorario(descripcionViajeBase(clave, modalidad), horario);
 
 const TIPOS_CRONOGRAMA = {
   ida: { color: '#4fc3f7', leyenda: 'Ida a la obra' },
@@ -2219,10 +2356,11 @@ const TIPOS_CRONOGRAMA = {
 };
 
 // Semanas de la jornada, día por día (lunes a domingo). G es el traslado
-// empresa ↔ obra de ese día: si supera las 7 hs, el viaje consume casi toda
-// la jornada y se muestra solo "Viaje", sin sumarle "+ trabajo".
-const cronogramaJornada = (clave, modalidad, G) => {
-  const viajeLargo = Number.isFinite(Number(G)) && Number(G) > 7;
+// empresa ↔ obra de ese día: si deja menos de 1 hora de trabajo (más de 7 hs
+// en una jornada de 8), el viaje consume casi toda la jornada y se muestra
+// solo "Viaje", sin sumarle "+ trabajo".
+const cronogramaJornadaBase = (clave, modalidad, G, horasDia) => {
+  const viajeLargo = Number.isFinite(Number(G)) && Number(G) > horasDia - 1;
   const c = (tipo, texto) => ({ tipo, texto });
   const trabajo = c('trabajo', 'Trabajo');
   const casa = c('casa', 'En casa');
@@ -2256,6 +2394,33 @@ const cronogramaJornada = (clave, modalidad, G) => {
         c('descanso', 'Descanso en el lugar'),
       ],
       [trabajo, trabajo, trabajo, trabajo, vuelta, casa, casa],
+    ];
+  }
+
+  if (clave === 'lv_sab_continua') {
+    const sabado = c('trabajo', 'Trabajo 8 a 13 hs');
+    const domingo = c('descanso', 'Descanso en el lugar');
+
+    return [
+      [ida, trabajo, trabajo, trabajo, trabajo, sabado, domingo],
+      [
+        trabajo,
+        trabajo,
+        trabajo,
+        trabajo,
+        c('vuelta', viajeLargo ? 'Si la obra termina: viaje' : 'Si termina: trabajo + vuelta'),
+        c('vuelta', viajeLargo ? 'Si la obra termina: viaje' : 'Si termina: trabajo 8 a 13 hs + vuelta'),
+        domingo,
+      ],
+      [
+        c('trabajo', 'Y así hasta terminar'),
+        trabajo,
+        trabajo,
+        trabajo,
+        trabajo,
+        sabado,
+        domingo,
+      ],
     ];
   }
 
@@ -2296,6 +2461,11 @@ const cronogramaJornada = (clave, modalidad, G) => {
   return [[ida, trabajo, trabajo, trabajo, vuelta, casa, casa]];
 };
 
+const cronogramaJornada = (clave, modalidad, G, horario = HORARIO_POR_DEFECTO) =>
+  cronogramaJornadaBase(clave, modalidad, G, horario.horasDia).map((semana) =>
+    semana.map((c) => ({ ...c, texto: aplicarHorario(c.texto, horario) }))
+  );
+
 const formatFechaCorta = (fecha) =>
   fecha
     ? fecha.toLocaleDateString('es-AR', {
@@ -2312,6 +2482,8 @@ const NOMBRES_CORTOS_JORNADA = {
   lv_sab: 'L–V 8 a 17 hs + sábado 8 a 13 hs · estadía de 2 semanas',
   lv_sab_vuelta_sab:
     'L–V 8 a 17 hs + sábado 8 a 13 hs · estadía de 2 semanas, vuelta el sábado al finalizar',
+  lv_sab_continua:
+    'L–V 8 a 17 hs + sábado 8 a 13 hs · estadía continua en la obra, vuelta al finalizar',
 };
 
 // Resumen breve de cuándo se viaja (el detalle está en el calendario).
@@ -2320,6 +2492,10 @@ const viajeResumen = (r) => {
     return String(r.modalidad) === '1'
       ? 'Ida y vuelta todos los días, dentro del horario de 8 a 17 hs.'
       : 'Ida el lunes y vuelta el viernes; a diario se viaja entre el alojamiento y la obra.';
+  }
+
+  if (r.jornada === 'lv_sab_continua') {
+    return 'Ida el primer día y vuelta recién al finalizar la obra, sin cortes. Se trabaja también los sábados; los domingos se descansa en el lugar.';
   }
 
   return `Ida el lunes y vuelta el viernes de la 2ª semana${
@@ -2372,7 +2548,16 @@ const construirHtmlInforme = (r) => {
       : []),
     ['Indicador de mano de obra', `${num(r.indicador, 2)} hs MO/kWp`],
     ['Coeficiente de seguridad', `${num(r.seguridad, 0)}%`],
-    ['Jornada', NOMBRES_CORTOS_JORNADA[r.jornada] || jornada.label],
+    [
+      'Jornada',
+      aplicarHorario(NOMBRES_CORTOS_JORNADA[r.jornada] || jornada.label, r.horario),
+    ],
+    [
+      'Horario de trabajo',
+      `${r.horario.textoLV}${
+        jornada.trabajaSabado ? ` · sábado ${r.horario.textoSab}` : ''
+      } · ${num(r.horario.horasDia, 1)} hs efectivas por día`,
+    ],
     [
       'Traslados',
       String(r.modalidad) === '1'
@@ -2816,7 +3001,7 @@ const construirHtmlInforme = (r) => {
     <section class="sec">
       <div class="sec-t">Cómo se compone la obra</div>
       <div class="nota" style="margin:0 0 7px">${esc(cal.composicion)}. ${esc(
-    viajeResumen(r)
+    aplicarHorario(viajeResumen(r), r.horario)
   )}</div>
       <table class="cal">
         <thead>
@@ -3205,6 +3390,12 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     presupuestarCombustible: 'no',
     distanciaKm: '',
     vehiculos: {},
+    horarioModo: 'estandar',
+    horaInicio: '08:00',
+    horaFin: '17:00',
+    almuerzo: '1',
+    sabInicio: '08:00',
+    sabFin: '13:00',
     fechaInicio: '',
     tipoClienteRef: 'Todos los clientes',
     implantacionRef: 'Todas las implantaciones',
@@ -5325,6 +5516,12 @@ const dataAnio =
       presupuestarCombustible: 'no',
       distanciaKm: '',
       vehiculos: {},
+      horarioModo: 'estandar',
+      horaInicio: '08:00',
+      horaFin: '17:00',
+      almuerzo: '1',
+      sabInicio: '08:00',
+      sabFin: '13:00',
       fechaInicio: '',
       tipoClienteRef: 'Todos los clientes',
       implantacionRef: 'Todas las implantaciones',
@@ -5346,6 +5543,13 @@ const dataAnio =
     return conTarifa.length ? conTarifa[0].costo_instalador_dia : null;
   }, [comparativaMO]);
 
+  // Horario de trabajo según lo que hay cargado en el formulario (si es
+  // inválido se muestra el estándar y el error aparece al lado de los campos).
+  const horarioVivo = horarioDesdeForm(
+    formEstimacion,
+    JORNADAS_OBRA[formEstimacion.jornada].trabajaSabado
+  );
+
   const calcularEstimacion = () => {
     const A = formEstimacion.nombre.trim();
     const E = formEstimacion.lugar.trim();
@@ -5359,6 +5563,10 @@ const dataAnio =
     const H = F === '1' ? 0 : parseNum(formEstimacion.trasladoAlojamiento);
     const XS = parseNum(formEstimacion.seguridad);
     const conSupervisor = formEstimacion.supervisor === 'si';
+    const { horario, error: errorHorario } = horarioDesdeForm(
+      formEstimacion,
+      jornada.trabajaSabado
+    );
 
     const textoTarifaInst = String(formEstimacion.tarifaInstalador).trim();
     const textoTarifaSup = String(formEstimacion.tarifaSupervisor).trim();
@@ -5387,6 +5595,10 @@ const dataAnio =
 
     if (!A || !E) {
       setErrorEstimacion('Completá el nombre y el lugar.');
+      return;
+    }
+    if (errorHorario) {
+      setErrorEstimacion(errorHorario);
       return;
     }
     if ([B, C, D, G, XS].some(Number.isNaN) || (F === '2' && Number.isNaN(H))) {
@@ -5456,6 +5668,7 @@ const dataAnio =
       alojamiento,
       distanciaKm,
       vehiculos: vehiculosElegidos,
+      horario,
       fechaInicio: formEstimacion.fechaInicio,
     });
 
@@ -5485,6 +5698,7 @@ const dataAnio =
       factorSeguridad: plan.factorSeguridad,
       jornada: jornadaClave,
       calendario: plan.calendario,
+      horario: plan.horario,
       conSupervisor,
       costo: plan.costo,
       vueltaSabadoDisponible: plan.vueltaSabadoDisponible,
@@ -6199,6 +6413,86 @@ const dataAnio =
                 Jornada de trabajo, mano de obra, viáticos y alojamiento
               </div>
 
+              <div style={{ marginBottom: 18 }}>
+                <label style={S.label}>Horario de trabajo</label>
+                <select
+                  style={{ ...S.estimatorInput, maxWidth: 460 }}
+                  value={formEstimacion.horarioModo}
+                  onChange={(e) => updateForm('horarioModo', e.target.value)}
+                >
+                  <option value="estandar">
+                    Estándar: 8 a 17 hs (1 h de almuerzo) · sábado 8 a 13 hs
+                  </option>
+                  <option value="personalizado">
+                    Personalizado: cargar el horario de esta obra
+                  </option>
+                </select>
+
+                {formEstimacion.horarioModo === 'personalizado' && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 14,
+                      marginTop: 10,
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    {[
+                      ['Lunes a viernes: inicio', 'horaInicio', 'time'],
+                      ['Lunes a viernes: fin', 'horaFin', 'time'],
+                      ['Almuerzo (horas)', 'almuerzo', 'text'],
+                      ...(JORNADAS_OBRA[formEstimacion.jornada].trabajaSabado
+                        ? [
+                            ['Sábado: inicio', 'sabInicio', 'time'],
+                            ['Sábado: fin', 'sabFin', 'time'],
+                          ]
+                        : []),
+                    ].map(([titulo, campo, tipo]) => (
+                      <div key={campo}>
+                        <label style={S.label}>{titulo}</label>
+                        <input
+                          type={tipo}
+                          style={{ ...S.estimatorInput, width: 150 }}
+                          value={formEstimacion[campo]}
+                          onChange={(e) => updateForm(campo, e.target.value)}
+                          placeholder={campo === 'almuerzo' ? 'Ej: 1' : undefined}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {horarioVivo.error ? (
+                  <div style={{ ...S.help, color: '#ff7a7a' }}>
+                    {horarioVivo.error}
+                  </div>
+                ) : (
+                  <div style={S.help}>
+                    Horas efectivas por día de trabajo:{' '}
+                    <strong style={{ color: '#e3eaea' }}>
+                      {horarioVivo.horario.horasDia
+                        .toFixed(2)
+                        .replace(/\.?0+$/, '')
+                        .replace('.', ',')}{' '}
+                      hs
+                    </strong>{' '}
+                    ({horarioVivo.horario.textoLV}
+                    {horarioVivo.horario.almuerzo > 0
+                      ? `, con ${String(horarioVivo.horario.almuerzo).replace('.', ',')} h de almuerzo`
+                      : ''}
+                    )
+                    {JORNADAS_OBRA[formEstimacion.jornada].trabajaSabado
+                      ? ` · sábado ${horarioVivo.horario.textoSab} (${String(
+                          horarioVivo.horario.horasSabado
+                        ).replace('.', ',')} hs)`
+                      : ''}
+                    . La mano de obra se paga por día trabajado, sin importar
+                    cuántas horas tenga el día.
+                  </div>
+                )}
+              </div>
+
               <div style={S.formGrid}>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={S.label}>J. Jornada de trabajo</label>
@@ -6209,12 +6503,15 @@ const dataAnio =
                   >
                     {Object.entries(JORNADAS_OBRA).map(([clave, j], i) => (
                       <option key={clave} value={clave}>
-                        {i + 1}. {j.label}
+                        {i + 1}. {aplicarHorario(j.label, horarioVivo.horario)}
                       </option>
                     ))}
                   </select>
                   <div style={S.help}>
-                    {JORNADAS_OBRA[formEstimacion.jornada].detalle}
+                    {aplicarHorario(
+                      JORNADAS_OBRA[formEstimacion.jornada].detalle,
+                      horarioVivo.horario
+                    )}
                   </div>
 
                   {(() => {
@@ -6250,12 +6547,17 @@ const dataAnio =
                           semanas={cronogramaJornada(
                             formEstimacion.jornada,
                             modalidadEfectiva,
-                            parseNum(formEstimacion.trasladoEmpresa)
+                            parseNum(formEstimacion.trasladoEmpresa),
+                            horarioVivo.horario
                           ).map((celdas) => ({ celdas }))}
                         />
 
                         <div style={{ ...S.help, marginTop: 8 }}>
-                          {descripcionViaje(formEstimacion.jornada, modalidadEfectiva)}{' '}
+                          {descripcionViaje(
+                            formEstimacion.jornada,
+                            modalidadEfectiva,
+                            horarioVivo.horario
+                          )}{' '}
                           Los viajes se hacen dentro del horario de trabajo y se
                           descuentan de las horas efectivas.
                         </div>
@@ -6575,21 +6877,35 @@ const dataAnio =
                     ],
                     [
                       'Jornada',
-                      JORNADAS_OBRA[resultadoEstimacion.jornada].label,
+                      aplicarHorario(
+                        JORNADAS_OBRA[resultadoEstimacion.jornada].label,
+                        resultadoEstimacion.horario
+                      ),
+                    ],
+                    [
+                      'Horario de trabajo',
+                      `${resultadoEstimacion.horario.textoLV}${
+                        JORNADAS_OBRA[resultadoEstimacion.jornada].trabajaSabado
+                          ? ` · sábado ${resultadoEstimacion.horario.textoSab}`
+                          : ''
+                      } · ${resultadoEstimacion.horario.horasDia.toFixed(1)} hs efectivas por día`,
                     ],
                     [
                       'Modalidad de traslado',
                       resultadoEstimacion.modalidad === '1'
                         ? '1 diaria'
                         : JORNADAS_OBRA[resultadoEstimacion.jornada].seQuedaEnLugar
-                        ? 'Estadía en el lugar (2 semanas)'
+                        ? resultadoEstimacion.jornada === 'lv_sab_continua'
+                          ? 'Estadía continua en el lugar'
+                          : 'Estadía en el lugar (2 semanas)'
                         : '2 semanal',
                     ],
                     [
                       'Cuándo se viaja',
                       descripcionViaje(
                         resultadoEstimacion.jornada,
-                        resultadoEstimacion.modalidad
+                        resultadoEstimacion.modalidad,
+                        resultadoEstimacion.horario
                       ),
                     ],
                     [
@@ -6689,7 +7005,7 @@ const dataAnio =
                           [
                             'Vuelta el sábado',
                             !resultadoEstimacion.vueltaSabadoDisponible
-                              ? `No disponible con este traslado (vuelta + alojamiento superan las ${HORAS_SABADO} hs del sábado): se vuelve el lunes`
+                              ? `No disponible con este traslado (vuelta + alojamiento superan las ${resultadoEstimacion.horario.horasSabado} hs del sábado): se vuelve el lunes`
                               : resultadoEstimacion.calendario.terminaEnSabado
                               ? 'Sí: la obra termina un sábado y vuelven ese mismo día'
                               : 'Disponible, pero la obra no termina en sábado',
