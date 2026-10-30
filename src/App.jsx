@@ -24,6 +24,8 @@ import {
   RiLineChartLine,
   RiArrowRightSLine,
   RiArrowLeftSLine,
+  RiFullscreenLine,
+  RiFullscreenExitLine,
   RiListCheck,
   RiTimerLine,
   RiTeamLine,
@@ -3396,6 +3398,18 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [vistaHs, setVistaHs] = useState('obras');
   // Año de la evolución: 'todo' o un año (ej. '2025').
   const [anioHs, setAnioHs] = useState('todo');
+  // Tipo de instalación de la evolución: 'todas' o 'En techo' / 'En suelo' / 'Cochera Solar'.
+  const [implHs, setImplHs] = useState('todas');
+  // Gráfico de Hs MO/kWp ampliado a pantalla completa.
+  const [hsPantalla, setHsPantalla] = useState(false);
+  useEffect(() => {
+    if (!hsPantalla) return undefined;
+    const alTeclear = (e) => {
+      if (e.key === 'Escape') setHsPantalla(false);
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, [hsPantalla]);
   useEffect(() => {
     if (!modalKpi) return undefined;
     const alTeclear = (e) => {
@@ -4100,6 +4114,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         const [anio, mes] = fecha.split('-').map(Number);
         return {
           nombre: o.nombre,
+          implantacion: o.implantacion,
           hs: Number(o.hs_mo_kwp),
           fecha,
           anio,
@@ -4116,6 +4131,190 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       sinFecha: conHs.length - puntos.length,
     };
   }, [obras, comparativaMO, potenciaInstalada]);
+
+  // Gráfico "por obra" (barras ordenadas por valor). `grande` = pantalla completa.
+  const renderGraficoObras = (grande) => (
+    <>
+      <div style={{ height: grande ? 'calc(100vh - 230px)' : 280, minHeight: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={barData}
+            margin={{ top: 0, right: 0, bottom: grande ? 120 : 90, left: -10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
+            <XAxis
+              dataKey="name"
+              tick={{ fill: '#8fa6a9', fontSize: grande ? 11 : 9 }}
+              angle={-45}
+              textAnchor="end"
+              interval={0}
+            />
+            <YAxis tick={{ fill: '#8fa6a9', fontSize: grande ? 12 : 10 }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+            />
+            <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+              {barData.map((e, i) => (
+                <Cell key={i} fill={e.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-3">
+        {[
+          ['≤5', '#95de1d', 'Óptimo'],
+          ['5–8', '#c7ee8a', 'Bueno'],
+          ['8–12', '#ffc933', 'Regular'],
+          ['12–18', '#ff9f4a', 'Alto'],
+          ['>18', '#ff5f5f', 'Crítico'],
+        ].map(([r, c, l]) => (
+          <div
+            key={r}
+            className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-500"
+          >
+            <div className="size-2.5 rounded-sm" style={{ background: c }} />
+            {r} — {l}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  // Gráfico de evolución del indicador: cada obra en orden de fecha de inicio,
+  // con filtros por año y por tipo de instalación.
+  const renderGraficoEvolucion = (grande) => {
+    const visibles = evolucionHs.puntos.filter(
+      (q) =>
+        (anioHs === 'todo' || String(q.anio) === anioHs) &&
+        (implHs === 'todas' || q.implantacion === implHs)
+    );
+    const implantaciones = ['En techo', 'En suelo', 'Cochera Solar'].filter((i) =>
+      evolucionHs.puntos.some((q) => q.implantacion === i)
+    );
+    // Con "todo" se marca dónde empieza cada año.
+    const inicioAnio = [];
+    if (anioHs === 'todo') {
+      [...new Set(visibles.map((q) => q.anio))].sort().slice(1).forEach((a) => {
+        const prim = visibles.find((q) => q.anio === a);
+        if (prim) inicioAnio.push({ anio: a, nombre: prim.nombre });
+      });
+    }
+    const chip = (texto, activo, onClick) => (
+      <button
+        key={texto}
+        type="button"
+        onClick={onClick}
+        className={cx(
+          'rounded-full border px-3 py-0.5 text-xs font-semibold transition-colors',
+          activo
+            ? 'border-[#95de1d] bg-[#95de1d] text-gray-900'
+            : 'border-gray-700 text-gray-300 hover:border-gray-500'
+        )}
+      >
+        {texto}
+      </button>
+    );
+
+    return (
+      <>
+        <div className="mb-2 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              Año
+            </span>
+            {['todo', ...evolucionHs.anios.map(String)].map((a) =>
+              chip(a === 'todo' ? 'Todo lo registrado' : a, anioHs === a, () => setAnioHs(a))
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              Instalación
+            </span>
+            {['todas', ...implantaciones].map((i) =>
+              chip(i === 'todas' ? 'Todas' : i, implHs === i, () => setImplHs(i))
+            )}
+          </div>
+        </div>
+
+        {visibles.length === 0 ? (
+          <div
+            className="flex items-center justify-center text-sm text-gray-500"
+            style={{ height: grande ? 'calc(100vh - 330px)' : 250, minHeight: 250 }}
+          >
+            No hay obras con estos filtros.
+          </div>
+        ) : (
+          <div style={{ height: grande ? 'calc(100vh - 330px)' : 250, minHeight: 250 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={visibles}
+                margin={{ top: 14, right: 8, bottom: grande ? 120 : 90, left: -10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
+                <XAxis
+                  dataKey="nombre"
+                  tick={{ fill: '#8fa6a9', fontSize: grande ? 11 : 9 }}
+                  angle={-45}
+                  textAnchor="end"
+                  interval={0}
+                />
+                <YAxis tick={{ fill: '#8fa6a9', fontSize: grande ? 12 : 10 }} />
+                <Tooltip
+                  content={<TooltipEvolucionHs />}
+                  cursor={{ stroke: 'rgba(255,255,255,0.15)' }}
+                />
+                {inicioAnio.map((m) => (
+                  <ReferenceLine
+                    key={m.anio}
+                    x={m.nombre}
+                    stroke="#8fa6a9"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: String(m.anio),
+                      position: 'insideTopLeft',
+                      fill: '#b9c7c9',
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  />
+                ))}
+                <Line
+                  type="linear"
+                  dataKey="hs"
+                  stroke="#4fc3f7"
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                  dot={({ cx, cy, payload }) => (
+                    <circle
+                      key={payload.nombre}
+                      cx={cx}
+                      cy={cy}
+                      r={grande ? 6 : 5}
+                      fill={payload.fill}
+                      stroke="#16323a"
+                      strokeWidth={1.5}
+                    />
+                  )}
+                  activeDot={{ r: 7 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+        <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-500">
+          {visibles.length} {visibles.length === 1 ? 'obra' : 'obras'}, ordenadas por
+          fecha de inicio (de la más antigua a la más reciente); el color indica su
+          rango de Hs MO/kWp.
+          {evolucionHs.sinFecha > 0 &&
+            ` ${evolucionHs.sinFecha} ${
+              evolucionHs.sinFecha === 1 ? 'obra' : 'obras'
+            } sin fecha no se muestran.`}
+        </div>
+      </>
+    );
+  };
 
   const pieData = useMemo(() => {
     const map = {};
@@ -11384,6 +11583,61 @@ const dataAnio =
             </div>
           </Card>
 
+          {hsPantalla && (
+            <div
+              className="fixed inset-0 z-50 flex animate-dialog-overlay-show items-center justify-center bg-black/70 p-3 backdrop-blur-sm"
+              onClick={() => setHsPantalla(false)}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Hs MO / kWp, pantalla completa"
+                onClick={(e) => e.stopPropagation()}
+                className="modal-pop flex max-h-full w-full max-w-[1700px] flex-col overflow-auto rounded-2xl border border-white/10 bg-gray-900 p-5 shadow-2xl shadow-black/60"
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="text-sm font-bold">
+                      {vistaHs === 'tiempo'
+                        ? 'Evolución del Hs MO / kWp en el tiempo'
+                        : 'Hs MO / kWp por obra'}
+                    </div>
+                    <div className="flex gap-1.5">
+                      {[
+                        ['obras', 'Por obra'],
+                        ['tiempo', 'Evolución en el tiempo'],
+                      ].map(([v, t]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setVistaHs(v)}
+                          className={cx(
+                            'rounded-full border px-3 py-0.5 text-xs font-semibold transition-colors',
+                            vistaHs === v
+                              ? 'border-[#95de1d] bg-[#95de1d] text-gray-900'
+                              : 'border-gray-700 text-gray-300 hover:border-gray-500'
+                          )}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setHsPantalla(false)}
+                    aria-label="Cerrar pantalla completa"
+                    title="Cerrar (Esc)"
+                    className="flex size-9 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <RiFullscreenExitLine className="size-5" aria-hidden="true" />
+                  </button>
+                </div>
+                {vistaHs === 'tiempo' ? renderGraficoEvolucion(true) : renderGraficoObras(true)}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
             <Card className="relative p-5">
               <div className="mb-4 flex items-center justify-between gap-2.5">
@@ -11401,26 +11655,37 @@ const dataAnio =
                       : 'Hs MO / kWp por obra'}
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5" role="tablist" aria-label="Vista del gráfico">
-                  {[
-                    ['obras', 'Por obra'],
-                    ['tiempo', 'Evolución en el tiempo'],
-                  ].map(([v, t]) => (
-                    <button
-                      key={v}
-                      type="button"
-                      role="tab"
-                      aria-selected={vistaHs === v}
-                      aria-label={t}
-                      title={t}
-                      onClick={() => setVistaHs(v)}
-                      className="h-2 rounded-full transition-all duration-300"
-                      style={{
-                        width: vistaHs === v ? 22 : 8,
-                        background: vistaHs === v ? '#95de1d' : '#3b5d65',
-                      }}
-                    />
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5" role="tablist" aria-label="Vista del gráfico">
+                    {[
+                      ['obras', 'Por obra'],
+                      ['tiempo', 'Evolución en el tiempo'],
+                    ].map(([v, t]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        role="tab"
+                        aria-selected={vistaHs === v}
+                        aria-label={t}
+                        title={t}
+                        onClick={() => setVistaHs(v)}
+                        className="h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: vistaHs === v ? 22 : 8,
+                          background: vistaHs === v ? '#95de1d' : '#3b5d65',
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setHsPantalla(true)}
+                    aria-label="Ampliar el gráfico a pantalla completa"
+                    title="Ampliar a pantalla completa"
+                    className="flex size-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <RiFullscreenLine className="size-4" aria-hidden="true" />
+                  </button>
                 </div>
               </div>
 
@@ -11457,159 +11722,11 @@ const dataAnio =
                     }}
                   >
                     <div className="w-1/2 shrink-0 pr-9" aria-hidden={vistaHs !== 'obras'}>
-              <ResponsiveContainer width="100%" height={280}>
-                    <BarChart
-                      data={barData}
-                      margin={{ top: 0, right: 0, bottom: 90, left: -10 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fill: '#8fa6a9', fontSize: 9 }}
-                        angle={-45}
-                        textAnchor="end"
-                        interval={0}
-                      />
-                      <YAxis tick={{ fill: '#8fa6a9', fontSize: 10 }} />
-                      <Tooltip
-                        content={<CustomTooltip />}
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                      />
-                      <Bar dataKey="value" radius={[3, 3, 0, 0]}>
-                        {barData.map((e, i) => (
-                          <Cell key={i} fill={e.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {[
-                      ['≤5', '#95de1d', 'Óptimo'],
-                      ['5–8', '#c7ee8a', 'Bueno'],
-                      ['8–12', '#ffc933', 'Regular'],
-                      ['12–18', '#ff9f4a', 'Alto'],
-                      ['>18', '#ff5f5f', 'Crítico'],
-                    ].map(([r, c, l]) => (
-                      <div
-                        key={r}
-                        className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-500"
-                      >
-                        <div
-                          className="size-2.5 rounded-sm"
-                          style={{ background: c }}
-                        />
-                        {r} — {l}
-                      </div>
-                    ))}
-                  </div>
+                      {renderGraficoObras(false)}
                     </div>
 
                     <div className="w-1/2 shrink-0 pl-9" aria-hidden={vistaHs !== 'tiempo'}>
-                      {(() => {
-                        const visibles =
-                          anioHs === 'todo'
-                            ? evolucionHs.puntos
-                            : evolucionHs.puntos.filter((q) => String(q.anio) === anioHs);
-                        // Con "todo" se marca dónde empieza cada año.
-                        const inicioAnio = [];
-                        if (anioHs === 'todo') {
-                          evolucionHs.anios.slice(1).forEach((a) => {
-                            const prim = visibles.find((q) => q.anio === a);
-                            if (prim) inicioAnio.push({ anio: a, nombre: prim.nombre });
-                          });
-                        }
-
-                        return (
-                          <>
-                            <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                              {['todo', ...evolucionHs.anios.map(String)].map((a) => (
-                                <button
-                                  key={a}
-                                  type="button"
-                                  onClick={() => setAnioHs(a)}
-                                  className={cx(
-                                    'rounded-full border px-3 py-0.5 text-xs font-semibold transition-colors',
-                                    anioHs === a
-                                      ? 'border-[#95de1d] bg-[#95de1d] text-gray-900'
-                                      : 'border-gray-700 text-gray-300 hover:border-gray-500'
-                                  )}
-                                >
-                                  {a === 'todo' ? 'Todo lo registrado' : a}
-                                </button>
-                              ))}
-                            </div>
-
-                            {visibles.length === 0 ? (
-                              <div className="flex h-[250px] items-center justify-center text-sm text-gray-500">
-                                No hay obras con fecha para este período.
-                              </div>
-                            ) : (
-                              <ResponsiveContainer width="100%" height={250}>
-                                <LineChart
-                                  data={visibles}
-                                  margin={{ top: 14, right: 8, bottom: 90, left: -10 }}
-                                >
-                                  <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
-                                  <XAxis
-                                    dataKey="nombre"
-                                    tick={{ fill: '#8fa6a9', fontSize: 9 }}
-                                    angle={-45}
-                                    textAnchor="end"
-                                    interval={0}
-                                  />
-                                  <YAxis tick={{ fill: '#8fa6a9', fontSize: 10 }} />
-                                  <Tooltip
-                                    content={<TooltipEvolucionHs />}
-                                    cursor={{ stroke: 'rgba(255,255,255,0.15)' }}
-                                  />
-                                  {inicioAnio.map((m) => (
-                                    <ReferenceLine
-                                      key={m.anio}
-                                      x={m.nombre}
-                                      stroke="#8fa6a9"
-                                      strokeDasharray="4 4"
-                                      label={{
-                                        value: String(m.anio),
-                                        position: 'insideTopLeft',
-                                        fill: '#b9c7c9',
-                                        fontSize: 11,
-                                        fontWeight: 700,
-                                      }}
-                                    />
-                                  ))}
-                                  <Line
-                                    type="linear"
-                                    dataKey="hs"
-                                    stroke="#4fc3f7"
-                                    strokeWidth={2}
-                                    isAnimationActive={false}
-                                    dot={({ cx, cy, payload }) => (
-                                      <circle
-                                        key={payload.nombre}
-                                        cx={cx}
-                                        cy={cy}
-                                        r={5}
-                                        fill={payload.fill}
-                                        stroke="#16323a"
-                                        strokeWidth={1.5}
-                                      />
-                                    )}
-                                    activeDot={{ r: 6 }}
-                                  />
-                                </LineChart>
-                              </ResponsiveContainer>
-                            )}
-                            <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-500">
-                              Obras ordenadas por fecha de inicio (de la más antigua a
-                              la más reciente); el color indica su rango de Hs MO/kWp.
-                              {evolucionHs.sinFecha > 0 &&
-                                ` ${evolucionHs.sinFecha} ${
-                                  evolucionHs.sinFecha === 1 ? 'obra' : 'obras'
-                                } sin fecha no se muestran.`}
-                            </div>
-                          </>
-                        );
-                      })()}
+                      {renderGraficoEvolucion(false)}
                     </div>
                   </div>
                 </div>
