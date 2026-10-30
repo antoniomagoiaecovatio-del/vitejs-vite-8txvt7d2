@@ -280,3 +280,25 @@ select,
     animation: none;
   }
 }
+
+/* Flecha que invita a deslizar a la vista siguiente del gráfico */
+@keyframes flechaInvita {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+.flecha-invita {
+  animation: flechaInvita 1.8s ease-in-out infinite;
+}
+.flecha-invita:hover {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flecha-invita {
+    animation: none;
+  }
+}
