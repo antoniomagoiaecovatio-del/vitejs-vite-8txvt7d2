@@ -3400,6 +3400,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [anioHs, setAnioHs] = useState('todo');
   // Tipo de instalación de la evolución: 'todas' o 'En techo' / 'En suelo' / 'Cochera Solar'.
   const [implHs, setImplHs] = useState('todas');
+  // Rango de potencia de la obra: 'todos' o una de las etiquetas de rango.
+  const [rangoHs, setRangoHs] = useState('todos');
   // Gráfico de Hs MO/kWp ampliado a pantalla completa.
   const [hsPantalla, setHsPantalla] = useState(false);
   useEffect(() => {
@@ -4115,6 +4117,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         return {
           nombre: o.nombre,
           implantacion: o.implantacion,
+          rango: getPowerRangeLabel(getPowerRange(o.kwp)),
           hs: Number(o.hs_mo_kwp),
           fecha,
           anio,
@@ -4188,11 +4191,16 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     const visibles = evolucionHs.puntos.filter(
       (q) =>
         (anioHs === 'todo' || String(q.anio) === anioHs) &&
-        (implHs === 'todas' || q.implantacion === implHs)
+        (implHs === 'todas' || q.implantacion === implHs) &&
+        (rangoHs === 'todos' || q.rango === rangoHs)
     );
     const implantaciones = ['En techo', 'En suelo', 'Cochera Solar'].filter((i) =>
       evolucionHs.puntos.some((q) => q.implantacion === i)
     );
+    const rangos = OPCIONES_POTENCIA_LABELS.filter((r) =>
+      evolucionHs.puntos.some((q) => q.rango === r)
+    );
+    const hayFiltros = anioHs !== 'todo' || implHs !== 'todas' || rangoHs !== 'todos';
     // Con "todo" se marca dónde empieza cada año.
     const inicioAnio = [];
     if (anioHs === 'todo') {
@@ -4219,23 +4227,59 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
 
     return (
       <>
-        <div className="mb-2 flex flex-wrap items-center gap-x-5 gap-y-1.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-              Año
-            </span>
-            {['todo', ...evolucionHs.anios.map(String)].map((a) =>
-              chip(a === 'todo' ? 'Todo lo registrado' : a, anioHs === a, () => setAnioHs(a))
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-              Instalación
-            </span>
-            {['todas', ...implantaciones].map((i) =>
-              chip(i === 'todas' ? 'Todas' : i, implHs === i, () => setImplHs(i))
-            )}
-          </div>
+        <div className="mb-2 overflow-hidden rounded-lg border border-gray-800">
+          <table className="w-full border-collapse text-xs">
+            <tbody>
+              {[
+                [
+                  'Año',
+                  ['todo', ...evolucionHs.anios.map(String)].map((a) =>
+                    chip(a === 'todo' ? 'Todo lo registrado' : a, anioHs === a, () => setAnioHs(a))
+                  ),
+                ],
+                [
+                  'Instalación',
+                  ['todas', ...implantaciones].map((i) =>
+                    chip(i === 'todas' ? 'Todas' : i, implHs === i, () => setImplHs(i))
+                  ),
+                ],
+                [
+                  'Rango de potencia',
+                  ['todos', ...rangos].map((r) =>
+                    chip(
+                      r === 'todos' ? 'Todos' : r.replace(' kWp)', ')'),
+                      rangoHs === r,
+                      () => setRangoHs(r)
+                    )
+                  ),
+                ],
+              ].map(([titulo, chips]) => (
+                <tr key={titulo} className="border-b border-gray-800 last:border-0">
+                  <th className="w-[1%] whitespace-nowrap bg-gray-950/40 px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    {titulo}
+                  </th>
+                  <td className="px-3 py-1.5">
+                    <div className="flex flex-wrap gap-1.5">{chips}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {hayFiltros && (
+            <div className="border-t border-gray-800 px-3 py-1 text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setAnioHs('todo');
+                  setImplHs('todas');
+                  setRangoHs('todos');
+                }}
+                className="text-[11px] font-semibold text-[#95de1d] hover:underline"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
 
         {visibles.length === 0 ? (
