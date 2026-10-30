@@ -53,7 +53,6 @@ const {
   AreaChart,
   Line,
   LineChart,
-  Scatter,
 
 
 
@@ -1007,40 +1006,22 @@ const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
 const labelMesAbs = (ym) =>
   `${MESES_CORTOS[((ym % 12) + 12) % 12]}-${String(Math.floor(ym / 12)).slice(-2)}`;
 
-// Tooltip de "evolución del Hs MO/kWp": al pasar por un mes muestra el
-// promedio del mes, el acumulado y las obras que entran en ese mes.
+// Tooltip de la evolución del Hs MO/kWp: la obra, su mes de inicio y su valor.
 function TooltipEvolucionHs({ active, payload }) {
   if (!active || !payload?.length) return null;
-  const fila = payload.map((p) => p.payload).find((d) => d && d.obrasMes);
-  if (!fila) return null;
+  const o = payload[0].payload;
+  if (!o) return null;
 
   return (
-    <div className="max-w-[260px] rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-xs shadow-lg">
-      <p className="mb-1 font-semibold text-white">{fila.label}</p>
-      {fila.n > 0 ? (
-        <p className="m-0 text-gray-300">
-          Promedio del mes:{' '}
-          <span className="font-bold text-[#4fc3f7]">{fila.promMes.toFixed(2)}</span>
-        </p>
-      ) : (
-        <p className="m-0 text-gray-500">Sin obras iniciadas este mes</p>
-      )}
-      <p className="m-0 text-gray-300">
-        Promedio acumulado:{' '}
-        <span className="font-bold text-[#ffc933]">{fila.acum.toFixed(2)}</span>
+    <div className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 text-xs shadow-lg">
+      <p className="mb-0.5 max-w-[200px] font-semibold text-white">{o.nombre}</p>
+      <p className="m-0 text-gray-400">Inicio: {o.mes}</p>
+      <p className="m-0 text-white">
+        <span className="font-bold" style={{ color: o.fill }}>
+          {o.hs.toFixed(2)}
+        </span>
+        <span className="ml-1 font-light text-gray-400">HS MO / kWp</span>
       </p>
-      {fila.n > 0 && (
-        <div className="mt-1.5 border-t border-gray-800 pt-1.5">
-          {fila.obrasMes.map((o) => (
-            <div key={o.nombre} className="flex justify-between gap-3 text-gray-400">
-              <span className="truncate">{o.nombre}</span>
-              <span className="font-semibold" style={{ color: o.fill }}>
-                {o.hs.toFixed(2)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -3413,6 +3394,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [modalKpi, setModalKpi] = useState(null);
   // Gráfico de Hs MO/kWp: 'obras' (por obra) o 'tiempo' (evolución mensual).
   const [vistaHs, setVistaHs] = useState('obras');
+  // Año de la evolución: 'todo' o un año (ej. '2025').
+  const [anioHs, setAnioHs] = useState('todo');
   useEffect(() => {
     if (!modalKpi) return undefined;
     const alTeclear = (e) => {
@@ -4088,10 +4071,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     const inicioPorObra = {};
     comparativaMO.forEach((r) => {
       const f = toInputDate(r.fecha_inicio);
-      if (f && r.obra) {
-        const [y, m] = f.split('-').map(Number);
-        inicioPorObra[clave(r.obra)] = y * 12 + (m - 1);
-      }
+      if (f && r.obra) inicioPorObra[clave(r.obra)] = f;
     });
 
     const primerMesPI = {};
@@ -4111,52 +4091,29 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     const puntos = conHs
       .map((o) => {
         const k = clave(o.nombre);
-        const ym = k in inicioPorObra ? inicioPorObra[k] : primerMesPI[k];
-        if (ym === undefined) return null;
+        let fecha = inicioPorObra[k];
+        if (!fecha && k in primerMesPI) {
+          const ym = primerMesPI[k];
+          fecha = `${Math.floor(ym / 12)}-${String((ym % 12) + 1).padStart(2, '0')}-01`;
+        }
+        if (!fecha) return null;
+        const [anio, mes] = fecha.split('-').map(Number);
         return {
           nombre: o.nombre,
           hs: Number(o.hs_mo_kwp),
-          kwp: Number(o.kwp) || 0,
-          ym,
+          fecha,
+          anio,
+          mes: labelMesAbs(anio * 12 + (mes - 1)),
           fill: HsMoColor(o.hs_mo_kwp),
         };
       })
-      .filter(Boolean);
-
-    if (!puntos.length) {
-      return { maxPorMes: 0, serie: [], sinFecha: conHs.length, promGeneral: null };
-    }
-
-    const minYm = Math.min(...puntos.map((q) => q.ym));
-    const maxYm = Math.max(...puntos.map((q) => q.ym));
-    const serie = [];
-
-    for (let ym = minYm; ym <= maxYm; ym++) {
-      const delMes = puntos.filter((q) => q.ym === ym).sort((a, b) => a.hs - b.hs);
-      const hastaAhora = puntos.filter((q) => q.ym <= ym);
-      const fila = {};
-      delMes.forEach((q, i) => {
-        fila[`p${i}`] = q.hs;
-        fila[`c${i}`] = q.fill;
-      });
-      serie.push({
-        ...fila,
-        x: ym - minYm,
-        label: labelMesAbs(ym),
-        n: delMes.length,
-        promMes: delMes.length
-          ? delMes.reduce((t, q) => t + q.hs, 0) / delMes.length
-          : null,
-        acum: hastaAhora.reduce((t, q) => t + q.hs, 0) / hastaAhora.length,
-        obrasMes: delMes,
-      });
-    }
+      .filter(Boolean)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.nombre.localeCompare(b.nombre));
 
     return {
-      maxPorMes: Math.max(...serie.map((d) => d.n)),
-      serie,
+      puntos,
+      anios: [...new Set(puntos.map((q) => q.anio))].sort(),
       sinFecha: conHs.length - puntos.length,
-      promGeneral: puntos.reduce((t, q) => t + q.hs, 0) / puntos.length,
     };
   }, [obras, comparativaMO, potenciaInstalada]);
 
@@ -11548,104 +11505,111 @@ const dataAnio =
                     </div>
 
                     <div className="w-1/2 shrink-0 pl-9" aria-hidden={vistaHs !== 'tiempo'}>
-                      {evolucionHs.serie.length === 0 ? (
-                        <div className="flex h-[280px] items-center justify-center text-sm text-gray-500">
-                          Todavía no hay obras con fecha para armar la evolución.
-                        </div>
-                      ) : (
-                        <>
-                          <ResponsiveContainer width="100%" height={280}>
-                            <ComposedChart
-                              data={evolucionHs.serie}
-                              margin={{ top: 10, right: 6, bottom: 0, left: -10 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
-                              <XAxis
-                                dataKey="label"
-                                tick={{ fill: '#8fa6a9', fontSize: 10 }}
-                                interval={0}
-                                angle={-45}
-                                textAnchor="end"
-                                height={46}
-                              />
-                              <YAxis
-                                tick={{ fill: '#8fa6a9', fontSize: 10 }}
-                                domain={[0, 'auto']}
-                              />
-                              <Tooltip
-                                content={<TooltipEvolucionHs />}
-                                cursor={{ stroke: 'rgba(255,255,255,0.15)' }}
-                              />
-                              {Array.from({ length: evolucionHs.maxPorMes }).map((_, i) => (
-                                <Scatter
-                                  key={`p${i}`}
-                                  dataKey={`p${i}`}
-                                  isAnimationActive={false}
-                                  legendType="none"
-                                  shape={({ cx, cy, payload }) =>
-                                    Number.isFinite(cx) &&
-                                    Number.isFinite(cy) &&
-                                    payload[`c${i}`] ? (
+                      {(() => {
+                        const visibles =
+                          anioHs === 'todo'
+                            ? evolucionHs.puntos
+                            : evolucionHs.puntos.filter((q) => String(q.anio) === anioHs);
+                        // Con "todo" se marca dónde empieza cada año.
+                        const inicioAnio = [];
+                        if (anioHs === 'todo') {
+                          evolucionHs.anios.slice(1).forEach((a) => {
+                            const prim = visibles.find((q) => q.anio === a);
+                            if (prim) inicioAnio.push({ anio: a, nombre: prim.nombre });
+                          });
+                        }
+
+                        return (
+                          <>
+                            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                              {['todo', ...evolucionHs.anios.map(String)].map((a) => (
+                                <button
+                                  key={a}
+                                  type="button"
+                                  onClick={() => setAnioHs(a)}
+                                  className={cx(
+                                    'rounded-full border px-3 py-0.5 text-xs font-semibold transition-colors',
+                                    anioHs === a
+                                      ? 'border-[#95de1d] bg-[#95de1d] text-gray-900'
+                                      : 'border-gray-700 text-gray-300 hover:border-gray-500'
+                                  )}
+                                >
+                                  {a === 'todo' ? 'Todo lo registrado' : a}
+                                </button>
+                              ))}
+                            </div>
+
+                            {visibles.length === 0 ? (
+                              <div className="flex h-[250px] items-center justify-center text-sm text-gray-500">
+                                No hay obras con fecha para este período.
+                              </div>
+                            ) : (
+                              <ResponsiveContainer width="100%" height={250}>
+                                <LineChart
+                                  data={visibles}
+                                  margin={{ top: 14, right: 8, bottom: 90, left: -10 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#2c5059" />
+                                  <XAxis
+                                    dataKey="nombre"
+                                    tick={{ fill: '#8fa6a9', fontSize: 9 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    interval={0}
+                                  />
+                                  <YAxis tick={{ fill: '#8fa6a9', fontSize: 10 }} />
+                                  <Tooltip
+                                    content={<TooltipEvolucionHs />}
+                                    cursor={{ stroke: 'rgba(255,255,255,0.15)' }}
+                                  />
+                                  {inicioAnio.map((m) => (
+                                    <ReferenceLine
+                                      key={m.anio}
+                                      x={m.nombre}
+                                      stroke="#8fa6a9"
+                                      strokeDasharray="4 4"
+                                      label={{
+                                        value: String(m.anio),
+                                        position: 'insideTopLeft',
+                                        fill: '#b9c7c9',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                      }}
+                                    />
+                                  ))}
+                                  <Line
+                                    type="linear"
+                                    dataKey="hs"
+                                    stroke="#4fc3f7"
+                                    strokeWidth={2}
+                                    isAnimationActive={false}
+                                    dot={({ cx, cy, payload }) => (
                                       <circle
+                                        key={payload.nombre}
                                         cx={cx}
                                         cy={cy}
                                         r={5}
-                                        fill={payload[`c${i}`]}
-                                        fillOpacity={0.9}
+                                        fill={payload.fill}
                                         stroke="#16323a"
                                         strokeWidth={1.5}
                                       />
-                                    ) : null
-                                  }
-                                />
-                              ))}
-                              <Line
-                                type="monotone"
-                                dataKey="promMes"
-                                stroke="#4fc3f7"
-                                strokeWidth={2.5}
-                                connectNulls
-                                dot={false}
-                                activeDot={{ r: 5 }}
-                                isAnimationActive={false}
-                              />
-                              <Line
-                                type="monotone"
-                                dataKey="acum"
-                                stroke="#ffc933"
-                                strokeWidth={2}
-                                strokeDasharray="6 4"
-                                dot={false}
-                                activeDot={{ r: 4 }}
-                                isAnimationActive={false}
-                              />
-                            </ComposedChart>
-                          </ResponsiveContainer>
-                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-gray-500 dark:text-gray-500">
-                            <span className="flex items-center gap-1.5">
-                              <span className="inline-block size-2.5 rounded-full bg-[#95de1d]" />
-                              Cada punto es una obra (color según su rango)
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="inline-block h-0.5 w-4 bg-[#4fc3f7]" />
-                              Promedio del mes
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <span className="inline-block h-0.5 w-4 border-t-2 border-dashed border-[#ffc933]" />
-                              Promedio acumulado
-                            </span>
-                          </div>
-                          <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-500">
-                            Cada obra va en el mes en que empezó (fecha de inicio de la
-                            hoja de MO o, si falta, su primer mes con potencia
-                            instalada).
-                            {evolucionHs.sinFecha > 0 &&
-                              ` ${evolucionHs.sinFecha} ${
-                                evolucionHs.sinFecha === 1 ? 'obra' : 'obras'
-                              } sin fecha no se muestran.`}
-                          </div>
-                        </>
-                      )}
+                                    )}
+                                    activeDot={{ r: 6 }}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            )}
+                            <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-500">
+                              Obras ordenadas por fecha de inicio (de la más antigua a
+                              la más reciente); el color indica su rango de Hs MO/kWp.
+                              {evolucionHs.sinFecha > 0 &&
+                                ` ${evolucionHs.sinFecha} ${
+                                  evolucionHs.sinFecha === 1 ? 'obra' : 'obras'
+                                } sin fecha no se muestran.`}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
