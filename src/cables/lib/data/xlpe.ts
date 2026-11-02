@@ -30,6 +30,12 @@ const cuTri: RxTable = {
 };
 
 const cuUni: RxTable = {
+  // 1,5 y 2,5 mm²: el catálogo RTX solo tabula unipolares desde 4 mm². R' = la de los multipolares de la misma
+  // aislación (R' multipolar = R' unipolar hasta 50 mm², como se verifica de 4 mm² en adelante) y X' = la del unipolar
+  // 1,5/2,5 mm² del catálogo AFX (misma geometría de 3 unipolares en plano, un diámetro de separación; del lado seguro:
+  // AFX da X' 0,002–0,004 Ω/km mayor que RTX en 4–16 mm²). Ampacidad: columnas B2/C/E de la tabla general del catálogo.
+  1.5: [17.2, 0.21],
+  2.5: [10.2, 0.199],
   4: [6.3, 0.187],
   6: [4.2, 0.176],
   10: [2.44, 0.166],

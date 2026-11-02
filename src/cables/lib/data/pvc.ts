@@ -29,6 +29,11 @@ const cuTri: RxTable = {
 };
 
 const cuUni: RxTable = {
+  // 1,5 y 2,5 mm²: el catálogo CAT20 solo tabula unipolares desde 4 mm². R' = la de los multipolares CAT20
+  // (R' multipolar = R' unipolar desde 4 mm²) y X' = la del unipolar 1,5/2,5 mm² del catálogo AFX, que coincide
+  // exactamente con la X' unipolar de CAT20 en 4, 6, 10, 16, 25 y 35 mm². Ampacidad: columnas B2/C/E del catálogo.
+  1.5: [15.9, 0.21],
+  2.5: [9.55, 0.199],
   4: [5.92, 0.189],
   6: [3.95, 0.18],
   10: [2.29, 0.17],
