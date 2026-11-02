@@ -1,5 +1,6 @@
 
 
+import { StepByStep } from "./StepByStep";
 import { AL_MIN_SECTION } from "../lib/engine/calc";
 import { CoordinationChart } from "./CoordinationChart";
 import { IndicatorsCard } from "./IndicatorsCard";
@@ -443,6 +444,7 @@ export function ResultsPanel({
 
       {ok && (
         <Collapsible title="Memoria de cálculo">
+          <StepByStep r={ok} res={res} inputs={inputs} />
           <Metrics r={ok} res={res} inputs={inputs} />
           <FactorsCard r={ok} />
           {res.recommendation && <RecommendationReasons rec={res.recommendation} />}
