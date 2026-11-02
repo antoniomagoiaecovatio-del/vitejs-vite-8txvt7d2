@@ -67,7 +67,12 @@ export async function descargarInformePdf(html: string, proyecto: string): Promi
 
     // Reparto en páginas.
     const tramos: [number, number][] = [];
-    if (total <= PAGE_H) {
+    const forzado = doc.querySelector(".corte");
+    const yForzado = forzado ? Math.round(forzado.getBoundingClientRect().top - top) : null;
+    if (yForzado !== null && yForzado > 100 && yForzado < total - 100) {
+      // El informe marca dónde empieza la segunda página.
+      tramos.push([0, yForzado], [yForzado, total]);
+    } else if (total <= PAGE_H) {
       tramos.push([0, total]);
     } else {
       let y = 0;
@@ -97,7 +102,11 @@ export async function descargarInformePdf(html: string, proyecto: string): Promi
       ctx.drawImage(canvas, 0, Math.round(y0 * SCALE), canvas.width, pagina.height, 0, 0, canvas.width, pagina.height);
       const img = pagina.toDataURL("image/jpeg", 0.9);
       const offset = i === 0 ? 0 : MARGIN;
-      pdf.addImage(img, "JPEG", 0, offset * mmPorPx, 210, alt * mmPorPx);
+      // Si una página trae más alto del disponible, se reduce proporcionalmente para que entre.
+      const disponible = PAGE_H - offset - MARGIN;
+      const k = alt > disponible ? disponible / alt : 1;
+      const w = 210 * k;
+      pdf.addImage(img, "JPEG", (210 - w) / 2, offset * mmPorPx, w, alt * mmPorPx * k);
     });
 
     pdf.setProperties({ title: `Dimensionamiento de conductores${proyecto ? " - " + proyecto : ""}`, author: "Ecovatio", creator: "Panel de Obras Solares" });
