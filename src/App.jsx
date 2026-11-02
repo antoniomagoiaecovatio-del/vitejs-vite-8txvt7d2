@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useMemo, useRef } from 'react';
 import * as Recharts from 'recharts';
 
 import { Card } from './components/Card/Card';
@@ -11,6 +11,9 @@ import { Checkbox } from './components/Checkbox/Checkbox';
 import { TabNavigation, TabNavigationLink } from './components/TabNavigation/TabNavigation';
 import { cx } from './utils/cx';
 import { VEHICULOS_FLOTA, CATEGORIAS_VEHICULOS } from './data/vehiculosCombustible';
+
+// Herramienta de solicitudes (usa Supabase y exceljs): se carga recién al entrar.
+const Solicitudes = lazy(() => import('./solicitudes/Solicitudes'));
 import {
   RiBuilding2Line,
   RiFlashlightLine,
@@ -26,6 +29,8 @@ import {
   RiArrowLeftSLine,
   RiFullscreenLine,
   RiHome2Line,
+  RiGasStationLine,
+  RiLockLine,
   RiToolsLine,
   RiFullscreenExitLine,
   RiListCheck,
@@ -122,6 +127,7 @@ const DASHBOARD_TABS = [
   ['personalOperaciones', 'Personal Operaciones', RiTeamLine],
   ['comparativaMO', 'Comparativa MO', RiPieChartLine],
   ['estimador', 'Estimar duración de obras FV', RiCalculatorLine],
+  ['solicitudes', 'Solicitudes', RiGasStationLine],
 ];
 
 // ── Portada ("Inicio") ──
@@ -147,6 +153,13 @@ const INFO_TABS = {
     color: '#22d3c5',
     descripcion: 'Mano de obra prevista vs. real: días y costos por obra.',
   },
+  solicitudes: {
+    color: '#ff6b6b',
+    nombre: 'Solicitudes de combustible y viáticos',
+    descripcion:
+      'Armá los pedidos de combustible (RPO 03 20) y de viáticos (RPS 01 02) y descargá el Excel listo para enviar.',
+    conClave: true,
+  },
   estimador: {
     color: '#ff9f4a',
     nombre: 'Estimador y presupuestador de obras FV',
@@ -165,10 +178,10 @@ const GRUPOS_INICIO = [
   },
   {
     titulo: 'Herramientas',
-    descripcion: 'Calculadoras para planificar y presupuestar.',
+    descripcion: 'Calculadoras y solicitudes para planificar, presupuestar y pedir.',
     color: '#ff9f4a',
     icono: RiToolsLine,
-    tabs: ['estimador'],
+    tabs: ['estimador', 'solicitudes'],
   },
 ];
 
@@ -6158,7 +6171,8 @@ const dataAnio =
     loadingPersonal ||
     loadingComparativaMO;
 
-  if (loading && obras.length === 0 && tabActiva !== 'inicio') {
+  // La portada y las solicitudes no dependen de los datos del panel: no esperan.
+  if (loading && obras.length === 0 && tabActiva !== 'inicio' && tabActiva !== 'solicitudes') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-transparent">
         <div className="text-center" role="status" aria-label="Cargando datos">
@@ -6393,6 +6407,12 @@ const dataAnio =
                           {dato}
                         </div>
                       )}
+                      {info.conClave && (
+                        <div className="relative mt-3 flex items-center gap-1 text-xs text-gray-400">
+                          <RiLockLine className="size-3.5" aria-hidden="true" />
+                          Acceso con clave
+                        </div>
+                      )}
                       <div
                         className="relative mt-auto flex items-center gap-1 pt-4 text-sm font-semibold"
                         style={{ color: info.color }}
@@ -6409,6 +6429,17 @@ const dataAnio =
               </div>
             </section>
           ))}
+        </main>
+      )}
+
+      {/* ── SOLICITUDES (combustible y viáticos) ── */}
+      {tabActiva === 'solicitudes' && (
+        <main className="mx-auto max-w-[1200px] px-4 py-6">
+          <Suspense
+            fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
+          >
+            <Solicitudes />
+          </Suspense>
         </main>
       )}
 
