@@ -1,16 +1,17 @@
 // Herramienta "Solicitudes de combustible y viáticos" (RPO 03 20 y RPS 01 02).
 // Vino de la app independiente "solicitud-combustible" y quedó dentro del
 // Panel de Obras Solares, en la sección Herramientas. Usa su propia base en
-// Supabase y pide clave para entrar (el resto del panel no la necesita).
+// Supabase y pide usuario y contraseña (el resto del panel no los necesita).
 import React, { useCallback, useEffect, useState } from 'react'
 import { RiLogoutBoxRLine, RiSettings3Line, RiGasStationLine, RiSuitcaseLine } from '@remixicon/react'
 import { Toaster } from 'sonner'
-import { Aviso, Button, Campo, Card, ConfirmProvider, Esqueleto, Input } from './components/ui'
+import { Aviso, Button, Card, ConfirmProvider, Esqueleto } from './components/ui'
 import { TabNavigation, TabNavigationLink } from './tremor/TabNavigation'
 import Pedido from './components/Pedido'
 import Config from './components/Config'
 import Viaticos from './components/Viaticos'
-import { CONFIG_FALTANTE, MODO_DEMO, cargarTodo, haySesion, login, logout } from './lib/data'
+import RequiereLogin from '../auth/RequiereLogin'
+import { MODO_DEMO, cargarTodo } from './lib/data'
 
 const PESTANAS = [
   ['pedido', 'Combustible', RiGasStationLine],
@@ -18,20 +19,18 @@ const PESTANAS = [
   ['config', 'Configuración', RiSettings3Line],
 ]
 
-// Mismo degradé del encabezado del Panel de Obras Solares.
-const DEGRADE = { background: 'linear-gradient(110deg, #123138 0%, #1d4a50 55%, #24604f 100%)' }
-
 export default function Solicitudes() {
   return (
     <ConfirmProvider>
       <Toaster theme="dark" position="top-center" richColors closeButton />
-      <Contenido />
+      <RequiereLogin titulo="Solicitudes" subtitulo="Combustible y viáticos · acceso con usuario">
+        {({ email, salir }) => <Contenido email={email} salir={salir} />}
+      </RequiereLogin>
     </ConfirmProvider>
   )
 }
 
-function Contenido() {
-  const [sesion, setSesion] = useState(null) // null = verificando
+function Contenido({ email, salir }) {
   const [datos, setDatos] = useState(null)
   const [error, setError] = useState('')
   const [vista, setVista] = useState(() => {
@@ -52,12 +51,8 @@ function Contenido() {
   }, [])
 
   useEffect(() => {
-    if (!CONFIG_FALTANTE) haySesion().then(setSesion)
-  }, [])
-
-  useEffect(() => {
-    if (sesion) recargar()
-  }, [sesion, recargar])
+    recargar()
+  }, [recargar])
 
   const cambiarVista = (id) => {
     setVista(id)
@@ -68,19 +63,6 @@ function Contenido() {
     }
   }
 
-  if (CONFIG_FALTANTE) {
-    return (
-      <Centro>
-        <Aviso tipo="error">
-          Falta configurar Supabase (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY y VITE_LOGIN_EMAIL) en las variables de
-          entorno de Vercel de este proyecto.
-        </Aviso>
-      </Centro>
-    )
-  }
-  if (sesion === null) return <Centro />
-  if (!sesion) return <Login onEntrar={() => setSesion(true)} />
-
   return (
     <div className="mx-auto max-w-5xl pb-10">
       <div className="mb-3 flex items-center gap-3">
@@ -90,15 +72,10 @@ function Contenido() {
             Combustible RPO 03 20 · Viáticos RPS 01 02{MODO_DEMO && ' · modo demo'}
           </div>
         </div>
-        <Button
-          variante="secundario"
-          onClick={async () => {
-            await logout()
-            setSesion(false)
-            setDatos(null)
-          }}
-          aria-label="Salir"
-        >
+        <span className="hidden max-w-[14rem] truncate text-xs text-gray-400 sm:inline" title={email}>
+          {email}
+        </span>
+        <Button variante="secundario" onClick={salir} aria-label="Salir">
           <RiLogoutBoxRLine className="size-4" />
           <span className="hidden sm:inline">Salir</span>
         </Button>
@@ -148,70 +125,5 @@ function Cargando() {
         </Card>
       ))}
     </div>
-  )
-}
-
-function Centro({ children }) {
-  return <div className="flex min-h-[55vh] items-center justify-center p-4">{children}</div>
-}
-
-function Login({ onEntrar }) {
-  const [clave, setClave] = useState('')
-  const [error, setError] = useState('')
-  const [entrando, setEntrando] = useState(false)
-
-  async function entrar(e) {
-    e.preventDefault()
-    setEntrando(true)
-    setError('')
-    try {
-      await login(clave)
-      onEntrar()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setEntrando(false)
-    }
-  }
-
-  return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/10">
-      <img src="/fotos/planta.jpg" alt="" className="foto-zoom absolute inset-0 size-full object-cover" />
-      <div className="absolute inset-0 bg-[#0e2228]/80 backdrop-blur-[2px]" />
-      <div className="relative">
-        <LoginCard
-          clave={clave}
-          setClave={setClave}
-          error={error}
-          entrando={entrando}
-          entrar={entrar}
-        />
-      </div>
-    </div>
-  )
-}
-
-function LoginCard({ clave, setClave, error, entrando, entrar }) {
-  return (
-    <Centro>
-      <Card className="w-full max-w-sm overflow-hidden p-0 sm:p-0">
-        <div className="flex items-center gap-3 px-6 py-4" style={DEGRADE}>
-          <img src="/logo-ecovatio.png" alt="Ecovatio" className="h-7" />
-          <div className="border-l border-white/15 pl-3">
-            <div className="text-sm font-bold">Solicitudes</div>
-            <div className="text-xs text-gray-400">Combustible y viáticos · acceso con clave</div>
-          </div>
-        </div>
-        <form onSubmit={entrar} className="space-y-4 p-6">
-          <Campo label="Clave" error={error}>
-            <Input type="password" value={clave} onChange={(e) => setClave(e.target.value)} autoFocus error={error} />
-          </Campo>
-          <Button type="submit" className="w-full" disabled={entrando || !clave} isLoading={entrando} loadingText="Entrando…">
-            Entrar
-          </Button>
-          {MODO_DEMO && <p className="text-xs text-gray-500">Modo demo local: la clave es "demo".</p>}
-        </form>
-      </Card>
-    </Centro>
   )
 }

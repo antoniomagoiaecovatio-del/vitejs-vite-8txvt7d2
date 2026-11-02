@@ -1,38 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { MODO_DEMO, supabase } from '../../auth/auth'
 
-const URL = import.meta.env.VITE_SUPABASE_URL
-const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-const LOGIN_EMAIL = import.meta.env.VITE_LOGIN_EMAIL
-
-// Sin credenciales de Supabase y en `npm run dev` se usa un modo demo con
-// datos en localStorage, solo para desarrollo local.
-export const MODO_DEMO = !URL || !KEY
-export const CONFIG_FALTANTE = MODO_DEMO && !import.meta.env.DEV
-
-const supabase = MODO_DEMO ? null : createClient(URL, KEY)
-
-// ---------------------------------------------------------------- sesión
-
-export async function haySesion() {
-  if (MODO_DEMO) return sessionStorage.getItem('demo-sesion') === '1'
-  const { data } = await supabase.auth.getSession()
-  return !!data.session
-}
-
-export async function login(password) {
-  if (MODO_DEMO) {
-    if (password !== 'demo') throw new Error('Clave incorrecta (modo demo: "demo")')
-    sessionStorage.setItem('demo-sesion', '1')
-    return
-  }
-  const { error } = await supabase.auth.signInWithPassword({ email: LOGIN_EMAIL, password })
-  if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Clave incorrecta' : error.message)
-}
-
-export async function logout() {
-  if (MODO_DEMO) return sessionStorage.removeItem('demo-sesion')
-  await supabase.auth.signOut()
-}
+export { MODO_DEMO }
 
 // ---------------------------------------------------------------- datos
 

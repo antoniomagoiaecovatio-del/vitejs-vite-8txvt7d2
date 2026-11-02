@@ -367,3 +367,49 @@ main {
     animation: none;
   }
 }
+
+/* ── Dimensionamiento de cables (herramienta portada de una app Next.js) ──
+   Paleta propia, siempre oscura y a tono con el panel; sus variables viven
+   solo dentro de .cables-root para no afectar al resto. */
+.cables-root {
+  color-scheme: dark;
+  --bg: transparent;
+  --surface: #1d3c44;
+  --field: #16323a;
+  --line: #2c5059;
+  --ink: #f6f9f9;
+  --ink-2: #d5dfe0;
+  --muted: #9bb0b3;
+  --brand: #1d4a50;
+  --accent: #95de1d;
+  --accent-ink: #a8e84a;
+  --ok: #4ade80;
+  --warn: #f5b301;
+  --warn-ink: #fcd34d;
+  --danger: #f05252;
+  --danger-ink: #fca5a5;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  color: var(--ink);
+}
+.cables-root select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+@theme inline {
+  --color-surface: var(--surface);
+  --color-field: var(--field);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-cb-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-warn-ink: var(--warn-ink);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+}

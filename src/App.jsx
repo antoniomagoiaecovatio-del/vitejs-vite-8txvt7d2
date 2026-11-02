@@ -14,6 +14,8 @@ import { VEHICULOS_FLOTA, CATEGORIAS_VEHICULOS } from './data/vehiculosCombustib
 
 // Herramienta de solicitudes (usa Supabase y exceljs): se carga recién al entrar.
 const Solicitudes = lazy(() => import('./solicitudes/Solicitudes'));
+// Dimensionamiento de cables (usa ECharts): también se carga recién al entrar.
+const Cables = lazy(() => import('./cables/Cables'));
 import {
   RiBuilding2Line,
   RiFlashlightLine,
@@ -128,6 +130,7 @@ const DASHBOARD_TABS = [
   ['comparativaMO', 'Comparativa MO', RiPieChartLine],
   ['estimador', 'Estimar duración de obras FV', RiCalculatorLine],
   ['solicitudes', 'Solicitudes', RiGasStationLine],
+  ['cables', 'Dimensionamiento de cables', RiFlashlightLine],
 ];
 
 // ── Portada ("Inicio") ──
@@ -160,6 +163,13 @@ const INFO_TABS = {
       'Armá los pedidos de combustible (RPO 03 20) y de viáticos (RPS 01 02) y descargá el Excel listo para enviar.',
     conClave: true,
   },
+  cables: {
+    color: '#4fc3f7',
+    nombre: 'Dimensionamiento de cables',
+    descripcion:
+      'Calculá la sección del conductor y la protección (BT y fotovoltaica) por ampacidad, caída de tensión y cortocircuito, y compará costos Cu vs Al.',
+    conClave: true,
+  },
   estimador: {
     color: '#ff9f4a',
     nombre: 'Estimador y presupuestador de obras FV',
@@ -181,14 +191,14 @@ const GRUPOS_INICIO = [
   },
   {
     titulo: 'Herramientas',
-    descripcion: 'Calculadoras y solicitudes para planificar, presupuestar y pedir.',
+    descripcion: 'Calculadoras y solicitudes para planificar, presupuestar, dimensionar y pedir.',
     color: '#ff9f4a',
     icono: RiToolsLine,
     foto: '/fotos/herramientas.jpg',
     // Más grande que el banner y corrida para que el techo con paneles quede a la derecha, sin tapar el texto
     fotoTam: '150% auto',
     fotoPos: '18% 41%',
-    tabs: ['estimador', 'solicitudes'],
+    tabs: ['estimador', 'solicitudes', 'cables'],
   },
 ];
 
@@ -6179,7 +6189,7 @@ const dataAnio =
     loadingComparativaMO;
 
   // La portada y las solicitudes no dependen de los datos del panel: no esperan.
-  if (loading && obras.length === 0 && tabActiva !== 'inicio' && tabActiva !== 'solicitudes') {
+  if (loading && obras.length === 0 && tabActiva !== 'inicio' && tabActiva !== 'solicitudes' && tabActiva !== 'cables') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-transparent">
         <div className="text-center" role="status" aria-label="Cargando datos">
@@ -6499,6 +6509,17 @@ const dataAnio =
             fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
           >
             <Solicitudes />
+          </Suspense>
+        </main>
+      )}
+
+      {/* ── DIMENSIONAMIENTO DE CABLES ── */}
+      {tabActiva === 'cables' && (
+        <main className="mx-auto max-w-[1500px] px-4 py-6">
+          <Suspense
+            fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
+          >
+            <Cables />
           </Suspense>
         </main>
       )}
