@@ -13,6 +13,9 @@ const esc = (v: unknown) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
+/** Igual que esc, pero convierte I_B, f_total, V_mp… en subíndices (el guion bajo se pierde al capturar la imagen). */
+const escf = (v: unknown) => esc(v).replace(/(?<![A-Za-z0-9])([IfVURXSPk])_([A-Za-z0-9ñ]+)/g, "$1<sub>$2</sub>");
+
 const ROUTING: Record<string, string> = {
   cano: "Caño embutido o a la vista",
   bandeja_perforada: "Bandeja perforada",
@@ -148,7 +151,7 @@ function datosEntrada(res: CalcResult, i: CalcInputs): [string, [string, string]
 }
 
 const alertaHtml = (a: Alert) =>
-  `<li class="al ${a.level}"><span class="tag">${a.level === "error" ? "Error" : a.level === "warning" ? "Atención" : "Norma"}</span>${esc(a.message)}</li>`;
+  `<li class="al ${a.level}"><span class="tag">${a.level === "error" ? "Error" : a.level === "warning" ? "Atención" : "Norma"}</span>${escf(a.message)}</li>`;
 
 export interface DatosInforme {
   proyecto: string;
@@ -183,23 +186,22 @@ export function construirHtmlInformeCables(res: CalcResult, inputs: CalcInputs, 
 
   const pasosHtml = steps
     .map((s) => {
-      const bullets = s.bullets.length ? `<div class="bl">${s.bullets.map(esc).join(" · ")}</div>` : "";
+      const bullets = s.bullets.length ? `<div class="bl">${s.bullets.map(escf).join(" · ")}</div>` : "";
       const tabla = s.table
-        ? `<table class="tp"><thead><tr>${s.table.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${s.table.rows
+        ? `<table class="tp"><thead><tr>${s.table.head.map((h) => `<th>${escf(h)}</th>`).join("")}</tr></thead><tbody>${s.table.rows
             .slice(-3)
-            .map((row) => `<tr class="${row.ok ? "ok" : "no"}">${row.cells.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`)
+            .map((row) => `<tr class="${row.ok ? "ok" : "no"}">${row.cells.map((c) => `<td>${escf(c)}</td>`).join("")}</tr>`)
             .join("")}</tbody></table>`
         : "";
       return `
       <div class="paso">
-        <div class="p-n">${s.num}</div>
         <div class="p-c">
-          <div class="p-h"><span class="p-t">${esc(s.title)}</span><span class="p-r">${esc(s.result)}</span></div>
-          ${s.paragraphs.map((p) => `<p>${esc(p)}</p>`).join("")}
-          ${s.formulas.map((x) => `<div class="fx">${esc(x)}</div>`).join("")}
+          <div class="p-h"><span class="p-t"><span class="nn">${s.num}.</span>${escf(s.title)}</span><span class="p-r">${escf(s.result)}</span></div>
+          ${s.paragraphs.map((p) => `<p>${escf(p)}</p>`).join("")}
+          ${s.formulas.map((x) => `<div class="fx">${escf(x)}</div>`).join("")}
           ${bullets}${tabla}
-          ${s.after ? `<p>${esc(s.after)}</p>` : ""}
-          ${s.sources.map((src) => `<div class="src">▤ <b>${esc(src.label)}:</b> ${fuenteTxt(src)}</div>`).join("")}
+          ${s.after ? `<p>${escf(s.after)}</p>` : ""}
+          ${s.sources.map((src) => `<div class="src">▤ <b>${escf(src.label)}:</b> ${fuenteTxt(src)}</div>`).join("")}
         </div>
       </div>`;
     })
@@ -208,7 +210,7 @@ export function construirHtmlInformeCables(res: CalcResult, inputs: CalcInputs, 
   const specs = r.protection
     ? `<section class="sec">
       <div class="sec-t">${isDC ? "Protección" : "Protección termomagnética (especificación)"}</div>
-      <div class="specs">${r.protection.specs.map((sp) => `<div class="sp"><span class="l">${esc(sp.label)}</span><span class="v">${esc(sp.value)}</span></div>`).join("")}</div>
+      <div class="specs">${r.protection.specs.map((sp) => `<div class="sp"><span class="l">${escf(sp.label)}</span><span class="v">${escf(sp.value)}</span></div>`).join("")}</div>
     </section>`
     : "";
 
@@ -229,9 +231,9 @@ export function construirHtmlInformeCables(res: CalcResult, inputs: CalcInputs, 
   <meta charset="UTF-8" />
   <title>Dimensionamiento de conductores${datos.proyecto ? " - " + esc(datos.proyecto) : ""}</title>
   <style>
-    @page { size: A4; margin: 8mm; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: #fff; }
+    html { background: #fff; }
+    body { margin: 0; width: 794px; padding: 30px; background: #fff; }
     body { font-family: Inter, "Segoe UI", Arial, sans-serif; color: #243238; font-size: 8.6px; line-height: 1.34; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     b, strong { color: #173f44; }
     .top { background: #173f44; color: #fff; border-radius: 10px; padding: 9px 16px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
@@ -256,12 +258,14 @@ export function construirHtmlInformeCables(res: CalcResult, inputs: CalcInputs, 
     .l { color: #6a7b78; } .v { font-weight: 700; color: #173f44; text-align: right; }
     .specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 18px; border: 1px solid #dfe8e7; border-radius: 9px; padding: 3px 11px; }
     .pasos { column-count: 2; column-gap: 7px; }
+    .pasos.una-col { column-count: 1; }
     .paso { display: flex; gap: 8px; border: 1px solid #dfe8e7; border-radius: 8px; padding: 4px 9px; margin-bottom: 3px; break-inside: avoid; }
-    .p-n { flex: none; width: 16px; height: 16px; border-radius: 50%; background: #173f44; color: #fff; font-weight: 800; font-size: 8.5px; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+    .nn { color: #78b409; font-weight: 800; margin-right: 4px; }
     .p-c { flex: 1; min-width: 0; }
     .p-h { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-    .p-t { font-weight: 800; color: #173f44; font-size: 9.2px; }
-    .p-r { font-weight: 800; color: #173f44; font-size: 8.6px; text-align: right; }
+    .p-t { font-weight: 800; color: #173f44; font-size: 9.2px; line-height: 1.5; }
+    .p-r { font-weight: 800; color: #173f44; font-size: 8.6px; line-height: 1.5; text-align: right; }
+    sub { font-size: .75em; line-height: 0; vertical-align: -0.25em; }
     .paso p { margin: 2px 0 0; color: #4d615f; }
     .fx { margin-top: 3px; background: #f3f7f6; border-radius: 5px; padding: 2.5px 7px; font-family: Consolas, "Courier New", monospace; font-size: 8px; color: #243238; overflow-wrap: anywhere; }
     .bl { margin-top: 3px; color: #647572; font-size: 8px; }
@@ -307,7 +311,7 @@ export function construirHtmlInformeCables(res: CalcResult, inputs: CalcInputs, 
       <div class="kpi">
         <div class="lab">Corriente</div>
         <div class="val">${n(f.iz)} <small>A</small></div>
-        <div class="s">I_z ${okAmp ? "≥" : "<"} I diseño ${n(iDesign)} A <span class="${okAmp ? "ok-t" : "no-t"}">${okAmp ? "✓" : "✗"}</span></div>
+        <div class="s">I<sub>z</sub> ${okAmp ? "≥" : "<"} I diseño ${n(iDesign)} A <span class="${okAmp ? "ok-t" : "no-t"}">${okAmp ? "✓" : "✗"}</span></div>
       </div>
       <div class="kpi">
         <div class="lab">Caída de tensión</div>
@@ -341,11 +345,6 @@ export function construirHtmlInformeCables(res: CalcResult, inputs: CalcInputs, 
     </footer>
   </main>
 
-  <script>
-    window.onload = function () {
-      window.setTimeout(function () { window.print(); }, 300);
-    };
-  </script>
 </body>
 </html>`;
 }

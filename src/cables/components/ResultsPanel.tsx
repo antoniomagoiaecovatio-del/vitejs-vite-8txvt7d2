@@ -372,21 +372,25 @@ function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
       return "";
     }
   });
-  const exportar = () => {
+  const [generando, setGenerando] = useState(false);
+  const [error, setError] = useState("");
+  const exportar = async () => {
     try {
       localStorage.setItem("cables-elaboro", elaboro);
     } catch {
       /* ignorar */
     }
-    const html = construirHtmlInformeCables(res, inputs, { proyecto: proyecto.trim(), elaboro: elaboro.trim() });
-    const w = window.open("", "_blank");
-    if (!w) {
-      alert("Permití las ventanas emergentes para exportar el informe.");
-      return;
+    setGenerando(true);
+    setError("");
+    try {
+      const html = construirHtmlInformeCables(res, inputs, { proyecto: proyecto.trim(), elaboro: elaboro.trim() });
+      const { descargarInformePdf } = await import("../lib/report/pdf");
+      await descargarInformePdf(html, proyecto.trim());
+    } catch (e) {
+      setError("No se pudo generar el PDF: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setGenerando(false);
     }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
   };
   const field =
     "w-full rounded-lg border border-line bg-field px-2.5 py-1.5 text-sm text-ink outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25";
@@ -404,15 +408,20 @@ function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
         <button
           type="button"
           onClick={exportar}
-          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-gray-900 shadow-sm transition hover:brightness-110 active:scale-95"
+          disabled={generando}
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-gray-900 shadow-sm transition hover:brightness-110 active:scale-95 disabled:cursor-wait disabled:opacity-70"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden>
             <path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Exportar informe PDF
+          {generando ? "Generando PDF…" : "Descargar informe PDF"}
         </button>
       </div>
-      <p className="mt-1.5 text-[11px] text-muted">Se abre el informe y el navegador ofrece «Guardar como PDF» (elegí ese destino en la ventana de impresión).</p>
+      {error ? (
+        <p className="mt-1.5 text-[12px] text-danger-ink">{error}</p>
+      ) : (
+        <p className="mt-1.5 text-[11px] text-muted">Se descarga un PDF de una hoja A4 con las consideraciones y el cálculo completo.</p>
+      )}
     </section>
   );
 }
