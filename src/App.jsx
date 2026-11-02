@@ -174,6 +174,7 @@ const GRUPOS_INICIO = [
     descripcion: 'Seguimiento de las obras, los proyectos, la potencia instalada, el personal y la mano de obra.',
     color: '#95de1d',
     icono: RiBarChartBoxLine,
+    foto: '/fotos/indicadores.jpg',
     tabs: ['dashboard', 'estadoProyectos', 'potenciaInstalada', 'personalOperaciones', 'comparativaMO'],
   },
   {
@@ -181,6 +182,7 @@ const GRUPOS_INICIO = [
     descripcion: 'Calculadoras y solicitudes para planificar, presupuestar y pedir.',
     color: '#ff9f4a',
     icono: RiToolsLine,
+    foto: '/fotos/herramientas.jpg',
     tabs: ['estimador', 'solicitudes'],
   },
 ];
@@ -6344,23 +6346,60 @@ const dataAnio =
       {/* ── INICIO (portada) ── */}
       {tabActiva === 'inicio' && (
         <main className="mx-auto max-w-[1200px] px-6 py-10">
-          <div className="mb-10 text-center">
-            <h1 className="text-3xl font-extrabold md:text-4xl">Panel de Obras Solares</h1>
-            <p className="mt-2 text-gray-400">Elegí a qué sección querés entrar</p>
+          {/* Portada con foto de fondo */}
+          <div className="relative mb-10 flex min-h-[300px] items-end overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/30 md:min-h-[400px]">
+            <img
+              src="/fotos/portada.jpg"
+              alt=""
+              fetchPriority="high"
+              className="foto-zoom absolute inset-0 size-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, rgba(14,34,40,0.94) 0%, rgba(18,49,56,0.6) 40%, rgba(18,49,56,0.08) 100%), linear-gradient(100deg, rgba(18,49,56,0.55) 0%, transparent 55%)',
+              }}
+            />
+            <div className="relative p-6 md:p-10">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#95de1d] backdrop-blur-sm">
+                <span className="size-1.5 rounded-full bg-[#95de1d]" />
+                ECOVATIO · Energía solar
+              </div>
+              <h1 className="max-w-2xl text-3xl font-extrabold leading-tight md:text-5xl">
+                Panel de Obras Solares
+              </h1>
+              <p className="mt-3 max-w-xl text-base text-gray-200 md:text-lg">
+                Indicadores, tableros y herramientas para gestionar cada obra fotovoltaica. Elegí a qué sección querés entrar.
+              </p>
+            </div>
           </div>
 
           {GRUPOS_INICIO.map((g) => (
-            <section key={g.titulo} className="mb-10">
-              <div className="mb-4 flex items-center gap-3">
+            <section key={g.titulo} className="mb-12">
+              <div className="grupo-foto relative mb-5 flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 p-5 md:p-6">
+                <img
+                  src={g.foto}
+                  alt=""
+                  loading="lazy"
+                  className="foto-zoom absolute inset-0 size-full object-cover"
+                />
                 <div
-                  className="flex size-11 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: g.color + '26', color: g.color }}
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      'linear-gradient(95deg, rgba(14,34,40,0.95) 0%, rgba(18,49,56,0.82) 45%, rgba(18,49,56,0.35) 100%)',
+                  }}
+                />
+                <div
+                  className="relative flex size-12 shrink-0 items-center justify-center rounded-xl backdrop-blur-sm"
+                  style={{ background: g.color + '33', color: g.color, border: `1px solid ${g.color}55` }}
                 >
                   <g.icono className="size-6" aria-hidden="true" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">{g.titulo}</h2>
-                  <p className="text-sm text-gray-400">{g.descripcion}</p>
+                <div className="relative">
+                  <h2 className="text-xl font-bold md:text-2xl">{g.titulo}</h2>
+                  <p className="text-sm text-gray-200">{g.descripcion}</p>
                 </div>
               </div>
 

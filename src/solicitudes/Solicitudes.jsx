@@ -175,6 +175,24 @@ function Login({ onEntrar }) {
   }
 
   return (
+    <div className="relative overflow-hidden rounded-3xl border border-white/10">
+      <img src="/fotos/planta.jpg" alt="" className="foto-zoom absolute inset-0 size-full object-cover" />
+      <div className="absolute inset-0 bg-[#0e2228]/80 backdrop-blur-[2px]" />
+      <div className="relative">
+        <LoginCard
+          clave={clave}
+          setClave={setClave}
+          error={error}
+          entrando={entrando}
+          entrar={entrar}
+        />
+      </div>
+    </div>
+  )
+}
+
+function LoginCard({ clave, setClave, error, entrando, entrar }) {
+  return (
     <Centro>
       <Card className="w-full max-w-sm overflow-hidden p-0 sm:p-0">
         <div className="flex items-center gap-3 px-6 py-4" style={DEGRADE}>

@@ -344,10 +344,26 @@ main {
   animation: tarjetaEntra 560ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: calc(var(--i, 0) * 80ms + 140ms);
 }
+/* Fotos de la portada: zoom muy lento (efecto "Ken Burns") */
+@keyframes fotoZoom {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.1) translate(-1.2%, -0.8%);
+  }
+}
+.foto-zoom {
+  animation: fotoZoom 28s ease-in-out infinite alternate;
+}
+.grupo-foto:hover .foto-zoom {
+  animation-duration: 14s;
+}
 @media (prefers-reduced-motion: reduce) {
   main,
   .vista-saliendo main,
-  .tarjeta-inicio {
+  .tarjeta-inicio,
+  .foto-zoom {
     animation: none;
   }
 }
