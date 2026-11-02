@@ -1,6 +1,8 @@
 
 
+import { useState } from "react";
 import { StepByStep } from "./StepByStep";
+import { construirHtmlInformeCables } from "../lib/report/informe";
 import { AL_MIN_SECTION } from "../lib/engine/calc";
 import { CoordinationChart } from "./CoordinationChart";
 import { IndicatorsCard } from "./IndicatorsCard";
@@ -360,6 +362,61 @@ function Comparison({ res, onPick, current }: { res: CalcResult; onPick: (f: Fam
   );
 }
 
+/** Datos del encabezado del informe + botón para exportarlo a PDF. */
+function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
+  const [proyecto, setProyecto] = useState("");
+  const [elaboro, setElaboro] = useState(() => {
+    try {
+      return localStorage.getItem("cables-elaboro") ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const exportar = () => {
+    try {
+      localStorage.setItem("cables-elaboro", elaboro);
+    } catch {
+      /* ignorar */
+    }
+    const html = construirHtmlInformeCables(res, inputs, { proyecto: proyecto.trim(), elaboro: elaboro.trim() });
+    const w = window.open("", "_blank");
+    if (!w) {
+      alert("Permití las ventanas emergentes para exportar el informe.");
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  };
+  const field =
+    "w-full rounded-lg border border-line bg-field px-2.5 py-1.5 text-sm text-ink outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25";
+  return (
+    <section className="rounded-xl border border-line bg-surface p-3 shadow-sm">
+      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <label className="block text-[11px] font-medium uppercase tracking-wide text-muted">
+          Proyecto / circuito (para el informe)
+          <input className={`${field} mt-1 normal-case tracking-normal`} value={proyecto} onChange={(e) => setProyecto(e.target.value)} placeholder="Ej.: Inversor 1 → tablero general" />
+        </label>
+        <label className="block text-[11px] font-medium uppercase tracking-wide text-muted">
+          Elaboró
+          <input className={`${field} mt-1 normal-case tracking-normal`} value={elaboro} onChange={(e) => setElaboro(e.target.value)} placeholder="Nombre" />
+        </label>
+        <button
+          type="button"
+          onClick={exportar}
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-bold text-gray-900 shadow-sm transition hover:brightness-110 active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden>
+            <path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Exportar informe PDF
+        </button>
+      </div>
+      <p className="mt-1.5 text-[11px] text-muted">Se abre el informe y el navegador ofrece «Guardar como PDF» (elegí ese destino en la ventana de impresión).</p>
+    </section>
+  );
+}
+
 function Disclaimer() {
   return (
     <p className="rounded-lg border border-warn/50 bg-warn/10 px-3 py-2 text-[13px] leading-snug text-warn-ink">
@@ -418,6 +475,8 @@ export function ResultsPanel({
           </p>
         </section>
       )}
+
+      {ok && <ExportBar res={res} inputs={inputs} />}
 
       <Disclaimer />
 
