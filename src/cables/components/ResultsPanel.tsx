@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { StepByStep } from "./StepByStep";
-import { construirHtmlInformeCables } from "../lib/report/informe";
 import { AL_MIN_SECTION } from "../lib/engine/calc";
 import { CoordinationChart } from "./CoordinationChart";
 import { IndicatorsCard } from "./IndicatorsCard";
@@ -383,9 +382,8 @@ function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
     setGenerando(true);
     setError("");
     try {
-      const html = construirHtmlInformeCables(res, inputs, { proyecto: proyecto.trim(), elaboro: elaboro.trim() });
-      const { descargarInformePdf } = await import("../lib/report/pdf");
-      await descargarInformePdf(html, proyecto.trim());
+      const { descargarInformePdf } = await import("../lib/report/pdfInforme");
+      await descargarInformePdf(res, inputs, { proyecto: proyecto.trim(), elaboro: elaboro.trim() });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (/dynamically imported module|Importing a module script failed|Failed to fetch/i.test(msg)) {
@@ -427,7 +425,7 @@ function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
       {error ? (
         <p className="mt-1.5 text-[12px] text-danger-ink">{error}</p>
       ) : (
-        <p className="mt-1.5 text-[11px] text-muted">Se descarga un PDF de una hoja A4 con las consideraciones y el cálculo completo.</p>
+        <p className="mt-1.5 text-[11px] text-muted">Se descarga un informe PDF de 2 páginas (A4) con el resultado, los gráficos y el cálculo completo.</p>
       )}
     </section>
   );
