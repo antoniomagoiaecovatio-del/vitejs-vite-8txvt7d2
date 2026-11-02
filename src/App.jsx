@@ -6280,10 +6280,22 @@ const dataAnio =
       )}
     >
       <header
-        className="flex items-center justify-between border-b border-white/10 px-6 py-3 shadow-lg shadow-black/20"
+        className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 shadow-lg shadow-black/20 sm:px-6"
         style={{ background: 'linear-gradient(110deg, #123138 0%, #1d4a50 55%, #24604f 100%)' }}
       >
         <div className="flex items-center">
+          {tabActiva !== 'inicio' && (
+            <button
+              type="button"
+              onClick={() => irA('inicio')}
+              title="Volver a la pantalla de inicio"
+              className="mr-4 flex shrink-0 cursor-pointer items-center gap-2 rounded-xl bg-[#95de1d] px-3.5 py-2 text-sm font-bold text-gray-900 shadow-md shadow-black/30 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#a8ee3a] hover:shadow-lg active:translate-y-0 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <RiHome2Line className="size-5" aria-hidden="true" />
+              <span className="hidden sm:inline">Volver al inicio</span>
+              <span className="sm:hidden">Inicio</span>
+            </button>
+          )}
           <a
             href="https://ecovatio.com.ar/"
             target="_blank"
