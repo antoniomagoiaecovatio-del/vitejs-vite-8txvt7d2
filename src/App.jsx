@@ -175,6 +175,8 @@ const GRUPOS_INICIO = [
     color: '#95de1d',
     icono: RiBarChartBoxLine,
     foto: '/fotos/indicadores.jpg',
+    fotoTam: 'cover',
+    fotoPos: '50% 45%',
     tabs: ['dashboard', 'estadoProyectos', 'potenciaInstalada', 'personalOperaciones', 'comparativaMO'],
   },
   {
@@ -183,6 +185,9 @@ const GRUPOS_INICIO = [
     color: '#ff9f4a',
     icono: RiToolsLine,
     foto: '/fotos/herramientas.jpg',
+    // Más grande que el banner y corrida para que el techo con paneles quede a la derecha, sin tapar el texto
+    fotoTam: '150% auto',
+    fotoPos: '18% 41%',
     tabs: ['estimador', 'solicitudes'],
   },
 ];
@@ -6378,17 +6383,21 @@ const dataAnio =
           {GRUPOS_INICIO.map((g) => (
             <section key={g.titulo} className="mb-12">
               <div className="grupo-foto relative mb-5 flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 p-5 md:p-6">
-                <img
-                  src={g.foto}
-                  alt=""
-                  loading="lazy"
-                  className="foto-zoom absolute inset-0 size-full object-cover"
+                <div
+                  aria-hidden="true"
+                  className="foto-zoom absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${g.foto})`,
+                    backgroundSize: g.fotoTam,
+                    backgroundPosition: g.fotoPos,
+                    backgroundRepeat: 'no-repeat',
+                  }}
                 />
                 <div
                   className="absolute inset-0"
                   style={{
                     background:
-                      'linear-gradient(95deg, rgba(14,34,40,0.95) 0%, rgba(18,49,56,0.82) 45%, rgba(18,49,56,0.35) 100%)',
+                      'linear-gradient(95deg, rgba(14,34,40,0.95) 0%, rgba(18,49,56,0.8) 38%, rgba(18,49,56,0.12) 70%, rgba(18,49,56,0.05) 100%)',
                   }}
                 />
                 <div
