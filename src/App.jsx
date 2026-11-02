@@ -25,6 +25,8 @@ import {
   RiArrowRightSLine,
   RiArrowLeftSLine,
   RiFullscreenLine,
+  RiHome2Line,
+  RiToolsLine,
   RiFullscreenExitLine,
   RiListCheck,
   RiTimerLine,
@@ -121,6 +123,61 @@ const DASHBOARD_TABS = [
   ['comparativaMO', 'Comparativa MO', RiPieChartLine],
   ['estimador', 'Estimar duración de obras FV', RiCalculatorLine],
 ];
+
+// ── Portada ("Inicio") ──
+// Cada pestaña del panel con su color y una descripción corta para la portada.
+const INFO_TABS = {
+  dashboard: {
+    color: '#95de1d',
+    descripcion: 'Hs MO / kWp por obra, evolución en el tiempo, capacidad y estado de las obras.',
+  },
+  estadoProyectos: {
+    color: '#4fc3f7',
+    descripcion: 'Avance de cada proyecto y de sus etapas de ejecución.',
+  },
+  potenciaInstalada: {
+    color: '#ffc933',
+    descripcion: 'Potencia solar instalada mes a mes, por obra y por año.',
+  },
+  personalOperaciones: {
+    color: '#9b7bff',
+    descripcion: 'Dotación, altas y bajas del personal de operaciones.',
+  },
+  comparativaMO: {
+    color: '#22d3c5',
+    descripcion: 'Mano de obra prevista vs. real: días y costos por obra.',
+  },
+  estimador: {
+    color: '#ff9f4a',
+    nombre: 'Estimador y presupuestador de obras FV',
+    descripcion:
+      'Estimá la duración de una obra y presupuestá mano de obra, viáticos, alojamiento y combustible.',
+  },
+};
+
+const GRUPOS_INICIO = [
+  {
+    titulo: 'Indicadores y Tableros',
+    descripcion: 'Seguimiento de las obras, los proyectos, la potencia instalada, el personal y la mano de obra.',
+    color: '#95de1d',
+    icono: RiBarChartBoxLine,
+    tabs: ['dashboard', 'estadoProyectos', 'potenciaInstalada', 'personalOperaciones', 'comparativaMO'],
+  },
+  {
+    titulo: 'Herramientas',
+    descripcion: 'Calculadoras para planificar y presupuestar.',
+    color: '#ff9f4a',
+    icono: RiToolsLine,
+    tabs: ['estimador'],
+  },
+];
+
+// La pestaña activa se guarda en la dirección (#/estimador): se puede
+// compartir el link de una sección y el botón "atrás" del navegador funciona.
+const tabDesdeHash = () => {
+  const id = String(window.location.hash || '').replace(/^#\/?/, '');
+  return id === 'inicio' || DASHBOARD_TABS.some((t) => t[0] === id) ? id : 'inicio';
+};
 
 const HsMoColor = (val) => {
   if (val === null || val === undefined) return '#8fa6a9';
@@ -3355,7 +3412,17 @@ const [anioPersonalSeleccionado, setAnioPersonalSeleccionado] = useState(
 );
 const [anioTablaPersonalSeleccionado, setAnioTablaPersonalSeleccionado] =
   useState(PERSONAL_TODOS_LOS_ANIOS);
-  const [tabActiva, setTabActiva] = useState('dashboard');
+  const [tabActiva, setTabActiva] = useState(tabDesdeHash);
+  useEffect(() => {
+    const nuevo = `#/${tabActiva}`;
+    if (window.location.hash !== nuevo) window.location.hash = nuevo;
+    window.scrollTo(0, 0);
+  }, [tabActiva]);
+  useEffect(() => {
+    const alCambiarHash = () => setTabActiva(tabDesdeHash());
+    window.addEventListener('hashchange', alCambiarHash);
+    return () => window.removeEventListener('hashchange', alCambiarHash);
+  }, []);
   const [obras, setObras] = useState([]);
   const [proyectosEstado, setProyectosEstado] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -6080,7 +6147,7 @@ const dataAnio =
     loadingPersonal ||
     loadingComparativaMO;
 
-  if (loading && obras.length === 0) {
+  if (loading && obras.length === 0 && tabActiva !== 'inicio') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-transparent">
         <div className="text-center" role="status" aria-label="Cargando datos">
@@ -6189,12 +6256,17 @@ const dataAnio =
           >
             <img src="/logo-ecovatio.png" alt="Ecovatio" className="h-7" />
           </a>
-          <div className="border-l border-white/15 pl-4">
+          <button
+            type="button"
+            onClick={() => setTabActiva('inicio')}
+            title="Ir al inicio"
+            className="cursor-pointer border-l border-white/15 pl-4 text-left transition-opacity hover:opacity-80"
+          >
             <div className="text-sm font-bold">Panel de Obras Solares</div>
             <div className="text-xs text-gray-500 dark:text-gray-500">
               Indicadores de gestión fotovoltaica
             </div>
-          </div>
+          </button>
         </div>
         <div className="flex items-center gap-3">
           {lastUpdate && (
@@ -6213,8 +6285,17 @@ const dataAnio =
         </div>
       </header>
 
+      {tabActiva !== 'inicio' && (
       <div className="mx-auto max-w-[1500px] px-6 pt-4">
         <TabNavigation>
+          <TabNavigationLink
+            active={false}
+            onClick={() => setTabActiva('inicio')}
+            className="cursor-pointer gap-1.5"
+          >
+            <RiHome2Line className="size-4" aria-hidden="true" />
+            Inicio
+          </TabNavigationLink>
           {DASHBOARD_TABS.map(([id, label, Icon]) => (
             <TabNavigationLink
               key={id}
@@ -6228,6 +6309,90 @@ const dataAnio =
           ))}
         </TabNavigation>
       </div>
+      )}
+
+      {/* ── INICIO (portada) ── */}
+      {tabActiva === 'inicio' && (
+        <main className="mx-auto max-w-[1200px] px-6 py-10">
+          <div className="mb-10 text-center">
+            <h1 className="text-3xl font-extrabold md:text-4xl">Panel de Obras Solares</h1>
+            <p className="mt-2 text-gray-400">Elegí a qué sección querés entrar</p>
+          </div>
+
+          {GRUPOS_INICIO.map((g) => (
+            <section key={g.titulo} className="mb-10">
+              <div className="mb-4 flex items-center gap-3">
+                <div
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: g.color + '26', color: g.color }}
+                >
+                  <g.icono className="size-6" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">{g.titulo}</h2>
+                  <p className="text-sm text-gray-400">{g.descripcion}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {g.tabs.map((id) => {
+                  const tab = DASHBOARD_TABS.find((t) => t[0] === id);
+                  const info = INFO_TABS[id];
+                  const Icono = tab[2];
+                  const dato =
+                    id === 'dashboard' && obras.length
+                      ? `${obras.length} obras · ${stats.activas} ${stats.activas === 1 ? 'activa' : 'activas'}`
+                      : id === 'estadoProyectos' && proyectosEstado.length
+                      ? `${proyectosEstado.length} proyectos`
+                      : id === 'potenciaInstalada' && potenciaTotalInstalada.disponible
+                      ? `${formatKwp(Math.round(potenciaTotalInstalada.totalKwp))} instalados`
+                      : id === 'comparativaMO' && comparativaMO.length
+                      ? `${comparativaMO.length} obras comparadas`
+                      : null;
+
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTabActiva(id)}
+                      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 p-5 text-left shadow-lg shadow-black/20 transition-all duration-200 hover:-translate-y-1 hover:border-[var(--c)] hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c)]"
+                      style={{ '--c': info.color }}
+                    >
+                      <div
+                        className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-20 blur-2xl transition-opacity duration-200 group-hover:opacity-40"
+                        style={{ background: info.color }}
+                      />
+                      <div
+                        className="relative mb-4 flex size-12 items-center justify-center rounded-xl"
+                        style={{ background: info.color + '26', color: info.color }}
+                      >
+                        <Icono className="size-6" aria-hidden="true" />
+                      </div>
+                      <div className="relative text-base font-bold">{info.nombre || tab[1]}</div>
+                      <div className="relative mt-1 text-sm text-gray-400">{info.descripcion}</div>
+                      {dato && (
+                        <div className="relative mt-3 text-xs font-semibold" style={{ color: info.color }}>
+                          {dato}
+                        </div>
+                      )}
+                      <div
+                        className="relative mt-auto flex items-center gap-1 pt-4 text-sm font-semibold"
+                        style={{ color: info.color }}
+                      >
+                        Entrar
+                        <RiArrowRightSLine
+                          className="size-4 transition-transform duration-200 group-hover:translate-x-1"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </main>
+      )}
 
       {/* ── ESTIMADOR ── */}
       {tabActiva === 'estimador' && (
