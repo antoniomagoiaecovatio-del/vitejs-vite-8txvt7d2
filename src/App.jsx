@@ -3418,6 +3418,17 @@ const [anioTablaPersonalSeleccionado, setAnioTablaPersonalSeleccionado] =
     if (window.location.hash !== nuevo) window.location.hash = nuevo;
     window.scrollTo(0, 0);
   }, [tabActiva]);
+  // Cambio de sección con una breve animación de salida; la nueva sección
+  // entra con otra (ver `main` en globals.css).
+  const [saliendo, setSaliendo] = useState(false);
+  const irA = (id) => {
+    if (saliendo || id === tabActiva) return;
+    setSaliendo(true);
+    window.setTimeout(() => {
+      setTabActiva(id);
+      setSaliendo(false);
+    }, 170);
+  };
   useEffect(() => {
     const alCambiarHash = () => setTabActiva(tabDesdeHash());
     window.addEventListener('hashchange', alCambiarHash);
@@ -6241,7 +6252,12 @@ const dataAnio =
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-transparent dark:text-gray-50">
+    <div
+      className={cx(
+        'min-h-screen bg-white text-gray-900 dark:bg-transparent dark:text-gray-50',
+        saliendo && 'vista-saliendo'
+      )}
+    >
       <header
         className="flex items-center justify-between border-b border-white/10 px-6 py-3 shadow-lg shadow-black/20"
         style={{ background: 'linear-gradient(110deg, #123138 0%, #1d4a50 55%, #24604f 100%)' }}
@@ -6258,7 +6274,7 @@ const dataAnio =
           </a>
           <button
             type="button"
-            onClick={() => setTabActiva('inicio')}
+            onClick={() => irA('inicio')}
             title="Ir al inicio"
             className="cursor-pointer border-l border-white/15 pl-4 text-left transition-opacity hover:opacity-80"
           >
@@ -6290,7 +6306,7 @@ const dataAnio =
         <TabNavigation>
           <TabNavigationLink
             active={false}
-            onClick={() => setTabActiva('inicio')}
+            onClick={() => irA('inicio')}
             className="cursor-pointer gap-1.5"
           >
             <RiHome2Line className="size-4" aria-hidden="true" />
@@ -6300,7 +6316,7 @@ const dataAnio =
             <TabNavigationLink
               key={id}
               active={tabActiva === id}
-              onClick={() => setTabActiva(id)}
+              onClick={() => irA(id)}
               className="cursor-pointer gap-1.5"
             >
               <Icon className="size-4" aria-hidden="true" />
@@ -6350,20 +6366,22 @@ const dataAnio =
                       ? `${comparativaMO.length} obras comparadas`
                       : null;
 
+                  const orden = GRUPOS_INICIO.flatMap((x) => x.tabs).indexOf(id);
+
                   return (
                     <button
                       key={id}
                       type="button"
-                      onClick={() => setTabActiva(id)}
-                      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 p-5 text-left shadow-lg shadow-black/20 transition-all duration-200 hover:-translate-y-1 hover:border-[var(--c)] hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c)]"
-                      style={{ '--c': info.color }}
+                      onClick={() => irA(id)}
+                      className="tarjeta-inicio group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 p-5 text-left shadow-lg shadow-black/20 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-[var(--c)] hover:shadow-2xl active:translate-y-0 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c)]"
+                      style={{ '--c': info.color, '--i': orden }}
                     >
                       <div
                         className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-20 blur-2xl transition-opacity duration-200 group-hover:opacity-40"
                         style={{ background: info.color }}
                       />
                       <div
-                        className="relative mb-4 flex size-12 items-center justify-center rounded-xl"
+                        className="relative mb-4 flex size-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
                         style={{ background: info.color + '26', color: info.color }}
                       >
                         <Icono className="size-6" aria-hidden="true" />
@@ -6381,7 +6399,7 @@ const dataAnio =
                       >
                         Entrar
                         <RiArrowRightSLine
-                          className="size-4 transition-transform duration-200 group-hover:translate-x-1"
+                          className="size-4 transition-transform duration-300 group-hover:translate-x-2"
                           aria-hidden="true"
                         />
                       </div>

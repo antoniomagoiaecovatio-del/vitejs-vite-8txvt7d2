@@ -302,3 +302,52 @@ select,
     animation: none;
   }
 }
+
+/* ── Transiciones entre secciones ── */
+@keyframes vistaEntra {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes vistaSale {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+  }
+}
+@keyframes tarjetaEntra {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Cada sección entra con un fundido + leve subida */
+main {
+  /* "backwards" (no "both"): al terminar no queda ninguna transformación aplicada, así las ventanas emergentes (position: fixed) siguen centradas en la pantalla */
+  animation: vistaEntra 450ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+/* Al tocar un botón, la sección actual sale antes de mostrar la nueva */
+.vista-saliendo main {
+  animation: vistaSale 170ms ease-in both;
+}
+/* Tarjetas de la portada: entran una tras otra */
+.tarjeta-inicio {
+  animation: tarjetaEntra 560ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms + 140ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  main,
+  .vista-saliendo main,
+  .tarjeta-inicio {
+    animation: none;
+  }
+}
