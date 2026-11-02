@@ -387,7 +387,14 @@ function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
       const { descargarInformePdf } = await import("../lib/report/pdf");
       await descargarInformePdf(html, proyecto.trim());
     } catch (e) {
-      setError("No se pudo generar el PDF: " + (e instanceof Error ? e.message : String(e)));
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/dynamically imported module|Importing a module script failed|Failed to fetch/i.test(msg)) {
+        // Versión vieja de la página abierta: el panel se actualizó. Se recarga para usar la nueva.
+        setError("El panel se actualizó. Recargando la página para usar la versión nueva…");
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else {
+        setError("No se pudo generar el PDF: " + msg);
+      }
     } finally {
       setGenerando(false);
     }
