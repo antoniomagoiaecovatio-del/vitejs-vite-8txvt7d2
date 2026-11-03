@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import * as Recharts from 'recharts';
 
 import { Card } from './components/Card/Card';
@@ -89,6 +90,8 @@ const ESTADO_PROYECTOS_API_URL =
 const COMPARATIVA_MO_API_URL =
   ESTADO_PROYECTOS_BASE_URL + '?action=comparativa_mo';
 
+const PROCESO_API_URL = ESTADO_PROYECTOS_BASE_URL + '?action=proceso';
+
 const INDICADOR_ESTRUCTURA_BIPOSTE = 1.15;
 
 const esObraTercerizada = (nombre) => {
@@ -141,6 +144,194 @@ const ETAPAS_GRUPOS_LISTA = Object.keys(ETAPAS_GRUPOS).map((id) => ({
   ...ETAPAS_GRUPOS[id],
   n: ETAPAS_COLS.filter((c) => c.grupo === id).length,
 }));
+// Proceso de cada etapa de obra (hoja "Proceso" de la planilla). Estos datos son
+// los de respaldo: si la planilla responde, se usan los de la planilla.
+const PROCESO_OBRA_DEFAULT = [
+  {
+    "etapa_n": 1,
+    "etapa": "Obra Civil",
+    "actividad": "Preparación de terreno",
+    "descripcion": "Limpieza y nivelación del terreno para estructura en suelo."
+  },
+  {
+    "etapa_n": 1,
+    "etapa": "Obra Civil",
+    "actividad": "Construcción de pilotes",
+    "descripcion": "Excavación y hormigonado de pilotes para estructura de suelo."
+  },
+  {
+    "etapa_n": 1,
+    "etapa": "Obra Civil",
+    "actividad": "Replanteo de puntos",
+    "descripcion": "Medición, escuadrado y colocación de estacas de estructura."
+  },
+  {
+    "etapa_n": 1,
+    "etapa": "Obra Civil",
+    "actividad": "Hincado/roscado de estructura",
+    "descripcion": "Servicio terciarizado para instalación de estructura mediante hincado/roscado directo en el terreno."
+  },
+  {
+    "etapa_n": 1,
+    "etapa": "Obra Civil",
+    "actividad": "Zanjeo para cables",
+    "descripcion": "Excavación de zanjas para tendido de cables subterráneo."
+  },
+  {
+    "etapa_n": 1,
+    "etapa": "Obra Civil",
+    "actividad": "Cámaras de inspección",
+    "descripcion": "Construcción de cámaras de hormigón para inspección de cables."
+  },
+  {
+    "etapa_n": 2,
+    "etapa": "Armado y Montaje de Estructuras",
+    "actividad": "Instalación en techo",
+    "descripcion": "Colocación de anclajes (fijaciones tipo \"L\", cubos para techo grafado, bloques de hormigón,patas regulables) y montaje de perfiles."
+  },
+  {
+    "etapa_n": 2,
+    "etapa": "Armado y Montaje de Estructuras",
+    "actividad": "Instalación en suelo",
+    "descripcion": "Armado de estructuras, colocación de perfiles y refuerzos estructurales."
+  },
+  {
+    "etapa_n": 2,
+    "etapa": "Armado y Montaje de Estructuras",
+    "actividad": "Instalación en cocheras",
+    "descripcion": "Colocación de perfiles (P37/P38) y fijación a la estructura existente."
+  },
+  {
+    "etapa_n": 2,
+    "etapa": "Armado y Montaje de Estructuras",
+    "actividad": "Escuadrado y alineado",
+    "descripcion": "Verificación y ajuste de alineación de estructuras."
+  },
+  {
+    "etapa_n": 3,
+    "etapa": "Montaje de Paneles",
+    "actividad": "Elevación de paneles",
+    "descripcion": "Uso de tijera, autoelevador u otros equipos para trabajo en altura."
+  },
+  {
+    "etapa_n": 3,
+    "etapa": "Montaje de Paneles",
+    "actividad": "Montaje y alineación",
+    "descripcion": "Instalación, alineación, escuadrado de paneles y ajuste de herrajes."
+  },
+  {
+    "etapa_n": 3,
+    "etapa": "Montaje de Paneles",
+    "actividad": "Conexión de strings",
+    "descripcion": "Interconexión eléctrica y armado de cadenas de paneles solares."
+  },
+  {
+    "etapa_n": 4,
+    "etapa": "Cableado de CC",
+    "actividad": "Crimpeado de conectores",
+    "descripcion": "Instalación y crimpeado de conectores MC4 para cables CC."
+  },
+  {
+    "etapa_n": 4,
+    "etapa": "Cableado de CC",
+    "actividad": "Canalizaciones de CC",
+    "descripcion": "Colocación de bandejas portacables, cañería DAISA y otros canalizaciones"
+  },
+  {
+    "etapa_n": 4,
+    "etapa": "Cableado de CC",
+    "actividad": "Identificación y etiquetado",
+    "descripcion": "Marcado y etiquetado de todas las cadenas de strings."
+  },
+  {
+    "etapa_n": 4,
+    "etapa": "Cableado de CC",
+    "actividad": "Tendido de cables CC",
+    "descripcion": "Instalación de cables de corriente continua hasta los inversores."
+  },
+  {
+    "etapa_n": 4,
+    "etapa": "Cableado de CC",
+    "actividad": "Verificación de strings",
+    "descripcion": "Medición de voltajes de las distintas cadenas de paneles."
+  },
+  {
+    "etapa_n": 5,
+    "etapa": "Montaje de Inversores y Tableros",
+    "actividad": "Colocación de perchas",
+    "descripcion": "Montaje de percha para inversor"
+  },
+  {
+    "etapa_n": 5,
+    "etapa": "Montaje de Inversores y Tableros",
+    "actividad": "Montaje de equipos",
+    "descripcion": "Instalación física de inversor y tableros eléctricos."
+  },
+  {
+    "etapa_n": 5,
+    "etapa": "Montaje de Inversores y Tableros",
+    "actividad": "Armado de tableros",
+    "descripcion": "Instalación y conexión de protecciones (térmicas, fusibles, descargadores, puestas a tierra)."
+  },
+  {
+    "etapa_n": 6,
+    "etapa": "Cableado de CA",
+    "actividad": "Tendido de cables CA",
+    "descripcion": "Instalación a través de bandejas, cañerías o tendido subterráneo."
+  },
+  {
+    "etapa_n": 6,
+    "etapa": "Cableado de CA",
+    "actividad": "Conexión principal",
+    "descripcion": "Cableado entre tablero de CA y punto de inyección. (Requiere de un corte programado)"
+  },
+  {
+    "etapa_n": 6,
+    "etapa": "Cableado de CA",
+    "actividad": "Medidor de potencia",
+    "descripcion": "Conexión de equipos de medición de energía."
+  },
+  {
+    "etapa_n": 7,
+    "etapa": "Puesta en Marcha",
+    "actividad": "Comisionamiento",
+    "descripcion": "Configuración en app de monitoreo (FusionSolar, VRM, etc.).  Ajuste de parámetros de instalación y funcionamiento."
+  },
+  {
+    "etapa_n": 7,
+    "etapa": "Puesta en Marcha",
+    "actividad": "Creación de planta",
+    "descripcion": "Registro del sistema e invitación a usuarios de planta."
+  },
+  {
+    "etapa_n": 7,
+    "etapa": "Puesta en Marcha",
+    "actividad": "Pruebas finales",
+    "descripcion": "Ajustes y verificación del correcto funcionamiento del sistema."
+  }
+];
+
+// Etapa N° de la hoja "Proceso" -> clave de la columna en la tabla.
+const PROCESO_KEY_POR_N = { 1: 'g', 2: 'h', 3: 'i', 4: 'j', 5: 'k', 6: 'l', 7: 'm' };
+
+// Agrupa las filas del proceso por columna: { g: [{actividad, descripcion}], ... }
+const agruparProceso = (rows) => {
+  const porNombre = {};
+  ETAPAS_COLS.forEach((c) => {
+    porNombre[normalizeKey(c.label)] = c.key;
+  });
+  const out = {};
+  (rows || []).forEach((r) => {
+    const key = PROCESO_KEY_POR_N[r.etapa_n] || porNombre[normalizeKey(r.etapa)];
+    if (!key) return;
+    (out[key] = out[key] || []).push({
+      actividad: cleanText(r.actividad),
+      descripcion: cleanText(r.descripcion),
+    });
+  });
+  return out;
+};
+
 const esPrimeraDelGrupo = (i) => i === 0 || ETAPAS_COLS[i - 1].grupo !== ETAPAS_COLS[i].grupo;
 
 const DASHBOARD_TABS = [
@@ -3553,6 +3744,32 @@ const [anioTablaPersonalSeleccionado, setAnioTablaPersonalSeleccionado] =
 
 const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [filtroResponsable, setFiltroResponsable] = useState('');
+  // Ventana con el proceso de una etapa de obra: { key, label, proyecto?, avance? }
+  const [procesoAbierto, setProcesoAbierto] = useState(null);
+  const [procesoRows, setProcesoRows] = useState(PROCESO_OBRA_DEFAULT);
+  const procesoCargado = useRef(false);
+
+  useEffect(() => {
+    if (!procesoAbierto) return undefined;
+    // Se pide a la planilla una sola vez; mientras tanto se muestra el respaldo.
+    if (!procesoCargado.current) {
+      procesoCargado.current = true;
+      fetchJsonp(PROCESO_API_URL, 1)
+        .then((json) => {
+          if (json?.ok !== false && Array.isArray(json?.data) && json.data.length) {
+            setProcesoRows(json.data);
+          }
+        })
+        .catch(() => {});
+    }
+    const alTeclear = (e) => {
+      if (e.key === 'Escape') setProcesoAbierto(null);
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, [procesoAbierto]);
+
+  const procesoPorEtapa = useMemo(() => agruparProceso(procesoRows), [procesoRows]);
   const [sortField, setSortField] = useState('hs_mo_kwp');
   const [sortDir, setSortDir] = useState('asc');
   const [criterioGraficoKwp, setCriterioGraficoKwp] =
@@ -8710,11 +8927,19 @@ const dataAnio =
                     {/* Columnas de etapas */}
                     {ETAPAS_COLS.map((col, ci) => {
                       const g = ETAPAS_GRUPOS[col.grupo];
+                      const verProceso = col.grupo === 'obra';
                       return (
                         <th
                           key={col.key}
+                          onClick={
+                            verProceso
+                              ? () => setProcesoAbierto({ key: col.key, label: col.label })
+                              : undefined
+                          }
+                          title={verProceso ? 'Ver las actividades de esta etapa' : undefined}
                           style={{
                             ...S.th,
+                            cursor: verProceso ? 'pointer' : undefined,
                             width: 84,
                             minWidth: 84,
                             maxWidth: 84,
@@ -8733,6 +8958,9 @@ const dataAnio =
                           }}
                         >
                           {col.label}
+                          {verProceso && (
+                            <span style={{ opacity: 0.7, marginLeft: 3 }}>ⓘ</span>
+                          )}
                         </th>
                       );
                     })}
@@ -8949,7 +9177,19 @@ const dataAnio =
                           return (
                             <td
                               key={col.key}
+                              onClick={
+                                col.grupo === 'obra'
+                                  ? () =>
+                                      setProcesoAbierto({
+                                        key: col.key,
+                                        label: col.label,
+                                        proyecto: p.nombre_proyecto,
+                                        avance: val,
+                                      })
+                                  : undefined
+                              }
                               style={{
+                                cursor: col.grupo === 'obra' ? 'pointer' : undefined,
                                 width: 84,
                                 minWidth: 84,
                                 maxWidth: 84,
@@ -9096,6 +9336,146 @@ const dataAnio =
               </table>
             </div>
           </div>
+
+          {procesoAbierto && createPortal(
+            <div
+              onClick={() => setProcesoAbierto(null)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 1000,
+                background: 'rgba(5, 15, 18, 0.72)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 16,
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Proceso: ${procesoAbierto.label}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: '100%',
+                  maxWidth: 760,
+                  maxHeight: '86vh',
+                  overflowY: 'auto',
+                  background: '#16323a',
+                  border: `1px solid ${ETAPAS_GRUPOS.obra.color}88`,
+                  borderTop: `4px solid ${ETAPAS_GRUPOS.obra.color}`,
+                  borderRadius: 12,
+                  boxShadow: '0 24px 60px rgba(0,0,0,0.55)',
+                  padding: '18px 22px 20px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: ETAPAS_GRUPOS.obra.color,
+                      }}
+                    >
+                      Proceso de la etapa
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#f4f8f8' }}>
+                      {procesoAbierto.label}
+                    </div>
+                    {procesoAbierto.proyecto && (
+                      <div style={{ fontSize: 12, color: '#b9c7c9', marginTop: 4 }}>
+                        {procesoAbierto.proyecto}
+                        {' · '}
+                        {procesoAbierto.avance === 'NA'
+                          ? 'Esta etapa no aplica a la obra'
+                          : procesoAbierto.avance === null ||
+                            procesoAbierto.avance === undefined
+                          ? 'Etapa sin cargar'
+                          : `Avance de la etapa: ${procesoAbierto.avance}%`}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProcesoAbierto(null)}
+                    aria-label="Cerrar"
+                    style={{
+                      ...S.input,
+                      cursor: 'pointer',
+                      fontSize: 16,
+                      lineHeight: 1,
+                      padding: '6px 10px',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {(procesoPorEtapa[procesoAbierto.key] || []).length === 0 ? (
+                  <div style={{ color: '#8fa6a9', fontSize: 13 }}>
+                    Todavía no hay actividades cargadas para esta etapa en la hoja Proceso.
+                  </div>
+                ) : (
+                  <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+                    {procesoPorEtapa[procesoAbierto.key].map((a, k) => (
+                      <li
+                        key={k}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '28px 1fr',
+                          gap: 10,
+                          alignItems: 'start',
+                          background: ETAPAS_GRUPOS.obra.tint,
+                          border: '1px solid #2c5059',
+                          borderRadius: 8,
+                          padding: '9px 12px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 999,
+                            background: `${ETAPAS_GRUPOS.obra.color}22`,
+                            color: ETAPAS_GRUPOS.obra.color,
+                            fontSize: 12,
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {k + 1}
+                        </span>
+                        <span>
+                          <span style={{ display: 'block', fontWeight: 700, fontSize: 13, color: '#f4f8f8' }}>
+                            {a.actividad}
+                          </span>
+                          {a.descripcion && (
+                            <span style={{ display: 'block', fontSize: 12, color: '#b9c7c9', marginTop: 2, lineHeight: 1.4 }}>
+                              {a.descripcion}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
         </main>
       )}
 {/* ── POTENCIA INSTALADA POR AÑO ── */}
