@@ -413,3 +413,50 @@ main {
   --color-danger: var(--danger);
   --color-danger-ink: var(--danger-ink);
 }
+
+/* ── Diagrama del proceso de obra (ventana de Estado de Proyectos) ── */
+@keyframes procesoEntrada {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes procesoVentana {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes procesoFlujo {
+  to { background-position: 28px 0; }
+}
+@keyframes procesoPulso {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(149, 222, 29, 0.5); }
+  60% { box-shadow: 0 0 0 11px rgba(149, 222, 29, 0); }
+}
+.proceso-ventana {
+  animation: procesoVentana 0.22s ease-out both;
+}
+.proceso-col {
+  animation: procesoEntrada 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.proceso-col:hover ul {
+  border-color: #95de1d88;
+}
+.proceso-linea {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #95de1d 0 10px,
+    transparent 10px 18px
+  );
+  background-size: 28px 3px;
+  animation: procesoFlujo 0.9s linear infinite;
+  opacity: 0.85;
+}
+.proceso-nodo {
+  animation: procesoPulso 2.4s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .proceso-ventana,
+  .proceso-col,
+  .proceso-linea,
+  .proceso-nodo {
+    animation: none;
+  }
+}

@@ -3748,9 +3748,11 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [procesoAbierto, setProcesoAbierto] = useState(null);
   const [procesoRows, setProcesoRows] = useState(PROCESO_OBRA_DEFAULT);
   const procesoCargado = useRef(false);
+  // Diagrama de flujo de todas las etapas de obra (se abre desde el título "Obra").
+  const [diagramaAbierto, setDiagramaAbierto] = useState(false);
 
   useEffect(() => {
-    if (!procesoAbierto) return undefined;
+    if (!procesoAbierto && !diagramaAbierto) return undefined;
     // Se pide a la planilla una sola vez; mientras tanto se muestra el respaldo.
     if (!procesoCargado.current) {
       procesoCargado.current = true;
@@ -3763,11 +3765,14 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         .catch(() => {});
     }
     const alTeclear = (e) => {
-      if (e.key === 'Escape') setProcesoAbierto(null);
+      if (e.key !== 'Escape') return;
+      // Primero se cierra el detalle de una etapa; el diagrama queda debajo.
+      if (procesoAbierto) setProcesoAbierto(null);
+      else setDiagramaAbierto(false);
     };
     window.addEventListener('keydown', alTeclear);
     return () => window.removeEventListener('keydown', alTeclear);
-  }, [procesoAbierto]);
+  }, [procesoAbierto, diagramaAbierto]);
 
   const procesoPorEtapa = useMemo(() => agruparProceso(procesoRows), [procesoRows]);
   const [sortField, setSortField] = useState('hs_mo_kwp');
@@ -8809,7 +8814,10 @@ const dataAnio =
                       <th
                         key={g.id}
                         colSpan={g.n}
+                        onClick={g.id === 'obra' ? () => setDiagramaAbierto(true) : undefined}
+                        title={g.id === 'obra' ? 'Ver el diagrama del proceso de obra' : undefined}
                         style={{
+                          cursor: g.id === 'obra' ? 'pointer' : undefined,
                           background: g.head,
                           color: g.color,
                           fontSize: 11,
@@ -8823,6 +8831,11 @@ const dataAnio =
                         }}
                       >
                         {g.label}
+                        {g.id === 'obra' && (
+                          <span style={{ opacity: 0.8, marginLeft: 8, fontWeight: 600, letterSpacing: '0.04em' }}>
+                            · ver diagrama del proceso ⓘ
+                          </span>
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -9336,6 +9349,199 @@ const dataAnio =
               </table>
             </div>
           </div>
+
+          {diagramaAbierto && createPortal(
+            <div
+              onClick={() => setDiagramaAbierto(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 999,
+                background: 'rgba(5, 15, 18, 0.78)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 16,
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Diagrama del proceso de obra"
+                onClick={(e) => e.stopPropagation()}
+                className="proceso-ventana"
+                style={{
+                  width: '100%',
+                  maxWidth: 1240,
+                  maxHeight: '90vh',
+                  overflow: 'auto',
+                  background: '#16323a',
+                  border: `1px solid ${ETAPAS_GRUPOS.obra.color}88`,
+                  borderTop: `4px solid ${ETAPAS_GRUPOS.obra.color}`,
+                  borderRadius: 12,
+                  boxShadow: '0 24px 60px rgba(0,0,0,0.55)',
+                  padding: '18px 22px 22px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    marginBottom: 18,
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 800,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: ETAPAS_GRUPOS.obra.color,
+                      }}
+                    >
+                      Diagrama del proceso
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#f4f8f8' }}>
+                      Etapas de obra, de punta a punta
+                    </div>
+                    <div style={{ fontSize: 12, color: '#8fa6a9', marginTop: 3 }}>
+                      Tocá una etapa para ver cada actividad con su descripción.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDiagramaAbierto(false)}
+                    aria-label="Cerrar"
+                    style={{
+                      ...S.input,
+                      cursor: 'pointer',
+                      fontSize: 16,
+                      lineHeight: 1,
+                      padding: '6px 10px',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ overflowX: 'auto', paddingBottom: 6 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${ETAPAS_COLS.filter((c) => c.grupo === 'obra').length}, minmax(138px, 1fr))`,
+                      minWidth: 7 * 138,
+                    }}
+                  >
+                    {ETAPAS_COLS.filter((c) => c.grupo === 'obra').map((col, i, lista) => {
+                      const acts = procesoPorEtapa[col.key] || [];
+                      const ultima = i === lista.length - 1;
+                      return (
+                        <div
+                          key={col.key}
+                          className="proceso-col"
+                          onClick={() => setProcesoAbierto({ key: col.key, label: col.label })}
+                          title="Ver el detalle de esta etapa"
+                          style={{
+                            position: 'relative',
+                            cursor: 'pointer',
+                            padding: '0 8px',
+                            textAlign: 'center',
+                            animationDelay: `${i * 130}ms`,
+                          }}
+                        >
+                          {/* línea que une con la etapa siguiente */}
+                          {!ultima && (
+                            <div
+                              className="proceso-linea"
+                              style={{
+                                position: 'absolute',
+                                top: 21,
+                                left: '50%',
+                                width: '100%',
+                                height: 3,
+                                borderRadius: 2,
+                                zIndex: 0,
+                              }}
+                            />
+                          )}
+                          <div
+                            className="proceso-nodo"
+                            style={{
+                              position: 'relative',
+                              zIndex: 1,
+                              width: 44,
+                              height: 44,
+                              margin: '0 auto',
+                              borderRadius: 999,
+                              background: '#10281a',
+                              border: `3px solid ${ETAPAS_GRUPOS.obra.color}`,
+                              color: ETAPAS_GRUPOS.obra.color,
+                              fontSize: 18,
+                              fontWeight: 800,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              animationDelay: `${i * 130 + 400}ms`,
+                            }}
+                          >
+                            {i + 1}
+                          </div>
+                          <div
+                            style={{
+                              margin: '10px 0 8px',
+                              fontSize: 13,
+                              fontWeight: 800,
+                              color: '#f4f8f8',
+                              lineHeight: 1.2,
+                              minHeight: 32,
+                            }}
+                          >
+                            {col.label}
+                          </div>
+                          <ul
+                            style={{
+                              listStyle: 'none',
+                              margin: 0,
+                              padding: '8px 8px',
+                              textAlign: 'left',
+                              background: ETAPAS_GRUPOS.obra.tint,
+                              border: '1px solid #2c5059',
+                              borderRadius: 8,
+                              display: 'grid',
+                              gap: 5,
+                            }}
+                          >
+                            {acts.length === 0 && (
+                              <li style={{ fontSize: 11, color: '#6f8a8f' }}>Sin actividades cargadas</li>
+                            )}
+                            {acts.map((a, k) => (
+                              <li
+                                key={k}
+                                style={{
+                                  fontSize: 11,
+                                  color: '#d3dfe0',
+                                  lineHeight: 1.25,
+                                  display: 'flex',
+                                  gap: 6,
+                                }}
+                              >
+                                <span style={{ color: ETAPAS_GRUPOS.obra.color, flexShrink: 0 }}>▸</span>
+                                <span>{a.actividad}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
 
           {procesoAbierto && createPortal(
             <div
