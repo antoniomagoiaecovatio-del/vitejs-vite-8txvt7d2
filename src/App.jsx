@@ -8570,7 +8570,8 @@ const dataAnio =
             <div style={{ overflowX: 'auto' }}>
               <table
                 style={{
-                  width: '100%',
+                  width: 'max-content',
+                  minWidth: '100%',
                   borderCollapse: 'collapse',
                   fontSize: 11,
                 }}
@@ -8617,8 +8618,10 @@ const dataAnio =
                         left: 0,
                         background: '#16323a',
                         zIndex: 2,
-                        minWidth: 72,
-                        padding: '10px 12px',
+                        width: 60,
+                        minWidth: 60,
+                        maxWidth: 60,
+                        padding: '10px 8px',
                         whiteSpace: 'nowrap',
                       }}
                     >
@@ -8628,11 +8631,13 @@ const dataAnio =
                       style={{
                         ...S.th,
                         position: 'sticky',
-                        left: 72,
+                        left: 60,
                         background: '#16323a',
                         zIndex: 2,
-                        minWidth: 220,
-                        padding: '10px 12px',
+                        width: 180,
+                        minWidth: 180,
+                        maxWidth: 180,
+                        padding: '10px 8px',
                       }}
                     >
                       Proyecto
@@ -8640,8 +8645,10 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 82,
-                        padding: '10px 6px',
+                        width: 64,
+                        minWidth: 64,
+                        maxWidth: 64,
+                        padding: '10px 4px',
                         textAlign: 'center',
                       }}
                     >
@@ -8651,10 +8658,13 @@ const dataAnio =
                     <th
   style={{
     ...S.th,
-    minWidth: 92,
-    padding: '10px 6px',
+    width: 78,
+    minWidth: 78,
+    maxWidth: 78,
+    padding: '10px 4px',
     textAlign: 'center',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'normal',
+    lineHeight: 1.2,
   }}
 >
   Fecha de venta
@@ -8662,10 +8672,13 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 120,
-                        padding: '10px 8px',
+                        width: 96,
+                        minWidth: 96,
+                        maxWidth: 96,
+                        padding: '10px 4px',
                         textAlign: 'center',
-                        whiteSpace: 'nowrap',
+                        whiteSpace: 'normal',
+                        lineHeight: 1.2,
                       }}
                     >
                       Responsable
@@ -8673,8 +8686,10 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 88,
-                        padding: '10px 8px',
+                        width: 84,
+                        minWidth: 84,
+                        maxWidth: 84,
+                        padding: '10px 4px',
                         textAlign: 'center',
                       }}
                     >
@@ -8683,8 +8698,10 @@ const dataAnio =
                     <th
                       style={{
                         ...S.th,
-                        minWidth: 70,
-                        padding: '10px 6px',
+                        width: 56,
+                        minWidth: 56,
+                        maxWidth: 56,
+                        padding: '10px 4px',
                         textAlign: 'center',
                       }}
                     >
@@ -8742,7 +8759,10 @@ const dataAnio =
                             zIndex: 1,
                             color: '#8fa6a9',
                             fontSize: 11,
-                            padding: '9px 12px',
+                            width: 60,
+                            minWidth: 60,
+                            maxWidth: 60,
+                            padding: '9px 8px',
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                             borderBottom: '1px solid #2c5059',
@@ -8755,14 +8775,15 @@ const dataAnio =
                           style={{
                             ...S.td,
                             position: 'sticky',
-                            left: 72,
+                            left: 60,
                             background: rowBg,
                             zIndex: 1,
                             fontWeight: 600,
                             fontSize: 12,
-                            padding: '9px 12px',
-                            minWidth: 220,
-                            maxWidth: 300,
+                            padding: '9px 4px',
+                            width: 180,
+                            minWidth: 180,
+                            maxWidth: 180,
                             whiteSpace: 'normal',
                             lineHeight: 1.25,
                             borderBottom: '1px solid #2c5059',
@@ -8817,7 +8838,7 @@ const dataAnio =
                           style={{
                             ...S.td,
                             textAlign: 'center',
-                            padding: '9px 8px',
+                            padding: '9px 4px',
                             color: '#ffc933',
                             fontWeight: 700,
                             whiteSpace: 'nowrap',
@@ -8833,7 +8854,7 @@ const dataAnio =
   style={{
     ...S.td,
     textAlign: 'center',
-    padding: '9px 8px',
+    padding: '9px 4px',
     color: '#e3eaea',
     fontWeight: 600,
     whiteSpace: 'nowrap',
@@ -8847,7 +8868,7 @@ const dataAnio =
   style={{
     ...S.td,
     textAlign: 'center',
-    padding: '9px 8px',
+    padding: '9px 4px',
     color: p.responsable ? '#e3eaea' : '#3b5d65',
     fontWeight: 600,
     whiteSpace: 'nowrap',
@@ -8861,7 +8882,7 @@ const dataAnio =
                           style={{
                             ...S.td,
                             textAlign: 'center',
-                            padding: '9px 8px',
+                            padding: '9px 4px',
                           }}
                         >
                           <EstadoProyectoBadge estado={p.estado} />
@@ -8871,7 +8892,7 @@ const dataAnio =
                           style={{
                             ...S.td,
                             textAlign: 'center',
-                            padding: '9px 8px',
+                            padding: '9px 4px',
                           }}
                         >
                           <div
