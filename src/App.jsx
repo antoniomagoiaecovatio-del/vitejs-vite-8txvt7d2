@@ -114,22 +114,34 @@ const VISTA_POTENCIA_RELACION_PERSONAL = 'relacion_personal';
 // Ingeniería (ya no hay etapa "c"). Las marcadas `post` son posteriores a la
 // obra: no cuentan en el avance.
 const ETAPAS_COLS = [
-  { key: 'a', label: 'Relevamiento' },
-  { key: 'b', label: 'Ingeniería' },
-  { key: 'd', label: 'Mat. Primarios' },
-  { key: 'f', label: 'Mat. Secundarios' },
-  { key: 'g', label: 'Obra Civil' },
-  { key: 'h', label: 'Armado y Montaje de Estructuras' },
-  { key: 'i', label: 'Montaje de Paneles' },
-  { key: 'j', label: 'Cableado de CC' },
-  { key: 'k', label: 'Montaje de Inversores y Tableros' },
-  { key: 'l', label: 'Cableado de CA' },
-  { key: 'm', label: 'Puesta en Marcha' },
-  { key: 'ct', label: 'Carpeta Técnica', post: true },
-  { key: 'ug', label: 'Trámite UG', post: true },
+  { key: 'a', label: 'Relevamiento', grupo: 'proyecto' },
+  { key: 'b', label: 'Ingeniería', grupo: 'proyecto' },
+  { key: 'd', label: 'Mat. Primarios', grupo: 'proyecto' },
+  { key: 'f', label: 'Mat. Secundarios', grupo: 'proyecto' },
+  { key: 'g', label: 'Obra Civil', grupo: 'obra' },
+  { key: 'h', label: 'Armado y Montaje de Estructuras', grupo: 'obra' },
+  { key: 'i', label: 'Montaje de Paneles', grupo: 'obra' },
+  { key: 'j', label: 'Cableado de CC', grupo: 'obra' },
+  { key: 'k', label: 'Montaje de Inversores y Tableros', grupo: 'obra' },
+  { key: 'l', label: 'Cableado de CA', grupo: 'obra' },
+  { key: 'm', label: 'Puesta en Marcha', grupo: 'obra' },
+  { key: 'ct', label: 'Carpeta Técnica', grupo: 'doc' },
+  { key: 'ug', label: 'Trámite UG', grupo: 'doc' },
 ];
-const ETAPAS_OBRA_N = ETAPAS_COLS.filter((c) => !c.post).length;
-const ETAPAS_POST_N = ETAPAS_COLS.length - ETAPAS_OBRA_N;
+
+// Tres bloques con colores bien distintos: lo que se prepara en oficina (proyecto),
+// la ejecución en campo (obra) y el cierre administrativo (documentación).
+const ETAPAS_GRUPOS = {
+  proyecto: { label: 'Proyecto', color: '#4fc3f7', tint: 'rgba(79,195,247,0.07)', head: '#12303f' },
+  obra: { label: 'Obra', color: '#95de1d', tint: 'rgba(149,222,29,0.06)', head: '#1a3318' },
+  doc: { label: 'Documentación', color: '#b794f6', tint: 'rgba(183,148,246,0.09)', head: '#2a2140' },
+};
+const ETAPAS_GRUPOS_LISTA = Object.keys(ETAPAS_GRUPOS).map((id) => ({
+  id,
+  ...ETAPAS_GRUPOS[id],
+  n: ETAPAS_COLS.filter((c) => c.grupo === id).length,
+}));
+const esPrimeraDelGrupo = (i) => i === 0 || ETAPAS_COLS[i - 1].grupo !== ETAPAS_COLS[i].grupo;
 
 const DASHBOARD_TABS = [
   ['dashboard', 'KPIs de Obras', RiBarChartBoxLine],
@@ -8575,39 +8587,26 @@ const dataAnio =
                       }}
                     />
                     <th colSpan={5} style={{ background: '#16323a' }} />
-                    <th
-                      colSpan={ETAPAS_OBRA_N}
-                      style={{
-                        background: '#111c31',
-                        color: '#4fc3f7',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        textAlign: 'center',
-                        padding: '6px 8px',
-                        borderBottom: '1px solid #2c5059',
-                      }}
-                    >
-                      Etapas de ejecución
-                    </th>
-                    <th
-                      colSpan={ETAPAS_POST_N}
-                      style={{
-                        background: '#14281c',
-                        borderLeft: '1px solid #2c5059',
-                        color: '#95de1d',
-                        fontSize: 10,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        textAlign: 'center',
-                        padding: '6px 8px',
-                        borderBottom: '1px solid #2c5059',
-                      }}
-                    >
-                      Después de la obra
-                    </th>
+                    {ETAPAS_GRUPOS_LISTA.map((g) => (
+                      <th
+                        key={g.id}
+                        colSpan={g.n}
+                        style={{
+                          background: g.head,
+                          color: g.color,
+                          fontSize: 11,
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.12em',
+                          textAlign: 'center',
+                          padding: '7px 8px',
+                          borderBottom: `3px solid ${g.color}`,
+                          borderLeft: `2px solid ${g.color}66`,
+                        }}
+                      >
+                        {g.label}
+                      </th>
+                    ))}
                   </tr>
                   <tr style={{ borderBottom: '2px solid #3b5d65' }}>
                     {/* Columnas fijas */}
@@ -8692,27 +8691,34 @@ const dataAnio =
                       Avance
                     </th>
                     {/* Columnas de etapas */}
-                    {ETAPAS_COLS.map((col) => (
-                      <th
-                        key={col.key}
-                        style={{
-                          ...S.th,
-                          width: 84,
-                          minWidth: 84,
-                          maxWidth: 84,
-                          padding: '10px 4px',
-                          textAlign: 'center',
-                          whiteSpace: 'normal',
-                          wordBreak: 'normal',
-                          overflowWrap: 'break-word',
-                          lineHeight: 1.2,
-                          color: '#8fa6a9',
-                          verticalAlign: 'middle',
-                        }}
-                      >
-                        {col.label}
-                      </th>
-                    ))}
+                    {ETAPAS_COLS.map((col, ci) => {
+                      const g = ETAPAS_GRUPOS[col.grupo];
+                      return (
+                        <th
+                          key={col.key}
+                          style={{
+                            ...S.th,
+                            width: 84,
+                            minWidth: 84,
+                            maxWidth: 84,
+                            padding: '10px 4px',
+                            textAlign: 'center',
+                            whiteSpace: 'normal',
+                            wordBreak: 'normal',
+                            overflowWrap: 'break-word',
+                            lineHeight: 1.2,
+                            color: g.color,
+                            background: g.head,
+                            verticalAlign: 'middle',
+                            borderLeft: esPrimeraDelGrupo(ci)
+                              ? `2px solid ${g.color}66`
+                              : undefined,
+                          }}
+                        >
+                          {col.label}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -8909,7 +8915,8 @@ const dataAnio =
                         {/* Celdas por etapa — barra de datos tipo Sheets: el
                         color sólido llena la celda en proporción al avance,
                         así se lee de un vistazo sin tener que leer cada %. */}
-                        {ETAPAS_COLS.map((col) => {
+                        {ETAPAS_COLS.map((col, ci) => {
+                          const g = ETAPAS_GRUPOS[col.grupo];
                           const val = getEtapaAvance(p.etapas_lista, col.key);
                           const esNA = val === 'NA';
                           const c = etapaCellStyle(esNA ? null : val);
@@ -8927,6 +8934,10 @@ const dataAnio =
                                 maxWidth: 84,
                                 padding: '5px 4px',
                                 borderBottom: '1px solid #2c5059',
+                                background: g.tint,
+                                borderLeft: esPrimeraDelGrupo(ci)
+                                  ? `2px solid ${g.color}66`
+                                  : undefined,
                               }}
                             >
                               {esNA ? (
