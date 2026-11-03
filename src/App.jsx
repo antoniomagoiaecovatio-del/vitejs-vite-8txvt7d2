@@ -4653,6 +4653,22 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       )
     );
   }, [estadosTablaProyecto]);
+
+  // Por defecto los proyectos finalizados quedan ocultos (tabla y gráfico).
+  // Se aplica una sola vez, cuando llegan los datos; después manda el botón.
+  const aplicoOcultarFinalizados = useRef(false);
+  useEffect(() => {
+    if (aplicoOcultarFinalizados.current || proyectosEstado.length === 0) return;
+    aplicoOcultarFinalizados.current = true;
+    const finalizados = [
+      ...new Set(
+        proyectosEstado
+          .map((p) => p.estado)
+          .filter((e) => normalizeKey(e) === 'finalizado')
+      ),
+    ];
+    if (finalizados.length) setFiltrosEstadoTablaProyecto(finalizados);
+  }, [proyectosEstado]);
  
 
   const statsProyectos = useMemo(() => {
@@ -8323,46 +8339,46 @@ const dataAnio =
                 const ocultos = finalizados.every((e) =>
                   filtrosEstadoTablaProyecto.includes(e)
                 );
+                const cantFinalizados = proyectosEstadoFiltrados.filter(
+                  (p) => normalizeKey(p.estado) === 'finalizado'
+                ).length;
                 return (
-                  <label
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFiltrosEstadoTablaProyecto((sel) =>
+                        ocultos
+                          ? sel.filter((e) => !finalizados.includes(e))
+                          : [
+                              ...sel,
+                              ...finalizados.filter((e) => !sel.includes(e)),
+                            ]
+                      )
+                    }
+                    title={
+                      ocultos
+                        ? 'Mostrar también los proyectos finalizados'
+                        : 'Ocultar los proyectos finalizados'
+                    }
                     style={{
+                      ...S.input,
+                      height: 32,
+                      boxSizing: 'border-box',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
-                      fontSize: 12,
                       cursor: 'pointer',
-                      color: ocultos ? '#f4f8f8' : '#b9c7c9',
-                      userSelect: 'none',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      color: ocultos ? '#95de1d' : '#b9c7c9',
+                      borderColor: ocultos ? '#7bc410' : undefined,
                     }}
                   >
-                    <span>Ocultar finalizados</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={ocultos}
-                      aria-label="Ocultar los proyectos finalizados"
-                      onClick={() =>
-                        setFiltrosEstadoTablaProyecto((sel) =>
-                          ocultos
-                            ? sel.filter((e) => !finalizados.includes(e))
-                            : [
-                                ...sel,
-                                ...finalizados.filter((e) => !sel.includes(e)),
-                              ]
-                        )
-                      }
-                      className="relative h-7 w-12 shrink-0 cursor-pointer rounded-full border transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#95de1d]"
-                      style={{
-                        background: ocultos ? '#95de1d' : '#3b5d65',
-                        borderColor: ocultos ? '#7bc410' : '#55787f',
-                      }}
-                    >
-                      <span
-                        className="absolute top-0.5 size-[22px] rounded-full bg-white shadow-md shadow-black/40 transition-all duration-200"
-                        style={{ left: ocultos ? 22 : 2 }}
-                      />
-                    </button>
-                  </label>
+                    {ocultos
+                      ? `Mostrar finalizados (${cantFinalizados})`
+                      : 'Ocultar finalizados'}
+                  </button>
                 );
               })()}
 
@@ -8954,7 +8970,7 @@ const dataAnio =
                     );
                   })}
                   {!loadingProyectos &&
-                    proyectosEstadoFiltrados.length === 0 && (
+                    proyectosEstadoTablaFiltrados.length === 0 && (
                       <tr>
                         <td
                           colSpan={7 + ETAPAS_COLS.length}
@@ -8964,7 +8980,9 @@ const dataAnio =
                             color: '#55787f',
                           }}
                         >
-                          Sin proyectos para mostrar
+                          {proyectosEstadoFiltrados.length > 0
+                            ? 'No hay proyectos en ejecución. Tocá "Mostrar finalizados" para ver los terminados.'
+                            : 'Sin proyectos para mostrar'}
                         </td>
                       </tr>
                     )}
