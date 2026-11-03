@@ -81,7 +81,8 @@ const APPS_SCRIPT_URL =
 // Planilla "Estado de Proyectos FV" (nueva): su script (ApiTablero.gs) entrega
 // Estado de Proyectos y Comparativa MO. Mientras esta URL esté vacía se sigue
 // usando el script de la planilla vieja.
-const URL_PLANILLA_NUEVA = '';
+const URL_PLANILLA_NUEVA =
+  'https://script.google.com/macros/s/AKfycby6RTrgCfvbB1fz6iGla7okFT3wdQY1-sWe0-Lg_qdqBnxAl5gUiRuKjy9VuxTzTXhcHw/exec';
 
 const ESTADO_PROYECTOS_BASE_URL =
   URL_PLANILLA_NUEVA ||
@@ -768,9 +769,10 @@ const normalizarEstadoProyecto = (p) => {
       return {
         id_proyecto: cleanText(p.id_proyecto || p.id || p.codigo),
       
+        // Se unifican los espacios dobles ("ETAPA  II") para que los nombres coincidan entre hojas.
         nombre_proyecto: cleanText(
           p.nombre_proyecto || p.nombre || p.proyecto
-        ),
+        ).replace(/\s+/g, ' '),
       
         fecha_venta: cleanText(
           p.fecha_venta ||
@@ -906,7 +908,7 @@ const normalizarComparativaMO = (p) => {
       p.obra ||
         p.nombre ||
         p.proyecto
-    ),
+    ).replace(/\s+/g, ' '),
 
     fecha_inicio: cleanText(
       p.fecha_inicio ||
