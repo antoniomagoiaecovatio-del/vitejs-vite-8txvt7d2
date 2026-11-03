@@ -78,7 +78,13 @@ const APPS_SCRIPT_URL =
   const PERSONAL_OPERACIONES_API_URL =
   APPS_SCRIPT_URL + '?action=personal_operaciones';
 
-  const ESTADO_PROYECTOS_BASE_URL =
+// Planilla "Estado de Proyectos FV" (nueva): su script (ApiTablero.gs) entrega
+// Estado de Proyectos y Comparativa MO. Mientras esta URL esté vacía se sigue
+// usando el script de la planilla vieja.
+const URL_PLANILLA_NUEVA = '';
+
+const ESTADO_PROYECTOS_BASE_URL =
+  URL_PLANILLA_NUEVA ||
   'https://script.google.com/macros/s/AKfycbyveaP6XNxwnwh7zbGwnOvxFBLUyZFHXAnlRT_k-bM1n3SIhE8LlOhbzSPbWQUR50El/exec';
 
 const ESTADO_PROYECTOS_API_URL =
@@ -108,19 +114,26 @@ const PERSONAL_TODOS_LOS_ANIOS = 'todos';
 const VISTA_POTENCIA_POR_OBRA = 'por_obra';
 const VISTA_POTENCIA_RELACION_PERSONAL = 'relacion_personal';
 
+// Etapas de la tabla de Estado de Proyectos. Los planos pasaron a ser parte de
+// Ingeniería (ya no hay etapa "c"). Las marcadas `post` son posteriores a la
+// obra: no cuentan en el avance.
 const ETAPAS_COLS = [
   { key: 'a', label: 'Relevamiento' },
   { key: 'b', label: 'Ingeniería' },
-  { key: 'c', label: 'Planos' },
   { key: 'd', label: 'Mat. Primarios' },
   { key: 'f', label: 'Mat. Secundarios' },
   { key: 'g', label: 'Obra Civil' },
   { key: 'h', label: 'Armado y Montaje de Estructuras' },
+  { key: 'i', label: 'Montaje de Paneles' },
   { key: 'j', label: 'Cableado de CC' },
   { key: 'k', label: 'Montaje de Inversores y Tableros' },
   { key: 'l', label: 'Cableado de CA' },
   { key: 'm', label: 'Puesta en Marcha' },
+  { key: 'ct', label: 'Carpeta Técnica', post: true },
+  { key: 'ug', label: 'Trámite UG', post: true },
 ];
+const ETAPAS_OBRA_N = ETAPAS_COLS.filter((c) => !c.post).length;
+const ETAPAS_POST_N = ETAPAS_COLS.length - ETAPAS_OBRA_N;
 
 const DASHBOARD_TABS = [
   ['dashboard', 'KPIs de Obras', RiBarChartBoxLine],
@@ -739,13 +752,18 @@ const parseProjectPercent = (v) => {
 };
 
 const normalizarEstadoProyecto = (p) => {
-  const etapasLista = Array.isArray(p.etapas_lista)
+  const etapasBase = Array.isArray(p.etapas_lista)
     ? p.etapas_lista
     : Object.entries(p.etapas || {}).map(([key, avance]) => ({
         key,
         nombre: key,
         avance,
       }));
+  // Carpeta Técnica y Trámite UG (posteriores a la obra) viajan aparte.
+  const etapasLista = [
+    ...etapasBase,
+    ...(Array.isArray(p.documentacion) ? p.documentacion : []),
+  ];
 
       return {
         id_proyecto: cleanText(p.id_proyecto || p.id || p.codigo),
@@ -812,11 +830,25 @@ const normalizarEstadoProyecto = (p) => {
 
     estado: cleanText(p.estado),
     avance: parseProjectPercent(p.avance),
-    etapas_lista: etapasLista.map((etapa) => ({
-      key: cleanText(etapa.key || etapa.nombre),
-      nombre: cleanText(etapa.nombre || etapa.key),
-      avance: parseProjectPercent(etapa.avance),
-    })),
+    responsable: cleanText(p.responsable),
+    observaciones: cleanText(p.observaciones),
+    ultima_actualizacion: cleanText(p.ultima_actualizacion),
+    documentacion_avance:
+      p.documentacion_avance === null || p.documentacion_avance === undefined
+        ? null
+        : parseProjectPercent(p.documentacion_avance),
+    etapas_lista: etapasLista.map((etapa) => {
+      // "N/A" (la etapa no aplica a esa obra) y etapa sin cargar (null) no son 0 %.
+      const sinDato =
+        etapa.avance === null || etapa.avance === undefined || etapa.avance === '';
+      return {
+        key: cleanText(etapa.key || etapa.nombre),
+        nombre: cleanText(etapa.nombre || etapa.key),
+        na: Boolean(etapa.na),
+        avance: etapa.na || sinDato ? null : parseProjectPercent(etapa.avance),
+        subitems: Array.isArray(etapa.subitems) ? etapa.subitems : undefined,
+      };
+    }),
   };
 };
 
@@ -1025,7 +1057,11 @@ const getEtapaAvance = (etapas_lista, letraKey) => {
       k === letraKey
     );
   });
-  return match !== undefined ? Number(match.avance) : null;
+  if (match === undefined) return null;
+  if (match.na) return 'NA'; // la etapa no aplica a esa obra
+  if (match.avance === null || match.avance === undefined) return null; // sin cargar
+  const n = Number(match.avance);
+  return Number.isNaN(n) ? null : n;
 };
 
 // Colores sólidos (no tintes al 10%) para que cada etapa se distinga de
@@ -3491,6 +3527,7 @@ const [anioTablaPersonalSeleccionado, setAnioTablaPersonalSeleccionado] =
   ] = useState([]);
 
 const [busquedaProyecto, setBusquedaProyecto] = useState('');
+  const [filtroResponsable, setFiltroResponsable] = useState('');
   const [sortField, setSortField] = useState('hs_mo_kwp');
   const [sortDir, setSortDir] = useState('asc');
   const [criterioGraficoKwp, setCriterioGraficoKwp] =
@@ -4548,14 +4585,26 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         p.nombre_proyecto.toLowerCase().includes(q) ||
         p.id_proyecto.toLowerCase().includes(q) ||
         p.ubicacion.toLowerCase().includes(q);
-  
-      return coincideEstado && coincideBusqueda;
+
+      const coincideResponsable =
+        !filtroResponsable || p.responsable === filtroResponsable;
+
+      return coincideEstado && coincideBusqueda && coincideResponsable;
     });
   }, [
     proyectosEstado,
     filtrosEstadoProyecto,
     busquedaProyecto,
+    filtroResponsable,
   ]);
+
+  const responsablesProyecto = useMemo(
+    () =>
+      [...new Set(proyectosEstado.map((p) => p.responsable).filter(Boolean))].sort(
+        (a, b) => a.localeCompare(b, 'es')
+      ),
+    [proyectosEstado]
+  );
   
   useEffect(() => {
     setFiltrosEstadoProyecto((seleccionados) =>
@@ -8005,6 +8054,21 @@ const dataAnio =
               onChange={(e) => setBusquedaProyecto(e.target.value)}
               style={{ ...S.input, width: 220 }}
             />
+            {responsablesProyecto.length > 0 && (
+              <select
+                value={filtroResponsable}
+                onChange={(e) => setFiltroResponsable(e.target.value)}
+                style={{ ...S.input, width: 190, height: 32, boxSizing: 'border-box' }}
+                title="Filtrar por responsable"
+              >
+                <option value="">Todos los responsables</option>
+                {responsablesProyecto.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            )}
             <details
   style={{
     position: 'relative',
@@ -8467,9 +8531,9 @@ const dataAnio =
                         zIndex: 2,
                       }}
                     />
-                    <th colSpan={4} style={{ background: '#16323a' }} />
+                    <th colSpan={5} style={{ background: '#16323a' }} />
                     <th
-                      colSpan={ETAPAS_COLS.length}
+                      colSpan={ETAPAS_OBRA_N}
                       style={{
                         background: '#111c31',
                         color: '#4fc3f7',
@@ -8483,6 +8547,23 @@ const dataAnio =
                       }}
                     >
                       Etapas de ejecución
+                    </th>
+                    <th
+                      colSpan={ETAPAS_POST_N}
+                      style={{
+                        background: '#14281c',
+                        borderLeft: '1px solid #2c5059',
+                        color: '#95de1d',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        textAlign: 'center',
+                        padding: '6px 8px',
+                        borderBottom: '1px solid #2c5059',
+                      }}
+                    >
+                      Después de la obra
                     </th>
                   </tr>
                   <tr style={{ borderBottom: '2px solid #3b5d65' }}>
@@ -8536,6 +8617,17 @@ const dataAnio =
 >
   Fecha de venta
 </th>
+                    <th
+                      style={{
+                        ...S.th,
+                        minWidth: 120,
+                        padding: '10px 8px',
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Responsable
+                    </th>
                     <th
                       style={{
                         ...S.th,
@@ -8635,6 +8727,19 @@ const dataAnio =
                             }}
                           >
                             <span>{p.nombre_proyecto || '—'}</span>
+                            {p.observaciones && (
+                              <span
+                                title={p.observaciones}
+                                style={{
+                                  cursor: 'help',
+                                  color: '#ffc933',
+                                  fontSize: 13,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                ⓘ
+                              </span>
+                            )}
                             {p.ubicacion && (
                               <a
                                 href={p.ubicacion}
@@ -8686,6 +8791,20 @@ const dataAnio =
   }}
 >
   {p.fecha_venta || '—'}
+</td>
+
+{/* Responsable */}
+<td
+  style={{
+    ...S.td,
+    textAlign: 'center',
+    padding: '9px 8px',
+    color: p.responsable ? '#e3eaea' : '#3b5d65',
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
+  }}
+>
+  {p.responsable || '—'}
 </td>
 
                         {/* Estado */}
@@ -8749,7 +8868,8 @@ const dataAnio =
                         así se lee de un vistazo sin tener que leer cada %. */}
                         {ETAPAS_COLS.map((col) => {
                           const val = getEtapaAvance(p.etapas_lista, col.key);
-                          const c = etapaCellStyle(val);
+                          const esNA = val === 'NA';
+                          const c = etapaCellStyle(esNA ? null : val);
                           return (
                             <td
                               key={col.key}
@@ -8761,7 +8881,26 @@ const dataAnio =
                                 borderBottom: '1px solid #2c5059',
                               }}
                             >
-                              {val !== null ? (
+                              {esNA ? (
+                                <div
+                                  title="No aplica a esta obra"
+                                  style={{
+                                    height: 26,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: 6,
+                                    background: '#16323a',
+                                    border: '1px dashed #3b5d65',
+                                    color: '#6f8a8f',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    letterSpacing: '0.04em',
+                                  }}
+                                >
+                                  N/A
+                                </div>
+                              ) : val !== null ? (
                                 <div
                                   style={{
                                     position: 'relative',
@@ -8821,7 +8960,7 @@ const dataAnio =
                     proyectosEstadoFiltrados.length === 0 && (
                       <tr>
                         <td
-                          colSpan={6 + ETAPAS_COLS.length}
+                          colSpan={7 + ETAPAS_COLS.length}
                           style={{
                             textAlign: 'center',
                             padding: 40,
@@ -8835,7 +8974,7 @@ const dataAnio =
                   {loadingProyectos && (
                     <tr>
                       <td
-                        colSpan={6 + ETAPAS_COLS.length}
+                        colSpan={7 + ETAPAS_COLS.length}
                         style={{
                           textAlign: 'center',
                           padding: 40,
