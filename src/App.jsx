@@ -332,6 +332,54 @@ const agruparProceso = (rows) => {
   return out;
 };
 
+// De dónde salen los datos de cada pestaña, para que cualquiera que mire el
+// tablero sepa en qué planilla corregirlos. Completar `url` con el enlace de la
+// planilla (si se copia con la pestaña abierta, el enlace lleva a esa hoja).
+const FUENTES_DATOS = {
+  dashboard: { planilla: 'Registro de MO', url: '' },
+  estadoProyectos: { planilla: 'Estado de Proyectos FV', hoja: 'Proyectos', url: '' },
+  potenciaInstalada: { planilla: 'Registro de MO', url: '' },
+  personalOperaciones: { planilla: 'Registro de MO', url: '' },
+  comparativaMO: { planilla: 'Estado de Proyectos FV', hoja: 'Comparativa MO', url: '' },
+};
+
+function FuenteDatos({ tab }) {
+  const f = FUENTES_DATOS[tab];
+  if (!f) return null;
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: '2px 8px',
+        fontSize: 12,
+        color: '#8fa6a9',
+      }}
+    >
+      <span>Fuente de los datos:</span>
+      {f.url ? (
+        <a
+          href={f.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Abrir la planilla de Google Sheets (se abre en otra pestaña)"
+          style={{ color: '#4fc3f7', fontWeight: 700, textDecoration: 'underline' }}
+        >
+          {f.planilla} ↗
+        </a>
+      ) : (
+        <b style={{ color: '#e3eaea' }}>{f.planilla}</b>
+      )}
+      {f.hoja && <span>· hoja “{f.hoja}”</span>}
+      <span style={{ opacity: 0.75 }}>
+        · Para corregir un dato, editalo en esa planilla y tocá Actualizar.
+      </span>
+    </div>
+  );
+}
+
 const esPrimeraDelGrupo = (i) => i === 0 || ETAPAS_COLS[i - 1].grupo !== ETAPAS_COLS[i].grupo;
 
 const DASHBOARD_TABS = [
@@ -6679,6 +6727,7 @@ const dataAnio =
             </TabNavigationLink>
           ))}
         </TabNavigation>
+        <FuenteDatos tab={tabActiva} />
       </div>
       )}
 
