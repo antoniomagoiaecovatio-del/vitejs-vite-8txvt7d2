@@ -332,15 +332,20 @@ const agruparProceso = (rows) => {
   return out;
 };
 
+const URL_ESTADO_PROYECTOS_FV =
+  'https://docs.google.com/spreadsheets/d/1G2IY_RXQUh9MZIWAvdg3J-KnOtXSA5wylt1iG8T8UN0/edit';
+const URL_REGISTRO_MO =
+  'https://docs.google.com/spreadsheets/d/1Pw6aBP9jKTpBCSGrhaU3xYeLQBdPRNOtlBAEtyMdYeg/edit';
+
 // De dónde salen los datos de cada pestaña, para que cualquiera que mire el
 // tablero sepa en qué planilla corregirlos. Completar `url` con el enlace de la
 // planilla (si se copia con la pestaña abierta, el enlace lleva a esa hoja).
 const FUENTES_DATOS = {
-  dashboard: { planilla: 'Registro de MO', url: '' },
-  estadoProyectos: { planilla: 'Estado de Proyectos FV', hoja: 'Proyectos', url: '' },
-  potenciaInstalada: { planilla: 'Registro de MO', url: '' },
-  personalOperaciones: { planilla: 'Registro de MO', url: '' },
-  comparativaMO: { planilla: 'Estado de Proyectos FV', hoja: 'Comparativa MO', url: '' },
+  dashboard: { planilla: 'Registro Diario de MO', url: URL_REGISTRO_MO },
+  estadoProyectos: { planilla: 'Estado de Proyectos FV', hoja: 'Proyectos', url: URL_ESTADO_PROYECTOS_FV + '#gid=1345996249' },
+  potenciaInstalada: { planilla: 'Registro Diario de MO', url: URL_REGISTRO_MO },
+  personalOperaciones: { planilla: 'Registro Diario de MO', url: URL_REGISTRO_MO },
+  comparativaMO: { planilla: 'Estado de Proyectos FV', hoja: 'Comparativa MO', url: URL_ESTADO_PROYECTOS_FV + '#gid=1618812909' },
 };
 
 function FuenteDatos({ tab }) {
