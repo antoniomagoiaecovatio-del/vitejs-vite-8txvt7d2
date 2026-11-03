@@ -1043,6 +1043,22 @@ const fetchJsonpUnaVez = (url) => {
   });
 };
 
+// Devuelve la etapa completa (con sus subítems: planos, SOC, provisión...) para una letra de etapa.
+const getEtapaItem = (etapas_lista, letraKey) =>
+  (etapas_lista || []).find((e) => {
+    const k = normalizeKey(e.key || e.nombre);
+    return k.startsWith(letraKey + '_') || k.startsWith(letraKey + ' ') || k === letraKey;
+  });
+
+// Color de cada segmento (plano / ítem de materiales): hecho, en curso, sin empezar, no aplica.
+const subitemColor = (s) =>
+  s.na ? '#3b5d65' : s.avance >= 100 ? '#16a34a' : s.avance > 0 ? '#e5a91c' : '#dc2626';
+
+const subitemTexto = (s) =>
+  `${s.na ? '—' : s.avance >= 100 ? '✔' : s.avance > 0 ? '◐' : '✘'} ${s.nombre}: ${
+    s.na ? 'no aplica' : `${Math.round(s.avance)}%`
+  }`;
+
 // Dado un proyecto, devuelve el avance (0-100 | null) para una letra de etapa (a, b, c...)
 const getEtapaAvance = (etapas_lista, letraKey) => {
   if (!etapas_lista || !etapas_lista.length) return null;
@@ -8525,6 +8541,20 @@ const dataAnio =
               </div>
             </div>
 
+            <div
+              style={{
+                fontSize: 11,
+                color: '#8fa6a9',
+                margin: '0 0 8px',
+              }}
+            >
+              Las barritas bajo <b style={{ color: '#e3eaea' }}>Ingeniería</b>,{' '}
+              <b style={{ color: '#e3eaea' }}>Mat. Primarios</b> y{' '}
+              <b style={{ color: '#e3eaea' }}>Mat. Secundarios</b> son los
+              planos y las partes (SOC y provisión): verde = hecho, amarillo =
+              en curso, rojo = sin empezar. Pasá el cursor para ver cuál es.
+            </div>
+
             <div style={{ overflowX: 'auto' }}>
               <table
                 style={{
@@ -8883,6 +8913,11 @@ const dataAnio =
                           const val = getEtapaAvance(p.etapas_lista, col.key);
                           const esNA = val === 'NA';
                           const c = etapaCellStyle(esNA ? null : val);
+                          const subs = getEtapaItem(p.etapas_lista, col.key)?.subitems;
+                          const detalleSubs =
+                            Array.isArray(subs) && subs.length
+                              ? `${col.label}\n${subs.map(subitemTexto).join('\n')}`
+                              : undefined;
                           return (
                             <td
                               key={col.key}
@@ -8914,6 +8949,7 @@ const dataAnio =
                                   N/A
                                 </div>
                               ) : val !== null ? (
+                                <div title={detalleSubs}>
                                 <div
                                   style={{
                                     position: 'relative',
@@ -8948,6 +8984,30 @@ const dataAnio =
                                   >
                                     {val}%
                                   </div>
+                                </div>
+                                {detalleSubs && (
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      gap: 2,
+                                      marginTop: 3,
+                                      height: 7,
+                                    }}
+                                  >
+                                    {subs.map((sub, k) => (
+                                      <div
+                                        key={k}
+                                        title={subitemTexto(sub)}
+                                        style={{
+                                          flex: 1,
+                                          borderRadius: 2,
+                                          background: subitemColor(sub),
+                                          opacity: sub.na ? 0.5 : sub.avance > 0 && sub.avance < 100 ? 0.9 : 1,
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
                                 </div>
                               ) : (
                                 <div
