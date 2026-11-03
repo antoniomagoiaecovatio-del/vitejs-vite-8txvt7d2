@@ -78,15 +78,10 @@ const APPS_SCRIPT_URL =
   const PERSONAL_OPERACIONES_API_URL =
   APPS_SCRIPT_URL + '?action=personal_operaciones';
 
-// Planilla "Estado de Proyectos FV" (nueva): su script (ApiTablero.gs) entrega
-// Estado de Proyectos y Comparativa MO. Mientras esta URL esté vacía se sigue
-// usando el script de la planilla vieja.
-const URL_PLANILLA_NUEVA =
-  'https://script.google.com/macros/s/AKfycby6RTrgCfvbB1fz6iGla7okFT3wdQY1-sWe0-Lg_qdqBnxAl5gUiRuKjy9VuxTzTXhcHw/exec';
-
+// Planilla "Estado de Proyectos FV": su script (ApiTablero.gs) entrega Estado de
+// Proyectos y Comparativa MO. Ya no se usa la planilla vieja del tablero de obras.
 const ESTADO_PROYECTOS_BASE_URL =
-  URL_PLANILLA_NUEVA ||
-  'https://script.google.com/macros/s/AKfycbyveaP6XNxwnwh7zbGwnOvxFBLUyZFHXAnlRT_k-bM1n3SIhE8LlOhbzSPbWQUR50El/exec';
+  'https://script.google.com/macros/s/AKfycby6RTrgCfvbB1fz6iGla7okFT3wdQY1-sWe0-Lg_qdqBnxAl5gUiRuKjy9VuxTzTXhcHw/exec';
 
 const ESTADO_PROYECTOS_API_URL =
   ESTADO_PROYECTOS_BASE_URL + '?action=estado_proyectos';
