@@ -4949,6 +4949,26 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     filtrosEstadoTablaProyecto,
   ]);
   
+  // Orden de la tabla: primero las obras que ya están en marcha (con alguna etapa de obra
+  // iniciada) y después los proyectos que todavía no empezaron la obra, así no se mezclan.
+  const proyectosEstadoTablaOrdenada = useMemo(() => {
+    const obraEnMarcha = (p) =>
+      ETAPAS_COLS.some((c) => {
+        if (c.grupo !== 'obra') return false;
+        const v = getEtapaAvance(p.etapas_lista, c.key);
+        return typeof v === 'number' && v > 0;
+      });
+    const lista = proyectosEstadoTablaFiltrados
+      .map((p) => ({ p, enMarcha: obraEnMarcha(p) }))
+      .sort(
+        (a, b) =>
+          Number(b.enMarcha) - Number(a.enMarcha) ||
+          (Number(b.p.avance) || 0) - (Number(a.p.avance) || 0) ||
+          String(a.p.nombre_proyecto).localeCompare(String(b.p.nombre_proyecto), 'es')
+      );
+    return { lista, cantEnMarcha: lista.filter((x) => x.enMarcha).length };
+  }, [proyectosEstadoTablaFiltrados]);
+
   useEffect(() => {
     setFiltrosEstadoTablaProyecto((seleccionados) =>
       seleccionados.filter((estado) =>
@@ -9038,11 +9058,45 @@ const dataAnio =
                   </tr>
                 </thead>
                 <tbody>
-                {proyectosEstadoTablaFiltrados.map((p, i) => {
+                {proyectosEstadoTablaOrdenada.lista.map(({ p, enMarcha }, i, arr) => {
                     const rowBg = i % 2 === 0 ? '#1d3c44' : '#0d1526';
+                    const colorGrupo = enMarcha ? ETAPAS_GRUPOS.obra.color : ETAPAS_GRUPOS.proyecto.color;
+                    const cantGrupo = enMarcha
+                      ? proyectosEstadoTablaOrdenada.cantEnMarcha
+                      : arr.length - proyectosEstadoTablaOrdenada.cantEnMarcha;
                     return (
+                      <React.Fragment key={`${p.id_proyecto}-${i}`}>
+                      {(i === 0 || arr[i - 1].enMarcha !== enMarcha) && (
+                        <tr>
+                          <td
+                            colSpan={7 + ETAPAS_COLS.length}
+                            style={{
+                              padding: 0,
+                              background: enMarcha ? '#14270f' : '#0e2530',
+                              borderTop: `2px solid ${colorGrupo}`,
+                            }}
+                          >
+                            <div
+                              style={{
+                                position: 'sticky',
+                                left: 0,
+                                width: 'max-content',
+                                padding: '7px 14px',
+                                fontSize: 11,
+                                fontWeight: 800,
+                                letterSpacing: '0.1em',
+                                textTransform: 'uppercase',
+                                color: colorGrupo,
+                              }}
+                            >
+                              {enMarcha
+                                ? `Obras en marcha (${cantGrupo})`
+                                : `Proyectos que todavía no iniciaron la obra (${cantGrupo})`}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                       <tr
-                        key={`${p.id_proyecto}-${i}`}
                         style={{
                           borderBottom: '1px solid #2c5059',
                           background: rowBg,
@@ -9370,6 +9424,7 @@ const dataAnio =
                           );
                         })}
                       </tr>
+                      </React.Fragment>
                     );
                   })}
                   {!loadingProyectos &&
