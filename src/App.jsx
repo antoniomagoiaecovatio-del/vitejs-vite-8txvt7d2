@@ -6738,9 +6738,9 @@ const dataAnio =
 
       {/* ── INICIO (portada) ── */}
       {tabActiva === 'inicio' && (
-        <main className="mx-auto max-w-[1200px] px-6 py-10">
+        <main className="mx-auto max-w-[1760px] px-6 py-10 2xl:px-10">
           {/* Portada con foto de fondo */}
-          <div className="relative mb-10 flex min-h-[300px] items-end overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/30 md:min-h-[400px]">
+          <div className="relative mb-10 flex min-h-[300px] items-end overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/30 md:min-h-[400px] xl:min-h-[46vh] 2xl:min-h-[50vh]">
             <img
               src="/fotos/portada.jpg"
               alt=""
@@ -6754,15 +6754,15 @@ const dataAnio =
                   'linear-gradient(to top, rgba(14,34,40,0.94) 0%, rgba(18,49,56,0.6) 40%, rgba(18,49,56,0.08) 100%), linear-gradient(100deg, rgba(18,49,56,0.55) 0%, transparent 55%)',
               }}
             />
-            <div className="relative p-6 md:p-10">
+            <div className="relative p-6 md:p-10 2xl:p-14">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#95de1d] backdrop-blur-sm">
                 <span className="size-1.5 rounded-full bg-[#95de1d]" />
                 ECOVATIO · Energía solar
               </div>
-              <h1 className="max-w-2xl text-3xl font-extrabold leading-tight md:text-5xl">
+              <h1 className="max-w-3xl text-3xl font-extrabold leading-tight md:text-5xl 2xl:text-6xl">
                 Panel de Obras Solares
               </h1>
-              <p className="mt-3 max-w-xl text-base text-gray-200 md:text-lg">
+              <p className="mt-3 max-w-xl text-base text-gray-200 md:text-lg 2xl:max-w-2xl 2xl:text-xl">
                 Indicadores, tableros y herramientas para gestionar cada obra fotovoltaica. Elegí a qué sección querés entrar.
               </p>
             </div>
@@ -6800,7 +6800,11 @@ const dataAnio =
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ${
+                  g.tabs.length >= 5 ? 'xl:grid-cols-5' : ''
+                }`}
+              >
                 {g.tabs.map((id) => {
                   const tab = DASHBOARD_TABS.find((t) => t[0] === id);
                   const info = INFO_TABS[id];
