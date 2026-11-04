@@ -1686,7 +1686,7 @@ const S = {
     marginRight: 10,
   },
   main: {
-    maxWidth: 1500,
+    maxWidth: 1760,
     margin: '0 auto',
     padding: '24px',
     display: 'flex',
@@ -1694,7 +1694,7 @@ const S = {
     gap: 20,
   },
   tabBar: {
-    maxWidth: 1500,
+    maxWidth: 1760,
     margin: '0 auto',
     padding: '16px 24px 0',
     display: 'flex',
@@ -6710,7 +6710,7 @@ const dataAnio =
       </header>
 
       {tabActiva !== 'inicio' && (
-      <div className="mx-auto max-w-[1500px] px-6 pt-4">
+      <div className="mx-auto max-w-[1760px] px-6 pt-4">
         <TabNavigation>
           <TabNavigationLink
             active={false}
@@ -6874,7 +6874,7 @@ const dataAnio =
 
       {/* ── SOLICITUDES (combustible y viáticos) ── */}
       {tabActiva === 'solicitudes' && (
-        <main className="mx-auto max-w-[1200px] px-4 py-6">
+        <main className="mx-auto max-w-[1760px] px-4 py-6">
           <Suspense
             fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
           >
@@ -6885,7 +6885,7 @@ const dataAnio =
 
       {/* ── DIMENSIONAMIENTO DE CABLES ── */}
       {tabActiva === 'cables' && (
-        <main className="mx-auto max-w-[1500px] px-4 py-6">
+        <main className="mx-auto max-w-[1760px] px-4 py-6">
           <Suspense
             fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
           >
@@ -12377,7 +12377,7 @@ const dataAnio =
 
       {/* ── DASHBOARD ── */}
       {tabActiva === 'dashboard' && (
-        <main className="mx-auto flex max-w-[1500px] flex-col gap-5 p-6">
+        <main className="mx-auto flex max-w-[1760px] flex-col gap-5 p-6">
           {error && (
             <Callout variant="error" title="Error">
               {error}

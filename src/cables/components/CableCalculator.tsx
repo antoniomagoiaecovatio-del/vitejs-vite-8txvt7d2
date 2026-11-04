@@ -19,7 +19,7 @@ export function CableCalculator() {
   const costsAvailable = inputs.side === "AC";
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 lg:grid-cols-[400px_1fr] lg:px-6">
+    <div className="mx-auto grid w-full max-w-[1760px] gap-5 px-4 py-5 lg:grid-cols-[400px_1fr] lg:px-6">
       <aside className="lg:sticky lg:top-5 lg:max-h-[calc(100vh-2.5rem)] lg:overflow-y-auto lg:pr-1">
         <InputPanel inputs={inputs} set={set} />
       </aside>

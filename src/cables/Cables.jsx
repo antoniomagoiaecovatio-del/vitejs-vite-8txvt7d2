@@ -14,7 +14,7 @@ export default function Cables() {
   return (
     <RequiereLogin titulo="Dimensionamiento de cables" subtitulo="Conductores BT y FV · acceso con usuario">
       {({ email, salir }) => (
-        <div className="cables-root mx-auto max-w-[1400px] pb-8">
+        <div className="cables-root mx-auto max-w-[1760px] pb-8">
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/10 text-[#95de1d] ring-1 ring-white/15">
               <RiFlashlightLine className="size-6" aria-hidden="true" />

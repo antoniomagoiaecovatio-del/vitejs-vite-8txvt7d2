@@ -64,7 +64,7 @@ function Contenido({ email, salir }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl pb-10">
+    <div className="mx-auto max-w-[1400px] pb-10">
       <div className="mb-3 flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-lg font-bold">Solicitudes de combustible y viáticos</h2>
