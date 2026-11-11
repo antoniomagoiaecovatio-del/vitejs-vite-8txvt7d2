@@ -1804,21 +1804,21 @@ const S = {
   },
   thead: {
     display: 'grid',
-    gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1.8fr 1fr 1.2fr 1.4fr',
-    gap: 8,
-    fontSize: 10,
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(230px,2fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gap: 6,
+    fontSize: 11,
     color: '#8fa6a9',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
-    padding: '10px 16px',
+    padding: '8px 14px',
     borderBottom: '1px solid #2c5059',
   },
   trow: {
     display: 'grid',
-    gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1.8fr 1fr 1.2fr 1.4fr',
-    gap: 8,
-    fontSize: 12,
-    padding: '9px 16px',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(230px,2fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gap: 6,
+    fontSize: 13,
+    padding: '5px 14px',
     alignItems: 'center',
   },
   formGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 },
@@ -13310,7 +13310,7 @@ const dataAnio =
                       }}
                     />
                   </div>
-                  <span style={{ fontSize: 10, color: '#8fa6a9' }}>
+                  <span style={{ fontSize: 11, color: '#8fa6a9' }}>
                     {o.avance}%
                   </span>
                 </div>
@@ -13340,23 +13340,32 @@ const dataAnio =
                     const cat = d.nivel === 'rango' ? `rango ${d.etiqueta}` : d.etiqueta;
                     return (
                       <span
-                        title={`Promedio de ${cat}: ${d.ref.toFixed(2)} Hs MO/kWp (${d.n} obras, sin atípicas y sin esta obra)`}
-                        style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2, cursor: 'help' }}
+                        title={`Promedio de ${cat}: ${d.ref.toFixed(2)} Hs MO/kWp (${d.n} obras, sin contar esta obra)`}
+                        style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'help', minWidth: 0 }}
                       >
                         <span
                           style={{
                             background: c + '22',
                             color: c,
                             fontWeight: 800,
-                            fontSize: 14,
+                            fontSize: 15,
                             padding: '1px 8px',
                             borderRadius: 4,
-                            width: 'fit-content',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
                           }}
                         >
                           {Math.abs(d.pct) < 5 ? '≈' : d.pct < 0 ? '▼' : '▲'} {Math.abs(d.pct).toFixed(0)} %
                         </span>
-                        <span style={{ fontSize: 10, color: '#8fa6a9', marginTop: 2 }}>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: '#8fa6a9',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           vs. {cat} · {d.n} obras
                         </span>
                       </span>
@@ -13372,7 +13381,7 @@ const dataAnio =
                       color: TIPO_COLORS[o.implantacion] || '#b9c7c9',
                       background:
                         (TIPO_COLORS[o.implantacion] || '#b9c7c9') + '22',
-                      fontSize: 11,
+                      fontSize: 12,
                       padding: '1px 7px',
                       borderRadius: 4,
                     }}

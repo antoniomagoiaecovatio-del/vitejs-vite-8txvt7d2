@@ -10,6 +10,7 @@ import {
   PUNTOS_HS,
   PUNTOS_DESVIO,
   UMBRAL_ATIPICA,
+  EXCLUIR_ATIPICAS,
   rangoDe,
   colorEscala,
   aclarar,
@@ -19,7 +20,7 @@ import {
 
 // Tablero de doble entrada del indicador Hs MO / kWp: rango de potencia (filas) × implantación (columnas),
 // con formato condicional. Al tocar una celda se filtra el "Detalle de obras" de abajo.
-// Las obras atípicas (más de 12 Hs MO/kWp) quedan siempre fuera de los promedios de este tablero.
+// Por ahora no se excluye ninguna obra (ver EXCLUIR_ATIPICAS en utils/categoriasObras.js).
 const MIN_OBRAS = 3;
 const MEJOR = colorEscala(0);
 const PEOR = colorEscala(1);
@@ -37,8 +38,8 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
     const todas = (obras || [])
       .filter((o) => Number(o.kwp) > 0 && o.hs_mo_kwp !== null && o.hs_mo_kwp !== undefined && Number.isFinite(Number(o.hs_mo_kwp)))
       .map((o) => ({ nombre: o.nombre, kwp: Number(o.kwp), hs: Number(o.hs_mo_kwp), rango: rangoDe(Number(o.kwp)), impl: o.implantacion || '' }));
-    const excl = todas.filter((o) => o.hs > UMBRAL_ATIPICA);
-    const base = todas.filter((o) => o.hs <= UMBRAL_ATIPICA);
+    const excl = EXCLUIR_ATIPICAS ? todas.filter((o) => o.hs > UMBRAL_ATIPICA) : [];
+    const base = EXCLUIR_ATIPICAS ? todas.filter((o) => o.hs <= UMBRAL_ATIPICA) : todas;
 
     // Promedio ponderado por kWp (horas totales sobre kWp totales).
     const calc = (lista) => {
@@ -203,8 +204,8 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 text-[10px] text-gray-400">
-        <div className="min-w-[260px] max-w-[420px] flex-1">
+      <div className="mt-4 flex flex-col items-center gap-2 text-[10px] text-gray-400">
+        <div className="w-full max-w-[460px]">
           <div className="mb-1 flex justify-between font-semibold">
             <span style={{ color: aclarar(MEJOR, 0.2) }}>Mejor (menos horas)</span>
             <span style={{ color: aclarar(PEOR, 0.25) }}>Peor (más horas)</span>
@@ -218,7 +219,7 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
             ))}
           </div>
         </div>
-        <span className="ml-auto max-w-[520px] text-right text-gray-500">
+        <span className="text-center text-gray-500">
           Promedios ponderados por kWp. Tocá una celda para ver esas obras en el detalle de abajo.
           {excluidas.length > 0 && (
             <span className="ml-1 cursor-help text-[#ffd93d]" title={excluidas.map((o) => `${o.nombre} (${fmt(o.hs, 1)})`).join(' · ')}>

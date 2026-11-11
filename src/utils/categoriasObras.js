@@ -12,8 +12,10 @@ export const RANGOS = [
 export const IMPLANTACIONES = ['En techo', 'En suelo', 'Cochera Solar', 'Residencial'];
 export const SIN_IMPLANTACION = 'Sin implantación';
 
-// Las obras "Alto" o "Crítico" (más de 12 Hs MO/kWp) no entran en el promedio de referencia.
+// Obras "Alto" o "Crítico" (más de 12 Hs MO/kWp). Por ahora NO se excluyen de ningún promedio del tablero;
+// poner EXCLUIR_ATIPICAS = true las deja afuera (el informe mensual y el Estimador sí las excluyen).
 export const UMBRAL_ATIPICA = 12;
+export const EXCLUIR_ATIPICAS = false;
 // Con menos de 3 obras similares se amplía el criterio (solo rango; después, todas).
 export const MIN_SIMILARES = 3;
 
@@ -53,12 +55,12 @@ const promedioPonderado = (lista) => {
 /**
  * Para cada obra: desvío (%) de su Hs MO/kWp contra el promedio ponderado de su categoría
  * (mismo rango e implantación; si hay menos de 3 similares, solo el rango; si no, todas).
- * La referencia no incluye a la propia obra ni a las atípicas. Positivo = más horas por kWp = peor.
+ * La referencia no incluye a la propia obra (ni a las atípicas, si EXCLUIR_ATIPICAS está activo). Positivo = más horas por kWp = peor.
  * Devuelve un Map nombre -> { pct, ref, n, nivel, etiqueta }.
  */
 export function calcularDesvios(obras) {
   const base = prepararObras(obras);
-  const referencia = base.filter((o) => o.hs <= UMBRAL_ATIPICA);
+  const referencia = EXCLUIR_ATIPICAS ? base.filter((o) => o.hs <= UMBRAL_ATIPICA) : base;
   const out = new Map();
   base.forEach((o) => {
     const pool = referencia.filter((x) => x.nombre !== o.nombre);
@@ -119,7 +121,7 @@ const interpolar = (v, puntos) => {
 };
 
 // Puntos de anclaje de la escala: valor → posición en la paleta (0 mejor, 1 peor).
-export const PUNTOS_HS = [[2, 0], [3.5, 0.18], [5, 0.36], [7, 0.55], [9, 0.75], [12, 1]];   // las obras de más de 12 quedan fuera de los promedios del tablero
+export const PUNTOS_HS = [[2, 0], [3.5, 0.15], [5, 0.3], [7, 0.45], [9, 0.6], [12, 0.78], [16, 1]];
 export const PUNTOS_DESVIO = [[-30, 0], [-10, 0.2], [0, 0.4], [10, 0.6], [25, 0.85], [50, 1]];
 export const tHs = (v) => interpolar(v, PUNTOS_HS);
 export const tDesvio = (pct) => interpolar(pct, PUNTOS_DESVIO);
