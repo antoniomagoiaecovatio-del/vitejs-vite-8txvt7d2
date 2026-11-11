@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { RiGridLine } from '@remixicon/react';
 
 import { Card } from './components/Card/Card';
@@ -8,14 +8,12 @@ import {
   IMPLANTACIONES,
   PALETA,
   PUNTOS_HS,
-  PUNTOS_DESVIO,
   UMBRAL_ATIPICA,
   EXCLUIR_ATIPICAS,
   rangoDe,
   colorEscala,
   aclarar,
   tHs,
-  tDesvio,
 } from './utils/categoriasObras';
 
 // Tablero de doble entrada del indicador Hs MO / kWp: rango de potencia (filas) × implantación (columnas),
@@ -24,7 +22,6 @@ import {
 const MIN_OBRAS = 3;
 const MEJOR = colorEscala(0);
 const PEOR = colorEscala(1);
-const NEUTRO = '#8fc9e8';
 
 const fmt = (n, d = 1) =>
   typeof n === 'number' && Number.isFinite(n)
@@ -32,9 +29,7 @@ const fmt = (n, d = 1) =>
     : '—';
 
 export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
-  const [colorModo, setColorModo] = useState('valor');
-
-  const { celdas, filasProm, total, categorias, excluidas, impls } = useMemo(() => {
+  const { celdas, total, categorias, excluidas, impls } = useMemo(() => {
     const todas = (obras || [])
       .filter((o) => Number(o.kwp) > 0 && o.hs_mo_kwp !== null && o.hs_mo_kwp !== undefined && Number.isFinite(Number(o.hs_mo_kwp)))
       .map((o) => ({ nombre: o.nombre, kwp: Number(o.kwp), hs: Number(o.hs_mo_kwp), rango: rangoDe(Number(o.kwp)), impl: o.implantacion || '' }));
@@ -58,23 +53,12 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
         if (c.v !== null && c.n >= MIN_OBRAS) cand.push({ ...c, nombre: `${i} · ${r.corto}` });
       })
     );
-    // Promedio de cada rango: referencia del modo "desvío vs. su rango" (no se muestra como fila).
-    const filasProm = {};
-    RANGOS.forEach((r) => (filasProm[r.id] = calc(base.filter((o) => o.rango.id === r.id)).v));
     cand.sort((a, b) => a.v - b.v);
 
-    return { celdas, filasProm, total: calc(base), categorias: cand, excluidas: excl, impls };
+    return { celdas, total: calc(base), categorias: cand, excluidas: excl, impls };
   }, [obras]);
 
-  const colorDe = (c, fila) => {
-    if (c.v === null) return null;
-    if (colorModo === 'desvio') {
-      const ref = filasProm[fila];
-      const desv = ref > 0 ? ((c.v - ref) / ref) * 100 : null;
-      return { color: desv === null ? NEUTRO : colorEscala(tDesvio(desv)), desv };
-    }
-    return { color: colorEscala(tHs(c.v)), desv: null };
-  };
+  const colorDe = (c) => (c.v === null ? null : { color: colorEscala(tHs(c.v)) });
 
   const mejor = categorias[0];
   const peor = categorias[categorias.length - 1];
@@ -91,10 +75,10 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
 
   const gridStyle = { display: 'grid', gap: 8, gridTemplateColumns: `minmax(130px,1.1fr) repeat(${impls.length}, minmax(120px,1fr))` };
 
-  const Celda = ({ c, fila, onClick, titulo }) => {
+  const Celda = ({ c, onClick, titulo }) => {
     if (c.v === null)
       return <div className="flex min-h-[74px] items-center justify-center rounded-xl border border-dashed border-white/10 text-xl text-gray-600">—</div>;
-    const st = colorDe(c, fila) || { color: NEUTRO, desv: null };
+    const st = colorDe(c);
     const pocas = c.n < MIN_OBRAS;
     return (
       <button
@@ -110,11 +94,6 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
         <span className="text-[24px] font-extrabold leading-none tracking-tight xl:text-[29px]" style={{ color: aclarar(st.color, 0.3) }}>
           {fmt(c.v, 1)}
         </span>
-        {st.desv !== null && (
-          <span className="mt-0.5 text-[11px] font-bold" style={{ color: aclarar(st.color, 0.3) }}>
-            {Math.abs(st.desv) < 5 ? '≈' : st.desv < 0 ? '▼' : '▲'} {fmt(Math.abs(st.desv), 0)} %
-          </span>
-        )}
         <span className="mt-1 text-[10px] font-medium text-gray-200">
           {c.n} {c.n === 1 ? 'obra' : 'obras'} · {fmt(c.kwp, 0)} kWp
           {pocas && <span className="ml-1 rounded bg-white/15 px-1 text-[9px] text-gray-300">pocas</span>}
@@ -132,10 +111,7 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
 
   // Leyenda: la barra va de lo mejor (verde) a lo peor (rojo).
   const barra = `linear-gradient(90deg, ${[...PALETA].reverse().join(', ')})`;
-  const marcas =
-    colorModo === 'desvio'
-      ? PUNTOS_DESVIO.map(([v, t]) => [t, (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' %'])
-      : PUNTOS_HS.map(([v, t], i, a) => [t, (i === 0 ? '≤ ' : i === a.length - 1 ? '≥ ' : '') + v]);
+  const marcas = PUNTOS_HS.map(([v, t], i, a) => [t, (i === 0 ? '≤ ' : i === a.length - 1 ? '≥ ' : '') + v]);
 
   return (
     <Card className="p-5">
@@ -145,25 +121,6 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
             <RiGridLine className="size-4" aria-hidden="true" />
           </div>
           <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Hs MO / kWp por rango de potencia e implantación</div>
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-          Colorear por
-          {[
-            ['valor', 'Valor'],
-            ['desvio', 'Desvío vs. su rango'],
-          ].map(([v, t]) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setColorModo(v)}
-              className={cx(
-                'rounded-full border px-2.5 py-0.5 font-semibold transition-colors',
-                colorModo === v ? 'border-[#4fc3f7] bg-[#4fc3f7]/20 text-[#4fc3f7]' : 'border-gray-700 text-gray-300 hover:border-gray-500',
-              )}
-            >
-              {t}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -197,7 +154,7 @@ export default function BenchmarkObras({ obras, desvios, onSeleccionar }) {
                 <span className="text-[10px] text-gray-400">{r.label.replace(/^[^(]*/, '').replace(/[()]/g, '')}</span>
               </button>
               {impls.map((i) => (
-                <Celda key={i} c={celdas[r.id + '|' + i]} fila={r.id} onClick={() => onSeleccionar?.(r.label, i)} titulo={`${i} · ${r.label}: ver las obras en el detalle`} />
+                <Celda key={i} c={celdas[r.id + '|' + i]} onClick={() => onSeleccionar?.(r.label, i)} titulo={`${i} · ${r.label}: ver las obras en el detalle`} />
               ))}
             </div>
           ))}

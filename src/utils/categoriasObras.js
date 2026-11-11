@@ -55,7 +55,7 @@ const promedioPonderado = (lista) => {
 /**
  * Para cada obra: desvío (%) de su Hs MO/kWp contra el promedio ponderado de su categoría
  * (mismo rango e implantación; si hay menos de 3 similares, solo el rango; si no, todas).
- * La referencia no incluye a la propia obra (ni a las atípicas, si EXCLUIR_ATIPICAS está activo). Positivo = más horas por kWp = peor.
+ * La referencia es el promedio de la categoría tal como se ve en el tablero de doble entrada (incluye a la propia obra; sin las atípicas solo si EXCLUIR_ATIPICAS está activo). Positivo = más horas por kWp = peor.
  * Devuelve un Map nombre -> { pct, ref, n, nivel, etiqueta }.
  */
 export function calcularDesvios(obras) {
@@ -63,7 +63,7 @@ export function calcularDesvios(obras) {
   const referencia = EXCLUIR_ATIPICAS ? base.filter((o) => o.hs <= UMBRAL_ATIPICA) : base;
   const out = new Map();
   base.forEach((o) => {
-    const pool = referencia.filter((x) => x.nombre !== o.nombre);
+    const pool = referencia;   // incluye a la propia obra: así la referencia es exactamente el valor de la celda del tablero
     let nivel = 'categoria';
     let sim = o.impl ? pool.filter((x) => x.rango.id === o.rango.id && x.impl === o.impl) : [];
     let etiqueta = [o.impl, o.rango.corto].filter(Boolean).join(' · ');

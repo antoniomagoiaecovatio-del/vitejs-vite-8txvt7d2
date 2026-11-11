@@ -1804,7 +1804,7 @@ const S = {
   },
   thead: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(230px,2fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
     gap: 6,
     fontSize: 11,
     color: '#8fa6a9',
@@ -1815,7 +1815,7 @@ const S = {
   },
   trow: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(230px,2fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
     gap: 6,
     fontSize: 13,
     padding: '5px 14px',
@@ -13340,7 +13340,7 @@ const dataAnio =
                     const cat = d.nivel === 'rango' ? `rango ${d.etiqueta}` : d.etiqueta;
                     return (
                       <span
-                        title={`Promedio de ${cat}: ${d.ref.toFixed(2)} Hs MO/kWp (${d.n} obras, sin contar esta obra)`}
+                        title={`Promedio de ${cat}: ${d.ref.toFixed(2)} Hs MO/kWp (${d.n} obras)${d.nivel === 'categoria' ? ' · es el valor de su celda en el tablero de arriba' : ''}`}
                         style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'help', minWidth: 0 }}
                       >
                         <span
@@ -13356,17 +13356,6 @@ const dataAnio =
                           }}
                         >
                           {Math.abs(d.pct) < 5 ? '≈' : d.pct < 0 ? '▼' : '▲'} {Math.abs(d.pct).toFixed(0)} %
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: '#8fa6a9',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          vs. {cat} · {d.n} obras
                         </span>
                       </span>
                     );
