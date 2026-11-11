@@ -783,6 +783,20 @@ const toInputDate = (value) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+// Clave para cruzar el nombre de una obra entre planillas (sin tildes, mayúsculas ni signos).
+const claveObra = (n) =>
+  normalizeKey(n)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const MESES_INICIO_OBRA = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+// "2026-03-15" -> "15/03/2026"; si solo se conoce el mes (primer registro de potencia) -> "mar 2026".
+const formatearInicioObra = (fecha, exacta) => {
+  if (!fecha) return '—';
+  const [a, m, d] = fecha.split('-');
+  return exacta ? `${d}/${m}/${a}` : `${MESES_INICIO_OBRA[Number(m) - 1]} ${a}`;
+};
+
 const getMonthLabel = (value) => {
   const d = parseDateText(value);
   if (!d) return 'Sin fecha';
@@ -1804,7 +1818,7 @@ const S = {
   },
   thead: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(88px,.8fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
     gap: 6,
     fontSize: 11,
     color: '#8fa6a9',
@@ -1815,7 +1829,7 @@ const S = {
   },
   trow: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(88px,.8fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
     gap: 6,
     fontSize: 13,
     padding: '5px 14px',
@@ -3830,7 +3844,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   }, [procesoAbierto, diagramaAbierto]);
 
   const procesoPorEtapa = useMemo(() => agruparProceso(procesoRows), [procesoRows]);
-  const [sortField, setSortField] = useState('hs_mo_kwp');
+  const [sortField, setSortField] = useState('fecha_inicio');
   const [sortDir, setSortDir] = useState('asc');
   const [criterioGraficoKwp, setCriterioGraficoKwp] =
   useState('implantacion');
@@ -4367,6 +4381,32 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     formEstimacion.potenciaRef,
   ]);
 
+  // Desvío de cada obra contra el promedio de su categoría (rango de potencia × implantación).
+  const desviosObras = useMemo(() => calcularDesvios(obras), [obras]);
+
+  const fechaInicioObras = useMemo(() => {
+    const out = new Map();
+    comparativaMO.forEach((r) => {
+      const f = toInputDate(r.fecha_inicio);
+      if (f && r.obra) out.set(claveObra(r.obra), { fecha: f, exacta: true });
+    });
+    const primerMes = new Map();
+    potenciaInstalada.forEach((a) =>
+      (a.meses || []).forEach((m) =>
+        (m.obras || []).forEach((ob) => {
+          const k = claveObra(ob.obra);
+          const ym = Number(a.anio) * 12 + (Number(m.mes_numero) - 1);
+          if (k && Number.isFinite(ym) && (!primerMes.has(k) || ym < primerMes.get(k))) primerMes.set(k, ym);
+        })
+      )
+    );
+    primerMes.forEach((ym, k) => {
+      if (out.has(k)) return;
+      out.set(k, { fecha: `${Math.floor(ym / 12)}-${String((ym % 12) + 1).padStart(2, '0')}-01`, exacta: false });
+    });
+    return out;
+  }, [comparativaMO, potenciaInstalada]);
+
   const obrasFiltradas = useMemo(
     () =>
       obras
@@ -4387,17 +4427,40 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
             (busqueda === '' ||
               o.nombre.toLowerCase().includes(busqueda.toLowerCase()))
         )
+        .map((o) => {
+          const f = fechaInicioObras.get(claveObra(o.nombre));
+          const dv = desviosObras.get(o.nombre);
+          return {
+            ...o,
+            fecha_inicio: f ? f.fecha : null,
+            fecha_exacta: f ? f.exacta : false,
+            desvio: dv && dv.pct !== null ? dv.pct : null,
+          };
+        })
         .sort((a, b) => {
-          const av = a[sortField] ?? Infinity;
-          const bv = b[sortField] ?? Infinity;
-          if (typeof av === 'string' || typeof bv === 'string')
-            return sortDir === 'asc'
-              ? String(av).localeCompare(String(bv))
-              : String(bv).localeCompare(String(av));
+          if (sortField === 'fecha_inicio') {
+            // Cronológico; las obras sin fecha quedan siempre al final.
+            if (!a.fecha_inicio && !b.fecha_inicio) return a.nombre.localeCompare(b.nombre);
+            if (!a.fecha_inicio) return 1;
+            if (!b.fecha_inicio) return -1;
+            const c = a.fecha_inicio.localeCompare(b.fecha_inicio);
+            return (sortDir === 'asc' ? c : -c) || a.nombre.localeCompare(b.nombre);
+          }
+          const av = a[sortField];
+          const bv = b[sortField];
+          const faltaA = av === null || av === undefined || av === '';
+          const faltaB = bv === null || bv === undefined || bv === '';
+          if (faltaA || faltaB) return faltaA && faltaB ? 0 : faltaA ? 1 : -1;
+          if (typeof av === 'string' || typeof bv === 'string') {
+            const c = String(av).localeCompare(String(bv), 'es');
+            return sortDir === 'asc' ? c : -c;
+          }
           return sortDir === 'asc' ? av - bv : bv - av;
         }),
     [
       obras,
+      fechaInicioObras,
+      desviosObras,
       filtroEstado,
       filtroTipoCliente,
       filtroImplantacion,
@@ -4410,8 +4473,6 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     ]
   );
 
-  // Desvío de cada obra contra el promedio de su categoría (rango de potencia × implantación).
-  const desviosObras = useMemo(() => calcularDesvios(obras), [obras]);
 
   // Al tocar una celda del tablero de doble entrada: se filtra el detalle de obras y se baja hasta él.
   const seleccionarCategoria = (rangoLabel, impl) => {
@@ -13244,6 +13305,7 @@ const dataAnio =
             <div style={S.thead}>
               {[
                 ['nombre', 'Obra'],
+                ['fecha_inicio', 'Inicio'],
                 ['kwp', 'kWp'],
                 ['estado', 'Estado'],
                 ['avance', 'Avance'],
@@ -13255,16 +13317,40 @@ const dataAnio =
               ].map(([f, l]) => (
                 <span
                   key={f}
-                  onClick={f === 'desvio' ? undefined : () => handleSort(f)}
+                  onClick={() => handleSort(f)}
                   title={
                     f === 'desvio'
-                      ? 'Cuánto se aparta el Hs MO/kWp de la obra del promedio de su categoría (mismo rango de potencia e implantación). Menos es mejor.'
-                      : undefined
+                      ? 'Cuánto se aparta el Hs MO/kWp de la obra del promedio de su categoría (mismo rango de potencia e implantación). Menos es mejor. Tocá para ordenar.'
+                      : 'Tocá para ordenar de menor a mayor y, de nuevo, de mayor a menor'
                   }
-                  style={{ cursor: f === 'desvio' ? 'help' : 'pointer' }}
+                  aria-sort={sortField === f ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  style={{
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    color: sortField === f ? '#95de1d' : undefined,
+                  }}
                 >
                   {l}
-                  {sortField === f ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      fontSize: 11,
+                      lineHeight: 1,
+                      flexShrink: 0,
+                      background: sortField === f ? '#95de1d22' : '#ffffff0f',
+                      color: sortField === f ? '#95de1d' : '#8fa6a9',
+                    }}
+                  >
+                    {sortField === f ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                  </span>
                 </span>
               ))}
             </div>
@@ -13286,6 +13372,18 @@ const dataAnio =
                   }}
                 >
                   {o.nombre}
+                </span>
+                <span
+                  style={{ color: '#b9c7c9' }}
+                  title={
+                    o.fecha_inicio
+                      ? o.fecha_exacta
+                        ? 'Fecha de inicio de la obra (Comparativa MO)'
+                        : 'Mes del primer registro de potencia instalada (fecha aproximada)'
+                      : 'Sin fecha de inicio cargada'
+                  }
+                >
+                  {formatearInicioObra(o.fecha_inicio, o.fecha_exacta)}
                 </span>
                 <span style={{ color: '#b9c7c9' }}>{o.kwp} kWp</span>
                 <span>
@@ -13391,6 +13489,7 @@ const dataAnio =
                 }}
               >
                 <span style={{ color: '#f4f8f8' }}>TOTAL / PROMEDIO</span>
+                <span />
                 <span style={{ color: '#ffc933' }}>
                   {formatKwp(resumenTabla.totalKwpTabla)}
                 </span>
