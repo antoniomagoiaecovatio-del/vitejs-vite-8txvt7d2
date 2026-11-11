@@ -789,14 +789,6 @@ const claveObra = (n) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-const MESES_INICIO_OBRA = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-// "2026-03-15" -> "15/03/2026"; si solo se conoce el mes (primer registro de potencia) -> "mar 2026".
-const formatearInicioObra = (fecha, exacta) => {
-  if (!fecha) return '—';
-  const [a, m, d] = fecha.split('-');
-  return exacta ? `${d}/${m}/${a}` : `${MESES_INICIO_OBRA[Number(m) - 1]} ${a}`;
-};
-
 const getMonthLabel = (value) => {
   const d = parseDateText(value);
   if (!d) return 'Sin fecha';
@@ -1818,7 +1810,7 @@ const S = {
   },
   thead: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px,2fr) minmax(88px,.8fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
     gap: 6,
     fontSize: 11,
     color: '#8fa6a9',
@@ -1829,7 +1821,7 @@ const S = {
   },
   trow: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px,2fr) minmax(88px,.8fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
+    gridTemplateColumns: 'minmax(150px,2fr) minmax(70px,.7fr) minmax(110px,1.1fr) minmax(80px,.8fr) minmax(110px,1fr) minmax(120px,1fr) minmax(90px,1fr) minmax(90px,.9fr) minmax(120px,1.3fr)',
     gap: 6,
     fontSize: 13,
     padding: '5px 14px',
@@ -3845,7 +3837,7 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
 
   const procesoPorEtapa = useMemo(() => agruparProceso(procesoRows), [procesoRows]);
   const [sortField, setSortField] = useState('fecha_inicio');
-  const [sortDir, setSortDir] = useState('asc');
+  const [sortDir, setSortDir] = useState('desc');   // por defecto: obras más recientes primero
   const [criterioGraficoKwp, setCriterioGraficoKwp] =
   useState('implantacion');
   // Fórmula del gráfico: 'kwp' (pesa la potencia) u 'obras' (cada obra pesa igual).
@@ -13305,7 +13297,6 @@ const dataAnio =
             <div style={S.thead}>
               {[
                 ['nombre', 'Obra'],
-                ['fecha_inicio', 'Inicio'],
                 ['kwp', 'kWp'],
                 ['estado', 'Estado'],
                 ['avance', 'Avance'],
@@ -13372,18 +13363,6 @@ const dataAnio =
                   }}
                 >
                   {o.nombre}
-                </span>
-                <span
-                  style={{ color: '#b9c7c9' }}
-                  title={
-                    o.fecha_inicio
-                      ? o.fecha_exacta
-                        ? 'Fecha de inicio de la obra (Comparativa MO)'
-                        : 'Mes del primer registro de potencia instalada (fecha aproximada)'
-                      : 'Sin fecha de inicio cargada'
-                  }
-                >
-                  {formatearInicioObra(o.fecha_inicio, o.fecha_exacta)}
                 </span>
                 <span style={{ color: '#b9c7c9' }}>{o.kwp} kWp</span>
                 <span>
@@ -13489,7 +13468,6 @@ const dataAnio =
                 }}
               >
                 <span style={{ color: '#f4f8f8' }}>TOTAL / PROMEDIO</span>
-                <span />
                 <span style={{ color: '#ffc933' }}>
                   {formatKwp(resumenTabla.totalKwpTabla)}
                 </span>
