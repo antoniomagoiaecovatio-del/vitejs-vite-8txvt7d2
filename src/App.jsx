@@ -4427,16 +4427,20 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
             fecha_inicio: f ? f.fecha : null,
             fecha_exacta: f ? f.exacta : false,
             desvio: dv && dv.pct !== null ? dv.pct : null,
+            orden: obras.indexOf(o),
           };
         })
         .sort((a, b) => {
           if (sortField === 'fecha_inicio') {
-            // Cronológico; las obras sin fecha quedan siempre al final.
-            if (!a.fecha_inicio && !b.fecha_inicio) return a.nombre.localeCompare(b.nombre);
-            if (!a.fecha_inicio) return 1;
-            if (!b.fecha_inicio) return -1;
-            const c = a.fecha_inicio.localeCompare(b.fecha_inicio);
-            return (sortDir === 'asc' ? c : -c) || a.nombre.localeCompare(b.nombre);
+            // Cronológico por fecha de inicio. Las obras sin fecha van al final; si ninguna tiene fecha
+            // (por ejemplo, mientras cargan los datos) se usa el orden de la planilla, que ya es cronológico.
+            const dir = sortDir === 'asc' ? 1 : -1;
+            if (a.fecha_inicio && b.fecha_inicio) {
+              return dir * (a.fecha_inicio.localeCompare(b.fecha_inicio) || a.orden - b.orden);
+            }
+            if (a.fecha_inicio) return -1;
+            if (b.fecha_inicio) return 1;
+            return dir * (a.orden - b.orden);
           }
           const av = a[sortField];
           const bv = b[sortField];
@@ -13271,6 +13275,22 @@ const dataAnio =
                   align="right"
                   minWidth={190}
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSortField('fecha_inicio');
+                    setSortDir('desc');
+                  }}
+                  title="Ordenar las obras de la más reciente a la más antigua"
+                  className={cx(
+                    'flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-xs font-semibold transition-colors',
+                    sortField === 'fecha_inicio' && sortDir === 'desc'
+                      ? 'border-[#95de1d] bg-[#95de1d]/15 text-[#95de1d]'
+                      : 'border-gray-700 text-gray-300 hover:border-gray-500'
+                  )}
+                >
+                  ↓ Más recientes primero
+                </button>
                 {(filtroEstado.length > 0 ||
                   filtroTipoCliente.length > 0 ||
                   filtroImplantacion.length > 0 ||
