@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import * as Recharts from 'recharts';
 
 import { Card } from './components/Card/Card';
+import BenchmarkObras from './BenchmarkObras';
 import { Badge } from './components/Badge/Badge';
 import { Button } from './components/Button/Button';
 import { Callout } from './components/Callout/Callout';
@@ -13134,6 +13135,8 @@ const dataAnio =
               </div>
             </Card>
           </div>
+
+          <BenchmarkObras obras={obras} />
 
           <div
             id="detalle-obras"
