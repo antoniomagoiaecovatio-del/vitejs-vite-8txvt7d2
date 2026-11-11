@@ -4,7 +4,7 @@ import * as Recharts from 'recharts';
 
 import { Card } from './components/Card/Card';
 import BenchmarkObras from './BenchmarkObras';
-import { calcularDesvios } from './utils/categoriasObras';
+import { calcularDesvios, colorEscala, tDesvio, aclarar } from './utils/categoriasObras';
 import { Badge } from './components/Badge/Badge';
 import { Button } from './components/Button/Button';
 import { Callout } from './components/Callout/Callout';
@@ -13155,7 +13155,7 @@ const dataAnio =
             </Card>
           </div>
 
-          <BenchmarkObras obras={obras} comparativa={comparativaMO} desvios={desviosObras} onSeleccionar={seleccionarCategoria} />
+          <BenchmarkObras obras={obras} desvios={desviosObras} onSeleccionar={seleccionarCategoria} />
 
           <div
             id="detalle-obras"
@@ -13336,7 +13336,7 @@ const dataAnio =
                   {(() => {
                     const d = desviosObras.get(o.nombre);
                     if (!d || d.pct === null) return <span style={{ color: '#55787f' }}>—</span>;
-                    const c = Math.abs(d.pct) < 5 ? '#b9c7c9' : d.pct < 0 ? '#95de1d' : '#ff7b7b';
+                    const c = aclarar(colorEscala(tDesvio(d.pct)), 0.2);
                     const cat = d.nivel === 'rango' ? `rango ${d.etiqueta}` : d.etiqueta;
                     return (
                       <span
