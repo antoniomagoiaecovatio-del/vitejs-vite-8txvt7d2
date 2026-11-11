@@ -1,298 +1,344 @@
 import React, { useMemo, useState } from 'react';
-import { RiArrowDownSLine, RiArrowRightSLine, RiBarChartGroupedLine } from '@remixicon/react';
+import { RiGridLine } from '@remixicon/react';
 
 import { Card } from './components/Card/Card';
 import { cx } from './utils/cx';
+import {
+  RANGOS,
+  IMPLANTACIONES,
+  UMBRAL_ATIPICA,
+  rangoDe,
+  normalizarNombre,
+} from './utils/categoriasObras';
 
-// Comparación del indicador Hs MO / kWp por grupo de obras (rango de potencia o implantación)
-// contra el promedio de su propio grupo. Los rangos son los mismos del resto del tablero.
-const RANGOS = [
-  { id: 'micro', label: 'Micro (1–4 kWp)', max: 4 },
-  { id: 'pequena', label: 'Pequeña (5–12 kWp)', max: 12 },
-  { id: 'mediana', label: 'Mediana (13–40 kWp)', max: 40 },
-  { id: 'grande', label: 'Grande (41–99 kWp)', max: 99 },
-  { id: 'muy_grande', label: 'Muy grande (100–300 kWp)', max: 300 },
-  { id: 'parque', label: 'Parque solar (>300 kWp)', max: Infinity },
+// Tablero de doble entrada: rango de potencia (filas) × implantación (columnas). Cada celda muestra el
+// indicador elegido con formato condicional. Al tocar una celda se filtra el "Detalle de obras" de abajo.
+const INDICADORES = [
+  { id: 'hs', label: 'Hs MO / kWp', unidad: 'Hs MO / kWp', dec: 1, menosEsMejor: true },
+  { id: 'dias', label: 'Días-hombre / kWp', unidad: 'días / kWp', dec: 2, menosEsMejor: true },
+  { id: 'costo', label: 'Costo MO US$ / kWp', unidad: 'US$ / kWp', dec: 0, menosEsMejor: true },
+  { id: 'obras', label: 'Cantidad de obras', unidad: 'obras', dec: 0, menosEsMejor: false },
+  { id: 'kwp', label: 'kWp totales', unidad: 'kWp', dec: 0, menosEsMejor: false },
 ];
-const IMPLANTACIONES = ['En techo', 'En suelo', 'Cochera Solar', 'Residencial'];
-const SIN_IMPL = 'Sin implantación cargada';
-
-// Las obras "Alto" o "Crítico" (más de 12 Hs MO/kWp) se pueden dejar afuera, igual que en el Estimador.
-const UMBRAL_ATIPICA = 12;
 const MIN_OBRAS = 3;
 
-const rangoDe = (kwp) => RANGOS.find((r) => kwp <= r.max) || RANGOS[RANGOS.length - 1];
-
-const colorHs = (v) =>
-  v <= 5 ? '#95de1d' : v <= 8 ? '#c7ee8a' : v <= 12 ? '#ffc933' : v <= 18 ? '#ff9f4a' : '#ff5f5f';
+const VERDE = '#95de1d';
+const VERDE_CLARO = '#c7ee8a';
+const AMARILLO = '#ffc933';
+const NARANJA = '#ff9f4a';
+const ROJO = '#ff5f5f';
+const NEUTRO = '#8fc9e8';
 
 const fmt = (n, d = 1) =>
   typeof n === 'number' && Number.isFinite(n)
     ? n.toLocaleString('es-AR', { minimumFractionDigits: d, maximumFractionDigits: d })
     : '—';
 
-const mediana = (valores) => {
-  const v = [...valores].sort((a, b) => a - b);
-  if (!v.length) return null;
-  const m = Math.floor(v.length / 2);
-  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+const colorHs = (v) => (v <= 5 ? VERDE : v <= 8 ? VERDE_CLARO : v <= 12 ? AMARILLO : v <= 18 ? NARANJA : ROJO);
+
+// Escala continua verde → amarillo → rojo para valores relativos (0 = mejor, 1 = peor).
+const mezcla = (a, b, t) => {
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
 };
+const colorRelativo = (t) => (t < 0.5 ? mezcla(VERDE, AMARILLO, t * 2) : mezcla(AMARILLO, ROJO, (t - 0.5) * 2));
 
-// Promedio ponderado por kWp (equivale a horas totales sobre kWp totales).
-const estadisticas = (lista) => {
-  const kwp = lista.reduce((s, o) => s + o.kwp, 0);
-  const hs = lista.map((o) => o.hs);
-  return {
-    n: lista.length,
-    kwp,
-    prom: kwp > 0 ? lista.reduce((s, o) => s + o.hs * o.kwp, 0) / kwp : null,
-    mediana: mediana(hs),
-    mejor: hs.length ? Math.min(...hs) : null,
-    peor: hs.length ? Math.max(...hs) : null,
-  };
-};
+const colorDesvio = (pct) =>
+  pct <= -15 ? VERDE : pct <= -5 ? VERDE_CLARO : pct < 5 ? NEUTRO : pct < 15 ? NARANJA : ROJO;
 
-/** Desvío porcentual de "valor" respecto de "ref" (positivo = más horas por kWp = peor). */
-const desvio = (valor, ref) => (ref > 0 ? ((valor - ref) / ref) * 100 : null);
-
-function Chip({ pct, neutro }) {
-  if (pct === null || pct === undefined) return <span className="text-gray-500">—</span>;
-  const cercano = Math.abs(pct) < 5;
-  // neutro: la diferencia contra "todas las obras" mezcla el efecto del tamaño, no se pinta de bueno/malo
-  const color = cercano || neutro ? (neutro ? '#8fc9e8' : '#b9c7c9') : pct < 0 ? '#95de1d' : '#ff7b7b';
-  return (
-    <span
-      className="inline-block whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-bold"
-      style={{ color, background: color + '1f' }}
-    >
-      {cercano ? '≈ ' : pct < 0 ? '▼ ' : '▲ '}
-      {fmt(Math.abs(pct), 0)} %
-    </span>
-  );
-}
-
-export default function BenchmarkObras({ obras }) {
-  const [criterio, setCriterio] = useState('rango');
+export default function BenchmarkObras({ obras, comparativa, desvios, onSeleccionar }) {
+  const [indicador, setIndicador] = useState('hs');
+  const [colorModo, setColorModo] = useState('valor');
   const [sinAtipicas, setSinAtipicas] = useState(false);
-  const [abierto, setAbierto] = useState(null);
 
-  const { filas, total, excluidas, sinDato } = useMemo(() => {
-    const conDato = (obras || [])
-      .filter((o) => o.hs_mo_kwp !== null && o.hs_mo_kwp !== undefined && Number(o.kwp) > 0 && Number.isFinite(Number(o.hs_mo_kwp)))
-      .map((o) => ({
-        nombre: o.nombre,
-        kwp: Number(o.kwp),
-        hs: Number(o.hs_mo_kwp),
-        rango: rangoDe(Number(o.kwp)),
-        impl: o.implantacion || SIN_IMPL,
-      }));
-    const excl = sinAtipicas ? conDato.filter((o) => o.hs > UMBRAL_ATIPICA) : [];
-    const base = sinAtipicas ? conDato.filter((o) => o.hs <= UMBRAL_ATIPICA) : conDato;
+  const ind = INDICADORES.find((i) => i.id === indicador);
+  const modo = ind.menosEsMejor ? colorModo : 'valor';
 
-    const grupos =
-      criterio === 'rango'
-        ? RANGOS.map((r) => ({ id: r.id, etiqueta: r.label, lista: base.filter((o) => o.rango.id === r.id) }))
-        : [...IMPLANTACIONES, SIN_IMPL].map((i) => ({ id: i, etiqueta: i, lista: base.filter((o) => o.impl === i) }));
+  const { celdas, filasTot, colsTot, total, categorias, excluidas, sinDato, impls } = useMemo(() => {
+    // Datos económicos de Comparativa MO, cruzados por nombre de obra.
+    const eco = new Map();
+    (comparativa || []).forEach((r) => {
+      eco.set(normalizarNombre(r.obra), {
+        dias: Number(r.dias_reales) > 0 ? Number(r.dias_reales) : null,
+        gasto: Number(r.gasto_mo_real_usd) > 0 ? Number(r.gasto_mo_real_usd) : null,
+      });
+    });
 
-    const totalStats = estadisticas(base);
-    return {
-      filas: grupos
-        .filter((g) => g.lista.length > 0)
-        .map((g) => {
-          const st = estadisticas(g.lista);
-          return {
-            ...g,
-            st,
-            vsGeneral: desvio(st.prom, totalStats.prom),
-            obras: [...g.lista]
-              .sort((a, b) => a.hs - b.hs)
-              .map((o) => ({ ...o, vsGrupo: desvio(o.hs, st.prom) })),
-          };
-        }),
-      total: totalStats,
-      excluidas: excl,
-      sinDato: (obras || []).length - conDato.length,
+    const todas = (obras || [])
+      .filter((o) => Number(o.kwp) > 0)
+      .map((o) => {
+        const e = eco.get(normalizarNombre(o.nombre)) || {};
+        const hs = o.hs_mo_kwp !== null && o.hs_mo_kwp !== undefined && Number.isFinite(Number(o.hs_mo_kwp)) ? Number(o.hs_mo_kwp) : null;
+        return { nombre: o.nombre, kwp: Number(o.kwp), hs, dias: e.dias ?? null, gasto: e.gasto ?? null, rango: rangoDe(Number(o.kwp)), impl: o.implantacion || '' };
+      });
+    const excl = sinAtipicas ? todas.filter((o) => o.hs !== null && o.hs > UMBRAL_ATIPICA) : [];
+    const base = sinAtipicas ? todas.filter((o) => !(o.hs !== null && o.hs > UMBRAL_ATIPICA)) : todas;
+
+    // Valor del indicador para un conjunto de obras: { v, n (obras que aportan dato), kwp, obras }
+    const calc = (lista) => {
+      const conDato =
+        indicador === 'hs' ? lista.filter((o) => o.hs !== null)
+          : indicador === 'dias' ? lista.filter((o) => o.dias !== null)
+            : indicador === 'costo' ? lista.filter((o) => o.gasto !== null)
+              : lista;
+      const kwp = conDato.reduce((s, o) => s + o.kwp, 0);
+      let v = null;
+      if (conDato.length) {
+        if (indicador === 'hs') v = conDato.reduce((s, o) => s + o.hs * o.kwp, 0) / kwp;
+        else if (indicador === 'dias') v = conDato.reduce((s, o) => s + o.dias, 0) / kwp;
+        else if (indicador === 'costo') v = conDato.reduce((s, o) => s + o.gasto, 0) / kwp;
+        else if (indicador === 'obras') v = conDato.length;
+        else v = kwp;
+      }
+      return { v, n: conDato.length, kwp, total: lista.length };
     };
-  }, [obras, criterio, sinAtipicas]);
 
-  const cols = 'grid grid-cols-[minmax(170px,2fr)_60px_80px_minmax(110px,1.2fr)_80px_80px_80px_100px] items-center gap-x-3';
+    // Solo se muestran las implantaciones que tienen alguna obra.
+    const impls = IMPLANTACIONES.filter((i) => base.some((o) => o.impl === i));
+    const celdas = {};
+    RANGOS.forEach((r) => {
+      impls.forEach((i) => {
+        celdas[r.id + '|' + i] = calc(base.filter((o) => o.rango.id === r.id && o.impl === i));
+      });
+    });
+    const filasTot = {};
+    RANGOS.forEach((r) => (filasTot[r.id] = calc(base.filter((o) => o.rango.id === r.id))));
+    const colsTot = {};
+    impls.forEach((i) => (colsTot[i] = calc(base.filter((o) => o.impl === i))));
+
+    // Mejor y peor categoría (solo celdas con 3 obras o más que aporten dato).
+    const cand = [];
+    RANGOS.forEach((r) =>
+      impls.forEach((i) => {
+        const c = celdas[r.id + '|' + i];
+        if (c.v !== null && c.n >= (ind.menosEsMejor ? MIN_OBRAS : 1)) cand.push({ ...c, nombre: `${i} · ${r.corto}` });
+      })
+    );
+    cand.sort((a, b) => a.v - b.v);
+
+    return {
+      celdas,
+      filasTot,
+      colsTot,
+      total: calc(base),
+      categorias: cand,
+      excluidas: excl,
+      sinDato: todas.length - calc(base).n,
+      impls,
+    };
+  }, [obras, comparativa, indicador, sinAtipicas, ind.menosEsMejor]);
+
+  // Valores de las celdas con dato, para la escala de color relativa.
+  const valores = Object.values(celdas).filter((c) => c.v !== null).map((c) => c.v);
+  const vMin = valores.length ? Math.min(...valores) : 0;
+  const vMax = valores.length ? Math.max(...valores) : 1;
+
+  const estiloCelda = (c, fila, resaltar) => {
+    if (c.v === null) return null;
+    let color;
+    let desv = null;
+    if (modo === 'desvio' && ind.menosEsMejor && !resaltar) {
+      const ref = filasTot[fila]?.v;
+      desv = ref > 0 ? ((c.v - ref) / ref) * 100 : null;
+      color = desv === null ? NEUTRO : colorDesvio(desv);
+    } else if (indicador === 'hs') color = colorHs(c.v);
+    else if (indicador === 'dias' || indicador === 'costo') color = colorRelativo(vMax > vMin ? (c.v - vMin) / (vMax - vMin) : 0);
+    else color = mezcla('#4a7f8c', '#4fc3f7', vMax > 0 ? c.v / vMax : 0);
+    return { color, desv };
+  };
+
+  const mejor = categorias[0];
+  const peor = categorias[categorias.length - 1];
+  const sobre = useMemo(() => {
+    let n = 0, t = 0;
+    (desvios || new Map()).forEach((d) => {
+      if (d.pct === null) return;
+      t += 1;
+      if (d.pct >= 5) n += 1;
+    });
+    return { n, t };
+  }, [desvios]);
+
+  const grid = 'grid gap-2';
+  const gridStyle = { gridTemplateColumns: `minmax(150px,1.3fr) repeat(${impls.length}, minmax(130px,1fr)) minmax(120px,0.9fr)` };
+
+  const Celda = ({ c, fila, onClick, resaltar, titulo }) => {
+    if (c.v === null)
+      return (
+        <div className="flex min-h-[92px] items-center justify-center rounded-xl border border-dashed border-white/10 text-2xl text-gray-600">—</div>
+      );
+    const st = estiloCelda(c, fila, resaltar) || { color: NEUTRO, desv: null };
+    const pocas = ind.menosEsMejor && c.n < MIN_OBRAS;
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={titulo}
+        className={cx(
+          'flex min-h-[92px] flex-col items-center justify-center rounded-xl border px-2 py-2 text-center transition-transform hover:-translate-y-0.5 hover:brightness-110',
+          pocas && 'opacity-70',
+        )}
+        style={{ background: st.color + (resaltar ? '30' : '22'), borderColor: st.color + (resaltar ? 'aa' : '66') }}
+      >
+        <span className="text-3xl font-extrabold leading-none tracking-tight xl:text-4xl" style={{ color: st.color }}>
+          {fmt(c.v, ind.dec)}
+        </span>
+        {st.desv !== null && (
+          <span className="mt-1 text-sm font-bold" style={{ color: st.color }}>
+            {Math.abs(st.desv) < 5 ? '≈' : st.desv < 0 ? '▼' : '▲'} {fmt(Math.abs(st.desv), 0)} %
+          </span>
+        )}
+        <span className="mt-1.5 text-xs font-medium text-gray-300">
+          {indicador === 'kwp' || indicador === 'obras' ? `${c.total} ${c.total === 1 ? 'obra' : 'obras'}` : `${c.n} ${c.n === 1 ? 'obra' : 'obras'} · ${fmt(c.kwp, 0)} kWp`}
+          {pocas && <span className="ml-1 rounded bg-white/10 px-1 text-[10px] text-gray-400">pocas</span>}
+        </span>
+      </button>
+    );
+  };
+
+  const kpis = [
+    {
+      t: `Promedio general`,
+      v: total.v !== null ? fmt(total.v, ind.dec) : '—',
+      s: `${ind.unidad} · ${total.total} obras`,
+      c: indicador === 'hs' && total.v !== null ? colorHs(total.v) : '#f4f8f8',
+    },
+    ind.menosEsMejor
+      ? { t: 'Categoría más eficiente', v: mejor ? fmt(mejor.v, ind.dec) : '—', s: mejor ? `${mejor.nombre} · ${mejor.n} obras` : 'sin categorías con 3 obras o más', c: VERDE }
+      : { t: 'Categoría con más', v: mejor ? fmt(categorias[categorias.length - 1].v, ind.dec) : '—', s: mejor ? categorias[categorias.length - 1].nombre : '', c: VERDE },
+    ind.menosEsMejor
+      ? { t: 'Categoría con más horas', v: peor ? fmt(peor.v, ind.dec) : '—', s: peor ? `${peor.nombre} · ${peor.n} obras` : 'sin categorías con 3 obras o más', c: ROJO }
+      : { t: 'Categoría con menos', v: mejor ? fmt(mejor.v, ind.dec) : '—', s: mejor ? mejor.nombre : '', c: AMARILLO },
+    { t: 'Obras por encima de su categoría', v: `${sobre.n} de ${sobre.t}`, s: 'más de 5 % de horas por kWp sobre el promedio de su categoría', c: AMARILLO },
+  ];
 
   return (
     <Card className="p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
-            <RiBarChartGroupedLine className="size-4" aria-hidden="true" />
+            <RiGridLine className="size-4" aria-hidden="true" />
           </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
-            Hs MO / kWp por grupo de obras — comparación con el promedio
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+            Indicadores por rango de potencia e implantación
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1.5" role="tablist" aria-label="Agrupar por">
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-300">
+          <input type="checkbox" checked={sinAtipicas} onChange={(e) => setSinAtipicas(e.target.checked)} className="size-3.5 accent-[#95de1d]" />
+          Excluir obras atípicas (más de {UMBRAL_ATIPICA} Hs MO/kWp)
+        </label>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Indicador">
+        {INDICADORES.map((i) => (
+          <button
+            key={i.id}
+            type="button"
+            role="tab"
+            aria-selected={indicador === i.id}
+            onClick={() => setIndicador(i.id)}
+            className={cx(
+              'rounded-full border px-4 py-1.5 text-sm font-bold transition-colors',
+              indicador === i.id ? 'border-[#95de1d] bg-[#95de1d] text-gray-900' : 'border-gray-700 text-gray-300 hover:border-gray-500',
+            )}
+          >
+            {i.label}
+          </button>
+        ))}
+        {ind.menosEsMejor && (
+          <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
+            Colorear por
             {[
-              ['rango', 'Por rango de potencia'],
-              ['implantacion', 'Por implantación'],
+              ['valor', 'Valor'],
+              ['desvio', 'Desvío vs. su rango'],
             ].map(([v, t]) => (
               <button
                 key={v}
                 type="button"
-                role="tab"
-                aria-selected={criterio === v}
-                onClick={() => {
-                  setCriterio(v);
-                  setAbierto(null);
-                }}
+                onClick={() => setColorModo(v)}
                 className={cx(
-                  'rounded-full border px-3 py-0.5 text-xs font-semibold transition-colors',
-                  criterio === v
-                    ? 'border-[#95de1d] bg-[#95de1d] text-gray-900'
-                    : 'border-gray-700 text-gray-300 hover:border-gray-500',
+                  'rounded-full border px-3 py-0.5 font-semibold transition-colors',
+                  colorModo === v ? 'border-[#4fc3f7] bg-[#4fc3f7]/20 text-[#4fc3f7]' : 'border-gray-700 text-gray-300 hover:border-gray-500',
                 )}
               >
                 {t}
               </button>
             ))}
           </div>
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-300">
-            <input
-              type="checkbox"
-              checked={sinAtipicas}
-              onChange={(e) => setSinAtipicas(e.target.checked)}
-              className="size-3.5 accent-[#95de1d]"
-            />
-            Excluir obras atípicas (más de {UMBRAL_ATIPICA} Hs MO/kWp)
-          </label>
+        )}
+      </div>
+
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {kpis.map((k) => (
+          <div key={k.t} className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{k.t}</div>
+            <div className="mt-1 text-4xl font-extrabold tracking-tight" style={{ color: k.c }}>
+              {k.v}
+            </div>
+            <div className="mt-0.5 text-xs text-gray-400">{k.s}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto pb-1">
+        <div style={{ minWidth: 220 + impls.length * 150 + 130 }}>
+          <div className={cx(grid, 'mb-2 px-1')} style={gridStyle}>
+            <div className="flex items-end text-xs font-semibold uppercase tracking-wider text-gray-500">Rango de potencia ↓ · Implantación →</div>
+            {impls.map((i) => (
+              <button key={i} type="button" onClick={() => onSeleccionar?.(null, i)} className="rounded-lg py-1 text-center text-base font-extrabold uppercase tracking-wide text-gray-100 hover:bg-white/10" title={`Ver las obras ${i} en el detalle`}>
+                {i}
+              </button>
+            ))}
+            <div className="flex items-end justify-center text-base font-extrabold uppercase tracking-wide text-gray-400">Todas</div>
+          </div>
+
+          {RANGOS.map((r) => (
+            <div key={r.id} className={cx(grid, 'mb-2')} style={gridStyle}>
+              <button type="button" onClick={() => onSeleccionar?.(r.label, null)} className="flex flex-col justify-center rounded-xl bg-white/5 px-3 text-left hover:bg-white/10" title={`Ver las obras ${r.corto} en el detalle`}>
+                <span className="text-lg font-extrabold text-gray-50">{r.corto}</span>
+                <span className="text-xs text-gray-400">{r.label.replace(/^[^(]*/, '').replace(/[()]/g, '')}</span>
+              </button>
+              {impls.map((i) => (
+                <Celda key={i} c={celdas[r.id + '|' + i]} fila={r.id} onClick={() => onSeleccionar?.(r.label, i)} titulo={`${i} · ${r.label}: ver las obras en el detalle`} />
+              ))}
+              <Celda c={filasTot[r.id]} fila={r.id} resaltar onClick={() => onSeleccionar?.(r.label, null)} titulo={`Todas las obras ${r.corto}`} />
+            </div>
+          ))}
+
+          <div className={cx(grid)} style={gridStyle}>
+            <div className="flex items-center rounded-xl bg-white/5 px-3 text-lg font-extrabold text-gray-50">Todos los rangos</div>
+            {impls.map((i) => (
+              <Celda key={i} c={colsTot[i]} fila="__tot" resaltar onClick={() => onSeleccionar?.(null, i)} titulo={`Todas las obras ${i}`} />
+            ))}
+            <Celda c={total} fila="__tot" resaltar onClick={() => onSeleccionar?.(null, null)} titulo="Todas las obras (quita los filtros)" />
+          </div>
         </div>
       </div>
 
-      <p className="mb-4 text-xs leading-relaxed text-gray-500">
-        El promedio es ponderado por kWp. Cada obra se compara contra el promedio de <b className="text-gray-300">su propio grupo</b>:
-        las obras chicas necesitan más horas por kWp que los parques, así que comparar contra el promedio de todas mezcla
-        el efecto del tamaño. Menos Hs MO/kWp es mejor.
-        {sinAtipicas && excluidas.length > 0 && (
-          <span title={excluidas.map((o) => `${o.nombre} (${fmt(o.hs, 1)})`).join(' · ')} className="ml-1 cursor-help text-[#ffc933]">
-            Se excluyeron {excluidas.length} obras atípicas (pasá el cursor para ver cuáles).
-          </span>
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-400">
+        {modo === 'desvio' ? (
+          [[VERDE, 'Mejor que su rango (−15 % o menos)'], [VERDE_CLARO, '−5 % a −15 %'], [NEUTRO, 'Parecido (±5 %)'], [NARANJA, '+5 % a +15 %'], [ROJO, 'Peor (+15 % o más)']].map(([c, t]) => (
+            <span key={t} className="flex items-center gap-1.5"><span className="size-3 rounded" style={{ background: c }} />{t}</span>
+          ))
+        ) : indicador === 'hs' ? (
+          [[VERDE, '≤ 5 Óptimo'], [VERDE_CLARO, '5–8 Bueno'], [AMARILLO, '8–12 Regular'], [NARANJA, '12–18 Alto'], [ROJO, '> 18 Crítico']].map(([c, t]) => (
+            <span key={t} className="flex items-center gap-1.5"><span className="size-3 rounded" style={{ background: c }} />{t}</span>
+          ))
+        ) : ind.menosEsMejor ? (
+          <span className="flex items-center gap-2">Menor <span className="h-3 w-32 rounded" style={{ background: `linear-gradient(90deg, ${VERDE}, ${AMARILLO}, ${ROJO})` }} /> Mayor (cada color es relativo a las demás celdas)</span>
+        ) : (
+          <span className="flex items-center gap-2">Menos <span className="h-3 w-32 rounded" style={{ background: 'linear-gradient(90deg, #4a7f8c, #4fc3f7)' }} /> Más</span>
         )}
-        {sinDato > 0 && <span className="ml-1">{sinDato} obras sin indicador no entran en el cálculo.</span>}
-      </p>
-
-      <div className="overflow-x-auto">
-        <div className="min-w-[860px]">
-          <div className={cx(cols, 'border-b border-white/10 px-2 pb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500')}>
-            <span>{criterio === 'rango' ? 'Rango de potencia' : 'Implantación'}</span>
-            <span className="text-right">Obras</span>
-            <span className="text-right">kWp</span>
-            <span>Promedio (pond.)</span>
-            <span className="text-right">Mediana</span>
-            <span className="text-right">Mejor</span>
-            <span className="text-right">Peor</span>
-            <span className="text-right" title="Promedio del grupo contra el promedio de todas las obras (refleja sobre todo el efecto del tamaño)">
-              vs. todas
+        <span className="ml-auto text-gray-500">
+          {ind.menosEsMejor ? 'Menos es mejor. ' : ''}Promedios ponderados por kWp. Tocá una celda para ver esas obras en el detalle de abajo.
+          {sinAtipicas && excluidas.length > 0 && (
+            <span className="ml-1 cursor-help text-[#ffc933]" title={excluidas.map((o) => `${o.nombre} (${fmt(o.hs, 1)})`).join(' · ')}>
+              {excluidas.length} atípicas excluidas.
             </span>
-          </div>
-
-          {filas.map((f) => {
-            const abierta = abierto === f.id;
-            const pocas = f.st.n < MIN_OBRAS;
-            return (
-              <div key={f.id} className="border-b border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setAbierto(abierta ? null : f.id)}
-                  aria-expanded={abierta}
-                  className={cx(cols, 'w-full px-2 py-2.5 text-left transition-colors hover:bg-white/5', pocas && 'opacity-70')}
-                >
-                  <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-50">
-                    {abierta ? (
-                      <RiArrowDownSLine className="size-4 shrink-0 text-[#95de1d]" aria-hidden="true" />
-                    ) : (
-                      <RiArrowRightSLine className="size-4 shrink-0 text-gray-500" aria-hidden="true" />
-                    )}
-                    {f.etiqueta}
-                    {pocas && (
-                      <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-gray-400" title="Con menos de 3 obras el promedio es poco confiable">
-                        pocas obras
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-right text-sm text-gray-300">{f.st.n}</span>
-                  <span className="text-right text-sm text-gray-300">{fmt(f.st.kwp, 0)}</span>
-                  <span className="flex items-center gap-2">
-                    <span className="h-2 flex-1 rounded-full bg-gray-800">
-                      <span
-                        className="block h-2 rounded-full"
-                        style={{ width: `${Math.min((f.st.prom / 20) * 100, 100)}%`, background: colorHs(f.st.prom) }}
-                      />
-                    </span>
-                    <span className="w-10 text-right text-sm font-bold" style={{ color: colorHs(f.st.prom) }}>
-                      {fmt(f.st.prom, 1)}
-                    </span>
-                  </span>
-                  <span className="text-right text-sm text-gray-300">{fmt(f.st.mediana, 1)}</span>
-                  <span className="text-right text-sm text-gray-300">{fmt(f.st.mejor, 1)}</span>
-                  <span className="text-right text-sm text-gray-300">{fmt(f.st.peor, 1)}</span>
-                  <span className="text-right">
-                    <Chip pct={f.vsGeneral} neutro />
-                  </span>
-                </button>
-
-                {abierta && (
-                  <div className="mb-2 ml-6 mr-2 rounded-lg bg-black/20 p-2.5">
-                    <div className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                      Obras del grupo, de mejor a peor, contra el promedio del grupo ({fmt(f.st.prom, 2)} Hs MO/kWp)
-                    </div>
-                    {f.obras.map((o) => (
-                      <div
-                        key={o.nombre}
-                        className="grid grid-cols-[minmax(160px,2fr)_70px_minmax(120px,1.5fr)_80px_90px] items-center gap-x-3 rounded px-1 py-1 text-sm hover:bg-white/5"
-                      >
-                        <span className="truncate text-gray-100" title={o.nombre}>
-                          {o.nombre}
-                        </span>
-                        <span className="text-right text-xs text-gray-400">{fmt(o.kwp, 1)} kWp</span>
-                        <span className="text-xs text-gray-500">
-                          {criterio === 'rango' ? o.impl : o.rango.label}
-                        </span>
-                        <span className="text-right font-bold" style={{ color: colorHs(o.hs) }}>
-                          {fmt(o.hs, 2)}
-                        </span>
-                        <span className="text-right">
-                          <Chip pct={o.vsGrupo} />
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {total.n > 0 && (
-            <div className={cx(cols, 'px-2 py-2.5 text-sm font-bold text-gray-50')}>
-              <span className="pl-5">Todas las obras</span>
-              <span className="text-right">{total.n}</span>
-              <span className="text-right">{fmt(total.kwp, 0)}</span>
-              <span className="flex items-center gap-2">
-                <span className="h-2 flex-1 rounded-full bg-gray-800">
-                  <span
-                    className="block h-2 rounded-full"
-                    style={{ width: `${Math.min((total.prom / 20) * 100, 100)}%`, background: colorHs(total.prom) }}
-                  />
-                </span>
-                <span className="w-10 text-right" style={{ color: colorHs(total.prom) }}>
-                  {fmt(total.prom, 1)}
-                </span>
-              </span>
-              <span className="text-right">{fmt(total.mediana, 1)}</span>
-              <span className="text-right">{fmt(total.mejor, 1)}</span>
-              <span className="text-right">{fmt(total.peor, 1)}</span>
-              <span className="text-right text-xs font-normal text-gray-500">referencia</span>
-            </div>
           )}
-          {total.n === 0 && <div className="py-8 text-center text-sm text-gray-500">No hay obras con indicador para comparar.</div>}
-        </div>
+          {sinDato > 0 && indicador !== 'obras' && indicador !== 'kwp' && <span className="ml-1">{sinDato} obras sin este dato no entran en el cálculo.</span>}
+        </span>
       </div>
     </Card>
   );

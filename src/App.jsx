@@ -4,6 +4,7 @@ import * as Recharts from 'recharts';
 
 import { Card } from './components/Card/Card';
 import BenchmarkObras from './BenchmarkObras';
+import { calcularDesvios } from './utils/categoriasObras';
 import { Badge } from './components/Badge/Badge';
 import { Button } from './components/Button/Button';
 import { Callout } from './components/Callout/Callout';
@@ -1803,7 +1804,7 @@ const S = {
   },
   thead: {
     display: 'grid',
-    gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1fr 1.2fr 1.5fr',
+    gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1.8fr 1fr 1.2fr 1.4fr',
     gap: 8,
     fontSize: 10,
     color: '#8fa6a9',
@@ -1814,7 +1815,7 @@ const S = {
   },
   trow: {
     display: 'grid',
-    gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1fr 1.2fr 1.5fr',
+    gridTemplateColumns: '2fr .8fr 1.1fr .8fr 1fr 1.8fr 1fr 1.2fr 1.4fr',
     gap: 8,
     fontSize: 12,
     padding: '9px 16px',
@@ -4408,6 +4409,24 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       sortDir,
     ]
   );
+
+  // Desvío de cada obra contra el promedio de su categoría (rango de potencia × implantación).
+  const desviosObras = useMemo(() => calcularDesvios(obras), [obras]);
+
+  // Al tocar una celda del tablero de doble entrada: se filtra el detalle de obras y se baja hasta él.
+  const seleccionarCategoria = (rangoLabel, impl) => {
+    setFiltroPotencia(rangoLabel ? [rangoLabel] : []);
+    setFiltroImplantacion(impl ? [impl] : []);
+    setTimeout(() => {
+      const el = document.getElementById('detalle-obras');
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.remove('destello-seccion');
+      void el.offsetWidth;
+      el.classList.add('destello-seccion');
+      setTimeout(() => el.classList.remove('destello-seccion'), 2400);
+    }, 60);
+  };
 
   const resumenTabla = useMemo(() => {
     const totalKwpTabla = obrasFiltradas.reduce(
@@ -13136,7 +13155,7 @@ const dataAnio =
             </Card>
           </div>
 
-          <BenchmarkObras obras={obras} />
+          <BenchmarkObras obras={obras} comparativa={comparativaMO} desvios={desviosObras} onSeleccionar={seleccionarCategoria} />
 
           <div
             id="detalle-obras"
@@ -13229,14 +13248,20 @@ const dataAnio =
                 ['estado', 'Estado'],
                 ['avance', 'Avance'],
                 ['hs_mo_kwp', 'Hs MO/kWp'],
+                ['desvio', 'Desvío vs. su categoría'],
                 ['tipo_cliente', 'Tipo de cliente'],
                 ['implantacion', 'Implantación'],
                 ['estructura', 'Tipo de estructura'],
               ].map(([f, l]) => (
                 <span
                   key={f}
-                  onClick={() => handleSort(f)}
-                  style={{ cursor: 'pointer' }}
+                  onClick={f === 'desvio' ? undefined : () => handleSort(f)}
+                  title={
+                    f === 'desvio'
+                      ? 'Cuánto se aparta el Hs MO/kWp de la obra del promedio de su categoría (mismo rango de potencia e implantación). Menos es mejor.'
+                      : undefined
+                  }
+                  style={{ cursor: f === 'desvio' ? 'help' : 'pointer' }}
                 >
                   {l}
                   {sortField === f ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
@@ -13307,6 +13332,37 @@ const dataAnio =
                     <span style={{ color: '#55787f' }}>—</span>
                   )}
                 </span>
+                <span>
+                  {(() => {
+                    const d = desviosObras.get(o.nombre);
+                    if (!d || d.pct === null) return <span style={{ color: '#55787f' }}>—</span>;
+                    const c = Math.abs(d.pct) < 5 ? '#b9c7c9' : d.pct < 0 ? '#95de1d' : '#ff7b7b';
+                    const cat = d.nivel === 'rango' ? `rango ${d.etiqueta}` : d.etiqueta;
+                    return (
+                      <span
+                        title={`Promedio de ${cat}: ${d.ref.toFixed(2)} Hs MO/kWp (${d.n} obras, sin atípicas y sin esta obra)`}
+                        style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2, cursor: 'help' }}
+                      >
+                        <span
+                          style={{
+                            background: c + '22',
+                            color: c,
+                            fontWeight: 800,
+                            fontSize: 14,
+                            padding: '1px 8px',
+                            borderRadius: 4,
+                            width: 'fit-content',
+                          }}
+                        >
+                          {Math.abs(d.pct) < 5 ? '≈' : d.pct < 0 ? '▼' : '▲'} {Math.abs(d.pct).toFixed(0)} %
+                        </span>
+                        <span style={{ fontSize: 10, color: '#8fa6a9', marginTop: 2 }}>
+                          vs. {cat} · {d.n} obras
+                        </span>
+                      </span>
+                    );
+                  })()}
+                </span>
                 <span style={{ color: '#b9c7c9' }}>
                   {o.tipo_cliente || '—'}
                 </span>
@@ -13361,6 +13417,7 @@ const dataAnio =
                     <span style={{ color: '#55787f' }}>—</span>
                   )}
                 </span>
+                <span style={{ color: '#8fa6a9' }}>—</span>
                 <span style={{ color: '#8fa6a9' }}>—</span>
                 <span style={{ color: '#8fa6a9' }}>—</span>
                 <span style={{ color: '#8fa6a9' }}>—</span>
