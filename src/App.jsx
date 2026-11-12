@@ -5036,7 +5036,17 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   
   // Orden de la tabla: primero las obras que ya están en marcha (con alguna etapa de obra
   // iniciada) y después los proyectos que todavía no empezaron la obra, así no se mezclan.
+  // Dentro de cada grupo van arriba los proyectos más recientes (número de ID más alto: SOL-025,
+  // SOL-024...). Si el ID no tuviera número, se desempata por fecha de venta y por nombre.
   const proyectosEstadoTablaOrdenada = useMemo(() => {
+    const numeroId = (p) => {
+      const m = String(p.id_proyecto || '').match(/(\d+)\s*$/);
+      return m ? Number(m[1]) : -1;
+    };
+    const tiempoVenta = (p) => {
+      const d = parseDateText(p.fecha_venta);
+      return d ? d.getTime() : 0;
+    };
     const obraEnMarcha = (p) =>
       ETAPAS_COLS.some((c) => {
         if (c.grupo !== 'obra') return false;
@@ -5048,7 +5058,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       .sort(
         (a, b) =>
           Number(b.enMarcha) - Number(a.enMarcha) ||
-          (Number(b.p.avance) || 0) - (Number(a.p.avance) || 0) ||
+          numeroId(b.p) - numeroId(a.p) ||
+          tiempoVenta(b.p) - tiempoVenta(a.p) ||
           String(a.p.nombre_proyecto).localeCompare(String(b.p.nombre_proyecto), 'es')
       );
     return { lista, cantEnMarcha: lista.filter((x) => x.enMarcha).length };
