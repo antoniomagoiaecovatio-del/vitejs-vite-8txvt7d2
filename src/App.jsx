@@ -4,6 +4,7 @@ import * as Recharts from 'recharts';
 
 import { Card } from './components/Card/Card';
 import BenchmarkObras from './BenchmarkObras';
+import ProyectoDetalle from './ProyectoDetalle';
 import { calcularDesvios, colorEscala, tDesvio, aclarar } from './utils/categoriasObras';
 import { Badge } from './components/Badge/Badge';
 import { Button } from './components/Button/Button';
@@ -1033,6 +1034,10 @@ const normalizarEstadoProyecto = (p) => {
           p.nombre_proyecto || p.nombre || p.proyecto
         ).replace(/\s+/g, ' '),
       
+        fecha_inicio: cleanText(p.fecha_inicio),
+        fecha_fin: cleanText(p.fecha_fin),
+        fecha_fin_tramite_ug: cleanText(p.fecha_fin_tramite_ug),
+
         fecha_venta: cleanText(
           p.fecha_venta ||
             p.fechaVenta ||
@@ -3807,13 +3812,15 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   const [filtroResponsable, setFiltroResponsable] = useState('');
   // Ventana con el proceso de una etapa de obra: { key, label, proyecto?, avance? }
   const [procesoAbierto, setProcesoAbierto] = useState(null);
+  // Proyecto cuya ficha (observaciones + proceso desplegado) está abierta.
+  const [proyectoAbierto, setProyectoAbierto] = useState(null);
   const [procesoRows, setProcesoRows] = useState(PROCESO_OBRA_DEFAULT);
   const procesoCargado = useRef(false);
   // Diagrama de flujo de todas las etapas de obra (se abre desde el título "Obra").
   const [diagramaAbierto, setDiagramaAbierto] = useState(false);
 
   useEffect(() => {
-    if (!procesoAbierto && !diagramaAbierto) return undefined;
+    if (!procesoAbierto && !diagramaAbierto && !proyectoAbierto) return undefined;
     // Se pide a la planilla una sola vez; mientras tanto se muestra el respaldo.
     if (!procesoCargado.current) {
       procesoCargado.current = true;
@@ -3829,11 +3836,12 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
       if (e.key !== 'Escape') return;
       // Primero se cierra el detalle de una etapa; el diagrama queda debajo.
       if (procesoAbierto) setProcesoAbierto(null);
-      else setDiagramaAbierto(false);
+      else if (diagramaAbierto) setDiagramaAbierto(false);
+      else setProyectoAbierto(null);
     };
     window.addEventListener('keydown', alTeclear);
     return () => window.removeEventListener('keydown', alTeclear);
-  }, [procesoAbierto, diagramaAbierto]);
+  }, [procesoAbierto, diagramaAbierto, proyectoAbierto]);
 
   const procesoPorEtapa = useMemo(() => agruparProceso(procesoRows), [procesoRows]);
   const [sortField, setSortField] = useState('fecha_inicio');
@@ -9174,9 +9182,13 @@ const dataAnio =
                         </tr>
                       )}
                       <tr
+                        className="fila-proyecto"
+                        onClick={() => setProyectoAbierto(p)}
+                        title="Tocá para ver el detalle del proyecto"
                         style={{
                           borderBottom: '1px solid #2c5059',
                           background: rowBg,
+                          cursor: 'pointer',
                         }}
                       >
                         {/* ID - sticky */}
@@ -9381,13 +9393,15 @@ const dataAnio =
                               key={col.key}
                               onClick={
                                 col.grupo === 'obra'
-                                  ? () =>
+                                  ? (e) => {
+                                      e.stopPropagation();
                                       setProcesoAbierto({
                                         key: col.key,
                                         label: col.label,
                                         proyecto: p.nombre_proyecto,
                                         avance: val,
-                                      })
+                                      });
+                                    }
                                   : undefined
                               }
                               style={{
@@ -9539,6 +9553,25 @@ const dataAnio =
               </table>
             </div>
           </div>
+
+          {proyectoAbierto && (
+            <ProyectoDetalle
+              proyecto={proyectoAbierto}
+              etapasCols={ETAPAS_COLS}
+              grupos={ETAPAS_GRUPOS}
+              getAvance={getEtapaAvance}
+              getItem={getEtapaItem}
+              onClose={() => setProyectoAbierto(null)}
+              onVerEtapa={(col, avance) =>
+                setProcesoAbierto({
+                  key: col.key,
+                  label: col.label,
+                  proyecto: proyectoAbierto.nombre_proyecto,
+                  avance,
+                })
+              }
+            />
+          )}
 
           {diagramaAbierto && createPortal(
             <div

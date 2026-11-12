@@ -460,3 +460,8 @@ main {
     animation: none;
   }
 }
+
+/* Fila de proyecto clicable (abre su ficha) */
+.fila-proyecto:hover > td {
+  filter: brightness(1.18);
+}
