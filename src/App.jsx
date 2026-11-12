@@ -5036,8 +5036,9 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
   
   // Orden de la tabla: lo que pide atención va arriba. Primero los proyectos que todavía no
   // empezaron la obra, después las obras en marcha que no terminaron y al final las finalizadas.
-  // Dentro de cada grupo van arriba los proyectos más recientes (número de ID más alto: SOL-025,
-  // SOL-024...). Si el ID no tuviera número, se desempata por fecha de venta y por nombre.
+  // En "obras en marcha" van primero las que tienen más etapas de obra sin completar. Después, y
+  // dentro de los otros grupos, van arriba los proyectos más recientes (número de ID más alto:
+  // SOL-025, SOL-024...). Si el ID no tuviera número, se desempata por fecha de venta y por nombre.
   const proyectosEstadoTablaOrdenada = useMemo(() => {
     const numeroId = (p) => {
       const m = String(p.id_proyecto || '').match(/(\d+)\s*$/);
@@ -5056,11 +5057,23 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     // 0 = obra sin empezar · 1 = en marcha (no terminada) · 2 = finalizada
     const grupoDe = (p) =>
       normalizeKey(p.estado) === 'finalizado' ? 2 : obraEnMarcha(p) ? 1 : 0;
+    // Etapas de obra que todavía no están al 100 % (las que no aplican, "N/A", no cuentan).
+    const etapasObraPendientes = (p) =>
+      ETAPAS_COLS.filter((c) => {
+        if (c.grupo !== 'obra') return false;
+        const v = getEtapaAvance(p.etapas_lista, c.key);
+        if (v === 'NA') return false;
+        return typeof v !== 'number' || v < 100;
+      }).length;
     const lista = proyectosEstadoTablaFiltrados
-      .map((p) => ({ p, grupo: grupoDe(p) }))
+      .map((p) => {
+        const grupo = grupoDe(p);
+        return { p, grupo, pendObra: grupo === 1 ? etapasObraPendientes(p) : 0 };
+      })
       .sort(
         (a, b) =>
           a.grupo - b.grupo ||
+          b.pendObra - a.pendObra ||
           numeroId(b.p) - numeroId(a.p) ||
           tiempoVenta(b.p) - tiempoVenta(a.p) ||
           String(a.p.nombre_proyecto).localeCompare(String(b.p.nombre_proyecto), 'es')
