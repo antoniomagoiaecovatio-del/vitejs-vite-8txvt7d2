@@ -5034,8 +5034,8 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
     filtrosEstadoTablaProyecto,
   ]);
   
-  // Orden de la tabla: primero las obras que ya están en marcha (con alguna etapa de obra
-  // iniciada) y después los proyectos que todavía no empezaron la obra, así no se mezclan.
+  // Orden de la tabla: lo que pide atención va arriba. Primero los proyectos que todavía no
+  // empezaron la obra, después las obras en marcha que no terminaron y al final las finalizadas.
   // Dentro de cada grupo van arriba los proyectos más recientes (número de ID más alto: SOL-025,
   // SOL-024...). Si el ID no tuviera número, se desempata por fecha de venta y por nombre.
   const proyectosEstadoTablaOrdenada = useMemo(() => {
@@ -5053,16 +5053,20 @@ const [busquedaProyecto, setBusquedaProyecto] = useState('');
         const v = getEtapaAvance(p.etapas_lista, c.key);
         return typeof v === 'number' && v > 0;
       });
+    // 0 = obra sin empezar · 1 = en marcha (no terminada) · 2 = finalizada
+    const grupoDe = (p) =>
+      normalizeKey(p.estado) === 'finalizado' ? 2 : obraEnMarcha(p) ? 1 : 0;
     const lista = proyectosEstadoTablaFiltrados
-      .map((p) => ({ p, enMarcha: obraEnMarcha(p) }))
+      .map((p) => ({ p, grupo: grupoDe(p) }))
       .sort(
         (a, b) =>
-          Number(b.enMarcha) - Number(a.enMarcha) ||
+          a.grupo - b.grupo ||
           numeroId(b.p) - numeroId(a.p) ||
           tiempoVenta(b.p) - tiempoVenta(a.p) ||
           String(a.p.nombre_proyecto).localeCompare(String(b.p.nombre_proyecto), 'es')
       );
-    return { lista, cantEnMarcha: lista.filter((x) => x.enMarcha).length };
+    const cantPorGrupo = [0, 1, 2].map((g) => lista.filter((x) => x.grupo === g).length);
+    return { lista, cantPorGrupo };
   }, [proyectosEstadoTablaFiltrados]);
 
   useEffect(() => {
@@ -9154,21 +9158,24 @@ const dataAnio =
                   </tr>
                 </thead>
                 <tbody>
-                {proyectosEstadoTablaOrdenada.lista.map(({ p, enMarcha }, i, arr) => {
+                {proyectosEstadoTablaOrdenada.lista.map(({ p, grupo }, i, arr) => {
                     const rowBg = i % 2 === 0 ? '#1d3c44' : '#0d1526';
-                    const colorGrupo = enMarcha ? ETAPAS_GRUPOS.obra.color : ETAPAS_GRUPOS.proyecto.color;
-                    const cantGrupo = enMarcha
-                      ? proyectosEstadoTablaOrdenada.cantEnMarcha
-                      : arr.length - proyectosEstadoTablaOrdenada.cantEnMarcha;
+                    const infoGrupo = [
+                      { color: ETAPAS_GRUPOS.proyecto.color, fondo: '#0e2530', titulo: 'Proyectos que todavía no iniciaron la obra' },
+                      { color: ETAPAS_GRUPOS.obra.color, fondo: '#14270f', titulo: 'Obras en marcha' },
+                      { color: '#94a3b8', fondo: '#151f27', titulo: 'Obras finalizadas' },
+                    ][grupo];
+                    const colorGrupo = infoGrupo.color;
+                    const cantGrupo = proyectosEstadoTablaOrdenada.cantPorGrupo[grupo];
                     return (
                       <React.Fragment key={`${p.id_proyecto}-${i}`}>
-                      {(i === 0 || arr[i - 1].enMarcha !== enMarcha) && (
+                      {(i === 0 || arr[i - 1].grupo !== grupo) && (
                         <tr>
                           <td
                             colSpan={7 + ETAPAS_COLS.length}
                             style={{
                               padding: 0,
-                              background: enMarcha ? '#14270f' : '#0e2530',
+                              background: infoGrupo.fondo,
                               borderTop: `2px solid ${colorGrupo}`,
                             }}
                           >
@@ -9185,9 +9192,7 @@ const dataAnio =
                                 color: colorGrupo,
                               }}
                             >
-                              {enMarcha
-                                ? `Obras en marcha (${cantGrupo})`
-                                : `Proyectos que todavía no iniciaron la obra (${cantGrupo})`}
+                              {`${infoGrupo.titulo} (${cantGrupo})`}
                             </div>
                           </td>
                         </tr>
