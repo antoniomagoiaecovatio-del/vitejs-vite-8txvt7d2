@@ -48,19 +48,27 @@ export async function cargarFlota() {
   }
 }
 
-// Un ítem por modelo + consumo + combustible. Si un mismo modelo aparece con distinto combustible o consumo,
-// se agrega el combustible al nombre para distinguirlos.
+// Un ítem por modelo + consumo + combustible. Si un mismo modelo aparece más de una vez, se agrega lo que
+// los distingue: primero el combustible y, si todavía quedan nombres iguales, también los km/l.
 function agrupar(items) {
   const unicos = []
   for (const it of items) {
     if (!unicos.some((u) => u.nombre === it.nombre && u.kmL === it.kmL && u.combustible === it.combustible)) unicos.push(it)
   }
-  const porNombre = unicos.reduce((m, u) => ({ ...m, [u.nombre]: (m[u.nombre] || 0) + 1 }), {})
-  return unicos
+  const km = (v) => String(v).replace('.', ',')
+  const contar = (lista) => lista.reduce((m, n) => ({ ...m, [n]: (m[n] || 0) + 1 }), {})
+  const base = contar(unicos.map((u) => u.nombre))
+  const conComb = unicos.map((u) => ({ ...u, etiqueta: base[u.nombre] > 1 ? `${u.nombre} (${u.combustible})` : u.nombre }))
+  const conComb2 = contar(conComb.map((u) => u.etiqueta))
+  return conComb
     .map((u) => ({
       ...u,
-      nombre: porNombre[u.nombre] > 1 ? `${u.nombre} (${u.combustible})` : u.nombre,
+      nombre: conComb2[u.etiqueta] > 1 ? `${u.nombre} (${u.combustible}, ${km(u.kmL)} km/l)` : u.etiqueta,
       consumo: 100 / u.kmL,
     }))
+    .map(({ etiqueta, ...v }) => {
+      void etiqueta
+      return v
+    })
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
 }
