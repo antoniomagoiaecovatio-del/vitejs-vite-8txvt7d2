@@ -20,6 +20,8 @@ import { VEHICULOS_FLOTA, CATEGORIAS_VEHICULOS } from './data/vehiculosCombustib
 const Solicitudes = lazy(() => import('./solicitudes/Solicitudes'));
 // Dimensionamiento de cables (usa ECharts): también se carga recién al entrar.
 const Cables = lazy(() => import('./cables/Cables'));
+// Presupuestador de visitas postventa (usa Supabase, jsPDF y exceljs): también se carga recién al entrar.
+const Presupuestador = lazy(() => import('./presupuestador/Presupuestador'));
 import {
   RiBuilding2Line,
   RiFlashlightLine,
@@ -46,6 +48,7 @@ import {
   RiCalendarLine,
   RiCalculatorLine,
   RiMapPinLine,
+  RiFileList3Line,
 } from '@remixicon/react';
 
 const {
@@ -399,6 +402,7 @@ const DASHBOARD_TABS = [
   ['estimador', 'Estimar duración de obras FV', RiCalculatorLine],
   ['solicitudes', 'Solicitudes', RiGasStationLine],
   ['cables', 'Dimensionamiento de cables', RiFlashlightLine],
+  ['presupuestador', 'Presupuestador postventa', RiFileList3Line],
 ];
 
 // ── Portada ("Inicio") ──
@@ -438,6 +442,13 @@ const INFO_TABS = {
       'Calculá la sección del conductor y la protección (BT y fotovoltaica) por ampacidad, caída de tensión y cortocircuito, y compará costos Cu vs Al.',
     conClave: true,
   },
+  presupuestador: {
+    color: '#b794f6',
+    nombre: 'Presupuestador de visitas postventa',
+    descripcion:
+      'Presupuestá una visita o intervención postventa (traslado, mano de obra, viáticos y repuestos) y descargá el PDF para el cliente, el interno y el Excel.',
+    conClave: true,
+  },
   estimador: {
     color: '#ff9f4a',
     nombre: 'Estimador y presupuestador de obras FV',
@@ -466,7 +477,7 @@ const GRUPOS_INICIO = [
     // Más grande que el banner y corrida para que el techo con paneles quede a la derecha, sin tapar el texto
     fotoTam: '150% auto',
     fotoPos: '18% 41%',
-    tabs: ['estimador', 'solicitudes', 'cables'],
+    tabs: ['estimador', 'solicitudes', 'cables', 'presupuestador'],
   },
 ];
 
@@ -7023,6 +7034,17 @@ const dataAnio =
             fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
           >
             <Cables />
+          </Suspense>
+        </main>
+      )}
+
+      {/* ── PRESUPUESTADOR POSTVENTA ── */}
+      {tabActiva === 'presupuestador' && (
+        <main className="mx-auto max-w-[1760px] px-4 py-6">
+          <Suspense
+            fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
+          >
+            <Presupuestador />
           </Suspense>
         </main>
       )}
