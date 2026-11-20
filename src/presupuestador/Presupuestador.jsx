@@ -16,6 +16,7 @@ import { TabNavigation, TabNavigationLink } from '../solicitudes/tremor/TabNavig
 import { calcular, num } from './lib/calculo'
 import { CONFIG_INICIAL, FILAS_REPUESTOS, TIPOS_SERVICIO, datosVacios } from './lib/config'
 import { cargarFlota } from './lib/flota'
+import { registrarUso } from '../auth/registroUso'
 import { cargarConfig, guardarConfig, TablaFaltante } from './lib/datos'
 import { etiquetas } from './lib/etiquetas'
 import { f0, f1, f2, hoyISO, usd } from './lib/formato'
@@ -182,6 +183,7 @@ function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
         const { descargarExcel } = await import('./lib/excel')
         await descargarExcel({ d, config, flota, tarifas, validezTexto: validezTexto.replace(/\.$/, ''), notas: d.notas.filter((n) => String(n).trim()) })
       }
+      registrarUso('presupuestador', que === 'cliente' ? 'pdf_cliente' : que === 'interno' ? 'pdf_interno' : 'excel', { tipo: d.tipo })
     } catch (e) {
       console.error(e)
       toast.error('No se pudo generar el archivo: ' + e.message)

@@ -1,6 +1,7 @@
 
 
 import { useState } from "react";
+import { registrarUso } from "../../auth/registroUso";
 import { StepByStep } from "./StepByStep";
 import { AL_MIN_SECTION } from "../lib/engine/calc";
 import { CoordinationChart } from "./CoordinationChart";
@@ -384,6 +385,7 @@ function ExportBar({ res, inputs }: { res: CalcResult; inputs: CalcInputs }) {
     try {
       const { descargarInformePdf } = await import("../lib/report/pdfInforme");
       await descargarInformePdf(res, inputs, { proyecto: proyecto.trim(), elaboro: elaboro.trim() });
+      registrarUso("cables", "pdf");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (/dynamically imported module|Importing a module script failed|Failed to fetch/i.test(msg)) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { registrarUso } from '../../auth/registroUso'
 import { RiAddLine, RiDeleteBinLine, RiDownload2Line, RiEraserLine, RiFileExcel2Line, RiWhatsappLine } from '@remixicon/react'
 import { toast } from 'sonner'
 import { Aviso, Badge, Button, Campo, Card, Combobox, Input, Segmentado, Select, cx, useConfirm } from './ui'
@@ -176,6 +177,7 @@ export default function Pedido({ datos, onVehiculoNuevo }) {
       const buffer = await generarExcel(plantilla, { filas, combustibles, personal: personalActivo })
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       setArchivo({ nombre: nombreArchivo(filas), blob })
+      registrarUso('solicitudes', 'combustible', { cargas: filas.length })
       toast.success('Excel generado', { description: 'Envialo por WhatsApp o descargalo.' })
     } catch (e) {
       setError(e.message)

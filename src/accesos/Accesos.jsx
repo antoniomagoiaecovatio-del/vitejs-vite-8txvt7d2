@@ -2,12 +2,14 @@
 // Los usuarios se crean en Supabase (Authentication → Users); acá solo se les autorizan herramientas.
 // Solo lo abren los usuarios con el permiso 'admin' (ver auth/permisos.js y supabase-permisos.sql).
 import React, { useCallback, useEffect, useState } from 'react'
-import { RiLogoutBoxRLine, RiRefreshLine } from '@remixicon/react'
+import { RiLogoutBoxRLine, RiRefreshLine, RiShieldUserLine, RiBarChartGroupedLine } from '@remixicon/react'
 import { Toaster, toast } from 'sonner'
 import RequiereLogin from '../auth/RequiereLogin'
 import { MODO_DEMO } from '../auth/auth'
 import { HERRAMIENTAS, guardarPermiso, listarUsuariosConPermisos } from '../auth/permisos'
 import { Aviso, Button, Card, cx } from '../solicitudes/components/ui'
+import { TabNavigation, TabNavigationLink } from '../solicitudes/tremor/TabNavigation'
+import Uso from './Uso'
 
 export default function Accesos() {
   return (
@@ -33,6 +35,7 @@ function Contenido({ email, salir }) {
   const [error, setError] = useState('')
   const [faltaSql, setFaltaSql] = useState(false)
   const [guardando, setGuardando] = useState('') // "email|permiso"
+  const [vista, setVista] = useState('accesos')
   const yo = String(email).toLowerCase()
 
   const cargar = useCallback(async () => {
@@ -80,6 +83,19 @@ function Contenido({ email, salir }) {
         </Button>
       </div>
 
+      <TabNavigation>
+        {[['accesos', 'Accesos', RiShieldUserLine], ['uso', 'Uso del programa', RiBarChartGroupedLine]].map(([id, texto, Icono]) => (
+          <TabNavigationLink key={id} active={vista === id} onClick={() => setVista(id)} className="cursor-pointer gap-1.5">
+            <Icono className="size-4" aria-hidden="true" />
+            {texto}
+          </TabNavigationLink>
+        ))}
+      </TabNavigation>
+
+      {vista === 'uso' ? (
+        <div className="pt-4"><Uso /></div>
+      ) : (
+      <div className="pt-4">
       {faltaSql && (
         <Aviso tipo="alerta" className="mb-4">
           Falta crear el sistema de accesos en Supabase: ejecutá una vez el archivo <b>supabase-permisos.sql</b> en el SQL Editor (y después tu email como administrador, según las
@@ -149,6 +165,8 @@ function Contenido({ email, salir }) {
         Para dar de alta a una persona nueva, creala en Supabase (Authentication → Users → Add user) y después tocá Actualizar acá: aparece sin herramientas autorizadas.
         Para sacarle el acceso a alguien por completo, borrá su usuario en Supabase.
       </p>
+      </div>
+      )}
     </div>
   )
 }

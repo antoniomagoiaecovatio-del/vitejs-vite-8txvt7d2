@@ -7,6 +7,7 @@ import BenchmarkObras from './BenchmarkObras';
 import ProyectoDetalle from './ProyectoDetalle';
 import { calcularDesvios, colorEscala, tDesvio, aclarar } from './utils/categoriasObras';
 import { Badge } from './components/Badge/Badge';
+import { registrarUso } from './auth/registroUso';
 import { Button } from './components/Button/Button';
 import { Callout } from './components/Callout/Callout';
 import { SelectNative } from './components/SelectNative/SelectNative';
@@ -492,7 +493,7 @@ const DASHBOARD_TABS = [
   ['solicitudes', 'Solicitudes', RiGasStationLine],
   ['cables', 'Dimensionamiento de cables', RiFlashlightLine],
   ['presupuestador', 'Presupuestador postventa', RiFileList3Line],
-  ['accesos', 'Accesos de usuarios', RiShieldUserLine],
+  ['accesos', 'Accesos y uso', RiShieldUserLine],
 ];
 
 // ── Portada ("Inicio") ──
@@ -541,8 +542,8 @@ const INFO_TABS = {
   },
   accesos: {
     color: '#94a3b8',
-    nombre: 'Accesos de usuarios',
-    descripcion: 'Elegí qué herramientas con clave puede usar cada persona. Solo para administradores.',
+    nombre: 'Accesos y uso',
+    descripcion: 'Elegí qué herramientas con clave puede usar cada persona y mirá cuánto usa cada una el programa. Solo para administradores.',
     conClave: true,
   },
   estimador: {
@@ -6757,6 +6758,7 @@ const dataAnio =
     });
     setSimOperarios('');
     setErrorEstimacion('');
+    registrarUso('estimador', 'calculo');
   };
 
   const simularOperarios = () => {
@@ -6785,6 +6787,7 @@ const dataAnio =
     w.document.open();
     w.document.write(html);
     w.document.close();
+    registrarUso('estimador', 'pdf');
   };
 
   const actualizandoAlgo =

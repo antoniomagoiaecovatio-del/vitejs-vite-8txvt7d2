@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { registrarUso } from '../../auth/registroUso'
 import { RiAddLine, RiDeleteBinLine, RiDownload2Line, RiEraserLine } from '@remixicon/react'
 import { toast } from 'sonner'
 import { Aviso, Button, Campo, Card, Combobox, Input, MoneyInput, Seccion, Segmentado, Select, useConfirm } from './ui'
@@ -213,6 +214,7 @@ export default function Viaticos({ datos }) {
       a.click()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
       toast.success('Excel descargado', { description: nombre })
+      registrarUso('solicitudes', 'viaticos', { personas: calc.colaboradores.length })
     } catch (e) {
       setError(e.message)
     } finally {
