@@ -359,6 +359,27 @@ const FUENTES_DATOS = {
   comparativaMO: { planilla: 'Estado de Proyectos FV', hoja: 'Comparativa MO', url: URL_ESTADO_PROYECTOS_FV + '#gid=1618812909' },
 };
 
+// Barra de pestañas del panel: con muchas pestañas (y en pantallas de notebook) no entran todas, así que se desplaza
+// horizontalmente dentro de su propia franja, sin ensanchar la página. La pestaña activa se acerca a la vista.
+function ContenedorTabs({ activa, children }) {
+  const caja = useRef(null);
+  useEffect(() => {
+    const el = caja.current?.querySelector('[data-active]');
+    if (el && caja.current) {
+      const c = caja.current.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      if (r.left < c.left || r.right > c.right) {
+        caja.current.scrollLeft += r.left - c.left - (c.width - r.width) / 2;
+      }
+    }
+  }, [activa]);
+  return (
+    <div ref={caja} className="max-w-full overflow-x-auto [scrollbar-color:rgba(255,255,255,0.25)_transparent] [scrollbar-width:thin]">
+      {children}
+    </div>
+  );
+}
+
 function FuenteDatos({ tab }) {
   const f = FUENTES_DATOS[tab];
   if (!f) return null;
@@ -6868,6 +6889,7 @@ const dataAnio =
 
       {tabActiva !== 'inicio' && (
       <div className="mx-auto max-w-[1760px] px-6 pt-4">
+        <ContenedorTabs activa={tabActiva}>
         <TabNavigation>
           <TabNavigationLink
             active={false}
@@ -6889,6 +6911,7 @@ const dataAnio =
             </TabNavigationLink>
           ))}
         </TabNavigation>
+        </ContenedorTabs>
         <FuenteDatos tab={tabActiva} />
       </div>
       )}
