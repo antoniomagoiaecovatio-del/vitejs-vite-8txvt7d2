@@ -6,6 +6,7 @@
 export const CONFIG_INICIAL = {
   tipoCambio: '1510', // ARS por USD
   ganancia: '50', // % de recargo sobre el costo
+  iva: '21', // % de IVA que se detalla en el presupuesto del cliente
   alojamientoNoche: '60000', // ARS por persona y por noche
   peaje: '2500', // ARS por peaje
   moIngenieroUsd: '100', // USD por día

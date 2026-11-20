@@ -208,10 +208,24 @@ function construirCliente({ JsPDF, fuentes, logo, d, calc }) {
 
   // Total final
   y += 6
-  rect(ML, y, CW, 17, VERDEFONDO, 1.5)
-  rect(ML, y, 2.4, 17, LIME)
-  T('TOTAL FINAL (Sin I.V.A)', ML + 8, y + 10.6, 11, 'b', PANEL)
-  T(usd(calc.totalCliente), W - ML - 6, y + 11.4, 17, 'b', PANEL, 'right')
+  if (calc.ivaPct > 0) {
+    // Subtotal sin IVA, IVA (con su monto) y total con IVA
+    T('Subtotal (sin I.V.A.)', ML + 8, y + 5, 10, 'n', GRIS)
+    T(usd(calc.totalCliente), W - ML - 6, y + 5, 10.5, 'b', TEXTO, 'right')
+    T(`I.V.A. ${f2.format(calc.ivaPct).replace(',00', '')} %`, ML + 8, y + 12, 10, 'n', GRIS)
+    T(usd(calc.iva), W - ML - 6, y + 12, 10.5, 'b', TEXTO, 'right')
+    linea(ML, y + 15, W - ML, y + 15, BORDE, 0.3)
+    y += 19
+    rect(ML, y, CW, 17, VERDEFONDO, 1.5)
+    rect(ML, y, 2.4, 17, LIME)
+    T('TOTAL FINAL (con I.V.A.)', ML + 8, y + 10.6, 11, 'b', PANEL)
+    T(usd(calc.totalConIva), W - ML - 6, y + 11.4, 17, 'b', PANEL, 'right')
+  } else {
+    rect(ML, y, CW, 17, VERDEFONDO, 1.5)
+    rect(ML, y, 2.4, 17, LIME)
+    T('TOTAL FINAL (Sin I.V.A)', ML + 8, y + 10.6, 11, 'b', PANEL)
+    T(usd(calc.totalCliente), W - ML - 6, y + 11.4, 17, 'b', PANEL, 'right')
+  }
   y += 27
 
   // Detalle de repuestos / actividades
@@ -270,6 +284,8 @@ function construirCliente({ JsPDF, fuentes, logo, d, calc }) {
 
 // ─────────────────────────────── PDF interno ───────────────────────────────
 
+const personasPor = (v, uno, varios) => `${f0.format(n0(v))} ${n0(v) === 1 ? uno : varios}`
+
 // Detalle del viático por persona (método de Solicitudes)
 function textoViatico(d, calc) {
   if (!d.viaticos) return 'No incluidos'
@@ -293,7 +309,7 @@ function construirInterno({ JsPDF, fuentes, logo, d, calc, config }) {
   linea(ML, y, W - ML, y, BORDE, 0.3)
   y += 6
 
-  const xCon = ML, xDet = ML + 52, xCant = ML + 128, xTot = W - ML - 3
+  const xCon = ML, xDet = ML + 50, xCant = ML + 150, xTot = W - ML - 3
   rect(ML, y, CW, 9, PANEL)
   T('Concepto', xCon + 3, y + 6, 9, 'b', BLANCO)
   T('Detalle / cálculo', xDet, y + 6, 9, 'b', BLANCO)
@@ -306,14 +322,14 @@ function construirInterno({ JsPDF, fuentes, logo, d, calc, config }) {
   const filas = [
     ['Combustible', calc.veh ? `${calc.veh.nombre} | ${f2.format(calc.veh.consumo)} L/100 km | ${ars(calc.precioLitro)} ARS/L` : '—', calc.litros > 0 || calc.combustible > 0 ? `${f2.format(n0(d.km))} km` : '', calc.combustible],
     ['Peajes', `Valor unitario: ${ars(n0(p.peaje))} ARS`, String(d.peajes || 0), calc.peajes],
-    ['Mano de obra – Ingenieros', `USD ${f2.format(n0(p.moIngenieroUsd))}/día`, `${f2.format(calc.jornadasIng)} jornadas`, calc.moIng],
-    ['Mano de obra – Técnicos', `USD ${f2.format(n0(p.moTecnicoUsd))}/día`, `${f2.format(calc.jornadasTec)} jornadas`, calc.moTec],
-    ['Alojamiento', `Valor noche/persona: ${ars(n0(p.alojamientoNoche))} ARS`, `${f2.format(calc.personasNoche)} noches-persona`, calc.alojamiento],
-    ['Viáticos – Ingenieros', textoViatico(d, calc), `${f0.format(n0(d.ingenieros))} pers.`, calc.viaticosIng],
-    ['Viáticos – Técnicos', textoViatico(d, calc), `${f0.format(n0(d.tecnicos))} pers.`, calc.viaticosTec],
+    ['Mano de obra – Ingenieros', `USD ${f2.format(n0(p.moIngenieroUsd))}/día · ${personasPor(d.ingenieros, 'ingeniero', 'ingenieros')} × ${f2.format(n0(d.diasIngenieros)).replace(',00', '')} días`, `${f2.format(calc.jornadasIng)} jornadas`, calc.moIng],
+    ['Mano de obra – Técnicos', `USD ${f2.format(n0(p.moTecnicoUsd))}/día · ${personasPor(d.tecnicos, 'técnico', 'técnicos')} × ${f2.format(n0(d.diasTecnicos)).replace(',00', '')} días`, `${f2.format(calc.jornadasTec)} jornadas`, calc.moTec],
+    ['Alojamiento', `Valor noche/persona: ${ars(n0(p.alojamientoNoche))} ARS · ${f0.format(n0(d.noches))} ${n0(d.noches) === 1 ? 'noche' : 'noches'} × ${f0.format(n0(d.ingenieros) + n0(d.tecnicos))} pers.`, `${f2.format(calc.personasNoche)} noches-persona`, calc.alojamiento],
+    ['Viáticos – Ingenieros', textoViatico(d, calc), `${f0.format(n0(d.ingenieros))} ${n0(d.ingenieros) === 1 ? 'persona' : 'personas'}`, calc.viaticosIng],
+    ['Viáticos – Técnicos', textoViatico(d, calc), `${f0.format(n0(d.tecnicos))} ${n0(d.tecnicos) === 1 ? 'persona' : 'personas'}`, calc.viaticosTec],
   ]
   const fila = (a, b, c, v, i, fuerte = false) => {
-    const det = envolver(b, 70, 8.4)
+    const det = envolver(b, 62, 8.4)
     const h = Math.max(9, det.length * 4 + 4)
     if (i % 2 === 0) rect(ML, y, CW, h, FILA)
     linea(ML, y + h, W - ML, y + h, BORDE, 0.15)

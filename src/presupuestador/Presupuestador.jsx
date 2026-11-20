@@ -224,7 +224,7 @@ function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
               </Select>
             </Campo>
             <Campo label="Distancia total ida y vuelta (km)"><Numero value={d.km} onChange={(v) => set('km', v)} placeholder="Ej: 140" /></Campo>
-            <Campo label="Cantidad de peajes"><Numero value={d.peajes} onChange={(v) => set('peajes', v)} placeholder="Ej: 2" /></Campo>
+            <Campo label="Cantidad de peajes (total del viaje, ida y vuelta)" ayuda="Sumá los peajes de ida y de vuelta."><Numero value={d.peajes} onChange={(v) => set('peajes', v)} placeholder="Ej: 2" /></Campo>
           </div>
           {calc.veh && (
             <p className="mt-2 text-xs text-gray-500">
@@ -346,8 +346,14 @@ function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
       <div className="grid min-w-0 gap-4 lg:sticky lg:top-3">
         <Card className="border-brand/40">
           <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">Precio para el cliente</div>
-          <div className="text-3xl font-bold tabular-nums text-brand">{usd(calc.totalCliente)}</div>
-          <div className="text-xs text-gray-400">Sin I.V.A. · incluye {f0.format(calc.g * 100)} % de ganancia</div>
+          <div className="text-3xl font-bold tabular-nums text-brand">{usd(calc.ivaPct > 0 ? calc.totalConIva : calc.totalCliente)}</div>
+          <div className="text-xs text-gray-400">{calc.ivaPct > 0 ? 'Con I.V.A.' : 'Sin I.V.A.'} · incluye {f0.format(calc.g * 100)} % de ganancia</div>
+          {calc.ivaPct > 0 && (
+            <div className="mt-2 text-xs text-gray-400">
+              <div className="flex justify-between"><span>Subtotal sin I.V.A.</span><span className="tabular-nums text-gray-200">{usd(calc.totalCliente)}</span></div>
+              <div className="flex justify-between"><span>I.V.A. {f0.format(calc.ivaPct)} %</span><span className="tabular-nums text-gray-200">{usd(calc.iva)}</span></div>
+            </div>
+          )}
           <div className="mt-3 border-t border-gray-800 pt-2">
             <Fila rotulo={lab.conceptoServicio} detalle="Traslado, peajes, mano de obra, viáticos y alojamiento" valor={usd(calc.servicioCliente)} />
             <Fila rotulo={lab.conceptoItems} valor={usd(calc.repuestosCliente)} tenue={calc.repuestos === 0} />
@@ -375,8 +381,8 @@ function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
           </div>
           <Fila rotulo="Combustible" detalle={calc.veh ? `${calc.veh.nombre} · ${f1.format(calc.litros)} L` : 'Elegí un vehículo'} valor={f2.format(calc.combustible)} tenue={calc.combustible === 0} />
           <Fila rotulo="Peajes" valor={f2.format(calc.peajes)} tenue={calc.peajes === 0} />
-          <Fila rotulo="Mano de obra · Ingenieros" detalle={`${f2.format(calc.jornadasIng)} jornadas`} valor={f2.format(calc.moIng)} tenue={calc.moIng === 0} />
-          <Fila rotulo="Mano de obra · Técnicos" detalle={`${f2.format(calc.jornadasTec)} jornadas`} valor={f2.format(calc.moTec)} tenue={calc.moTec === 0} />
+          <Fila rotulo="Mano de obra · Ingenieros" detalle={`${f0.format(num(d.ingenieros) ?? 0)} × ${f2.format(num(d.diasIngenieros) ?? 0).replace(',00', '')} días = ${f2.format(calc.jornadasIng)} jornadas`} valor={f2.format(calc.moIng)} tenue={calc.moIng === 0} />
+          <Fila rotulo="Mano de obra · Técnicos" detalle={`${f0.format(num(d.tecnicos) ?? 0)} × ${f2.format(num(d.diasTecnicos) ?? 0).replace(',00', '')} días = ${f2.format(calc.jornadasTec)} jornadas`} valor={f2.format(calc.moTec)} tenue={calc.moTec === 0} />
           <Fila rotulo="Alojamiento" valor={f2.format(calc.alojamiento)} tenue={calc.alojamiento === 0} />
           <Fila rotulo="Viáticos" detalle={d.viaticos ? `${calc.personas} pers. × ${calc.diasViaje} ${calc.diasViaje === 1 ? 'día' : 'días'}` : 'No incluidos'} valor={f2.format(calc.viaticos)} tenue={calc.viaticos === 0} />
           <Fila rotulo={lab.internoItems} valor={f2.format(calc.repuestos)} tenue={calc.repuestos === 0} />
@@ -448,6 +454,7 @@ function PestanaConfig({ estado, flota, onGuardada }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <Campo label="Tipo de cambio (ARS por USD)"><Numero value={c.tipoCambio} onChange={(v) => set('tipoCambio', v)} /></Campo>
             <Campo label="Ganancia (% sobre el costo)" ayuda="Recargo: costo × (1 + %)."><Numero value={c.ganancia} onChange={(v) => set('ganancia', v)} /></Campo>
+            <Campo label="I.V.A. (%)" ayuda="Se detalla aparte en el presupuesto del cliente. 0 = no se detalla."><Numero value={c.iva} onChange={(v) => set('iva', v)} /></Campo>
           </div>
         </Seccion>
         <Seccion titulo="Mano de obra (USD por día)">

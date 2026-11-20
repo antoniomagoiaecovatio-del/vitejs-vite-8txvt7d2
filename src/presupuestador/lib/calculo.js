@@ -86,6 +86,10 @@ export function calcular(d, config, flota = [], tarifas = TARIFAS_DEFECTO) {
   const servicioCliente = subtotalServicio * (1 + g)
   const repuestosCliente = repuestos * (1 + g)
   const totalCliente = servicioCliente + repuestosCliente
+  // IVA: se detalla aparte en el presupuesto del cliente (el total sin IVA es el de la planilla)
+  const ivaPct = n0(config.iva)
+  const iva = (totalCliente * ivaPct) / 100
+  const totalConIva = totalCliente + iva
 
   return {
     tc,
@@ -119,6 +123,9 @@ export function calcular(d, config, flota = [], tarifas = TARIFAS_DEFECTO) {
     servicioCliente,
     repuestosCliente,
     totalCliente,
+    ivaPct,
+    iva,
+    totalConIva,
     ganancia: totalCliente - totalInterno,
     margenSobrePrecio: totalCliente > 0 ? (totalCliente - totalInterno) / totalCliente : 0,
   }
