@@ -346,12 +346,12 @@ function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
       <div className="grid min-w-0 gap-4 lg:sticky lg:top-3">
         <Card className="border-brand/40">
           <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">Precio para el cliente</div>
-          <div className="text-3xl font-bold tabular-nums text-brand">{usd(calc.ivaPct > 0 ? calc.totalConIva : calc.totalCliente)}</div>
-          <div className="text-xs text-gray-400">{calc.ivaPct > 0 ? 'Con I.V.A.' : 'Sin I.V.A.'} · incluye {f0.format(calc.g * 100)} % de ganancia</div>
+          <div className="text-3xl font-bold tabular-nums text-brand">{usd(calc.totalCliente)}</div>
+          <div className="text-xs text-gray-400">Total sin I.V.A. · incluye {f0.format(calc.g * 100)} % de ganancia</div>
           {calc.ivaPct > 0 && (
             <div className="mt-2 text-xs text-gray-400">
-              <div className="flex justify-between"><span>Subtotal sin I.V.A.</span><span className="tabular-nums text-gray-200">{usd(calc.totalCliente)}</span></div>
               <div className="flex justify-between"><span>I.V.A. {f0.format(calc.ivaPct)} %</span><span className="tabular-nums text-gray-200">{usd(calc.iva)}</span></div>
+              <div className="flex justify-between font-semibold"><span>Total con I.V.A.</span><span className="tabular-nums text-gray-100">{usd(calc.totalConIva)}</span></div>
             </div>
           )}
           <div className="mt-3 border-t border-gray-800 pt-2">

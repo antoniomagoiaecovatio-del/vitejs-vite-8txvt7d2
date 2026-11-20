@@ -208,25 +208,24 @@ function construirCliente({ JsPDF, fuentes, logo, d, calc }) {
 
   // Total final
   y += 6
+  // En primer plano el TOTAL FINAL sin IVA; debajo, el monto del IVA y el total con IVA
+  rect(ML, y, CW, 17, VERDEFONDO, 1.5)
+  rect(ML, y, 2.4, 17, LIME)
+  T('TOTAL FINAL (Sin I.V.A)', ML + 8, y + 10.6, 11, 'b', PANEL)
+  T(usd(calc.totalCliente), W - ML - 6, y + 11.4, 17, 'b', PANEL, 'right')
+  y += 17
   if (calc.ivaPct > 0) {
-    // Subtotal sin IVA, IVA (con su monto) y total con IVA
-    T('Subtotal (sin I.V.A.)', ML + 8, y + 5, 10, 'n', GRIS)
-    T(usd(calc.totalCliente), W - ML - 6, y + 5, 10.5, 'b', TEXTO, 'right')
-    T(`I.V.A. ${f2.format(calc.ivaPct).replace(',00', '')} %`, ML + 8, y + 12, 10, 'n', GRIS)
-    T(usd(calc.iva), W - ML - 6, y + 12, 10.5, 'b', TEXTO, 'right')
-    linea(ML, y + 15, W - ML, y + 15, BORDE, 0.3)
-    y += 19
-    rect(ML, y, CW, 17, VERDEFONDO, 1.5)
-    rect(ML, y, 2.4, 17, LIME)
-    T('TOTAL FINAL (con I.V.A.)', ML + 8, y + 10.6, 11, 'b', PANEL)
-    T(usd(calc.totalConIva), W - ML - 6, y + 11.4, 17, 'b', PANEL, 'right')
-  } else {
-    rect(ML, y, CW, 17, VERDEFONDO, 1.5)
-    rect(ML, y, 2.4, 17, LIME)
-    T('TOTAL FINAL (Sin I.V.A)', ML + 8, y + 10.6, 11, 'b', PANEL)
-    T(usd(calc.totalCliente), W - ML - 6, y + 11.4, 17, 'b', PANEL, 'right')
+    y += 6
+    T(`I.V.A. ${f2.format(calc.ivaPct).replace(',00', '')} %`, ML + 8, y, 10, 'n', GRIS)
+    T(usd(calc.iva), W - ML - 6, y, 10.5, 'b', TEXTO, 'right')
+    y += 3.5
+    linea(ML + 8, y, W - ML - 6, y, BORDE, 0.3)
+    y += 6.5
+    T('Total con I.V.A.', ML + 8, y, 10.5, 'b', TEXTO)
+    T(usd(calc.totalConIva), W - ML - 6, y, 11.5, 'b', TEXTO, 'right')
+    y += 4
   }
-  y += 27
+  y += 10
 
   // Detalle de repuestos / actividades
   const usadas = calc.filas.filter((f) => f.usada && f.total !== null)
