@@ -22,6 +22,8 @@ const Solicitudes = lazy(() => import('./solicitudes/Solicitudes'));
 const Cables = lazy(() => import('./cables/Cables'));
 // Presupuestador de visitas postventa (usa Supabase, jsPDF y exceljs): también se carga recién al entrar.
 const Presupuestador = lazy(() => import('./presupuestador/Presupuestador'));
+// Accesos de usuarios (qué herramienta con clave puede usar cada persona; solo administradores).
+const Accesos = lazy(() => import('./accesos/Accesos'));
 import {
   RiBuilding2Line,
   RiFlashlightLine,
@@ -49,6 +51,7 @@ import {
   RiCalculatorLine,
   RiMapPinLine,
   RiFileList3Line,
+  RiShieldUserLine,
 } from '@remixicon/react';
 
 const {
@@ -403,6 +406,7 @@ const DASHBOARD_TABS = [
   ['solicitudes', 'Solicitudes', RiGasStationLine],
   ['cables', 'Dimensionamiento de cables', RiFlashlightLine],
   ['presupuestador', 'Presupuestador postventa', RiFileList3Line],
+  ['accesos', 'Accesos de usuarios', RiShieldUserLine],
 ];
 
 // ── Portada ("Inicio") ──
@@ -449,6 +453,12 @@ const INFO_TABS = {
       'Presupuestá una visita o intervención postventa (traslado, mano de obra, viáticos y repuestos) y descargá el PDF para el cliente, el interno y el Excel.',
     conClave: true,
   },
+  accesos: {
+    color: '#94a3b8',
+    nombre: 'Accesos de usuarios',
+    descripcion: 'Elegí qué herramientas con clave puede usar cada persona. Solo para administradores.',
+    conClave: true,
+  },
   estimador: {
     color: '#ff9f4a',
     nombre: 'Estimador y presupuestador de obras FV',
@@ -477,7 +487,7 @@ const GRUPOS_INICIO = [
     // Más grande que el banner y corrida para que el techo con paneles quede a la derecha, sin tapar el texto
     fotoTam: '150% auto',
     fotoPos: '18% 41%',
-    tabs: ['estimador', 'solicitudes', 'cables', 'presupuestador'],
+    tabs: ['estimador', 'solicitudes', 'cables', 'presupuestador', 'accesos'],
   },
 ];
 
@@ -7045,6 +7055,17 @@ const dataAnio =
             fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
           >
             <Presupuestador />
+          </Suspense>
+        </main>
+      )}
+
+      {/* ── ACCESOS DE USUARIOS ── */}
+      {tabActiva === 'accesos' && (
+        <main className="mx-auto max-w-[1760px] px-4 py-6">
+          <Suspense
+            fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}
+          >
+            <Accesos />
           </Suspense>
         </main>
       )}

@@ -32,7 +32,7 @@ export default function Presupuestador() {
   return (
     <>
       <Toaster theme="dark" position="top-center" richColors closeButton />
-      <RequiereLogin titulo="Presupuestador postventa" subtitulo="Visitas e intervenciones · acceso con usuario">
+      <RequiereLogin titulo="Presupuestador postventa" subtitulo="Visitas e intervenciones · acceso con usuario" herramienta="presupuestador">
         {({ email, salir }) => <Contenido email={email} salir={salir} />}
       </RequiereLogin>
     </>

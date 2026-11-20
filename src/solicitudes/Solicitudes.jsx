@@ -23,7 +23,7 @@ export default function Solicitudes() {
   return (
     <ConfirmProvider>
       <Toaster theme="dark" position="top-center" richColors closeButton />
-      <RequiereLogin titulo="Solicitudes" subtitulo="Combustible y viáticos · acceso con usuario">
+      <RequiereLogin titulo="Solicitudes" subtitulo="Combustible y viáticos · acceso con usuario" herramienta="solicitudes">
         {({ email, salir }) => <Contenido email={email} salir={salir} />}
       </RequiereLogin>
     </ConfirmProvider>

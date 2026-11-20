@@ -12,7 +12,7 @@ const NORMAS = ['AEA 90364-7-771', 'AEA 90364-7-712', 'AEA 92559-3', 'IEC 60364-
 
 export default function Cables() {
   return (
-    <RequiereLogin titulo="Dimensionamiento de cables" subtitulo="Conductores BT y FV · acceso con usuario">
+    <RequiereLogin titulo="Dimensionamiento de cables" subtitulo="Conductores BT y FV · acceso con usuario" herramienta="cables">
       {({ email, salir }) => (
         <div className="cables-root mx-auto max-w-[1760px] pb-8">
           <div className="mb-4 flex flex-wrap items-center gap-3">
