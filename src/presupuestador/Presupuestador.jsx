@@ -92,7 +92,7 @@ function Contenido({ email, salir }) {
         {!cfgEstado || !flota ? (
           !error && <div className="py-10 text-center text-sm text-gray-400">Cargando…</div>
         ) : vista === 'presupuesto' ? (
-          <PestanaPresupuesto config={cfgEstado.config} flota={flota.vehiculos} irAConfig={() => setVista('config')} />
+          <PestanaPresupuesto config={cfgEstado.config} flota={flota.vehiculos} tarifas={flota.tarifas} irAConfig={() => setVista('config')} />
         ) : (
           <PestanaConfig
             estado={cfgEstado}
@@ -144,7 +144,7 @@ function Fila({ rotulo, detalle, valor, tenue, fuerte }) {
 
 // ───────────────────────────── presupuesto ─────────────────────────────
 
-function PestanaPresupuesto({ config, flota, irAConfig }) {
+function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
   const [d, setD] = useState(() => borrador || datosVacios(hoyISO()))
   const [generando, setGenerando] = useState('')
   const [confirmaNuevo, setConfirmaNuevo] = useState(false)
@@ -154,7 +154,7 @@ function PestanaPresupuesto({ config, flota, irAConfig }) {
   }, [d])
 
   const lab = etiquetas(d.tipo)
-  const calc = useMemo(() => calcular(d, config, flota), [d, config, flota])
+  const calc = useMemo(() => calcular(d, config, flota, tarifas), [d, config, flota, tarifas])
   const vehiculos = flota
   const hayVehiculo = vehiculos.some((v) => v.nombre === d.vehiculo)
 
@@ -180,7 +180,7 @@ function PestanaPresupuesto({ config, flota, irAConfig }) {
         await descargarPdfInterno({ d, calc, config })
       } else {
         const { descargarExcel } = await import('./lib/excel')
-        await descargarExcel({ d, config, flota, validezTexto: validezTexto.replace(/\.$/, ''), notas: d.notas.filter((n) => String(n).trim()) })
+        await descargarExcel({ d, config, flota, tarifas, validezTexto: validezTexto.replace(/\.$/, ''), notas: d.notas.filter((n) => String(n).trim()) })
       }
     } catch (e) {
       console.error(e)
@@ -245,8 +245,15 @@ function PestanaPresupuesto({ config, flota, irAConfig }) {
           </Seccion>
           <Seccion titulo="4 · Estadía">
             <div className="grid gap-3">
-              <Campo label="Noches de alojamiento" ayuda="Se cobra por cada persona (ingenieros + técnicos)."><Numero value={d.noches} onChange={(v) => set('noches', v)} /></Campo>
+              <Campo label="Noches de alojamiento" ayuda="Se cobra por cada persona (ingenieros + técnicos). Define los días del viaje: noches + 1."><Numero value={d.noches} onChange={(v) => set('noches', v)} /></Campo>
               <Grupo label="Incluir viáticos"><Segmentado opciones={[['si', 'Sí'], ['no', 'No']]} valor={d.viaticos ? 'si' : 'no'} onCambio={(v) => set('viaticos', v === 'si')} /></Grupo>
+              {d.viaticos && (
+                <p className="text-xs text-gray-500">
+                  Viaje de <b className="text-gray-300">{calc.diasViaje} {calc.diasViaje === 1 ? 'día' : 'días'}</b>
+                  {calc.diasViaje === 1 ? ' (en el día)' : ` (${calc.diasViaje - 1} con pernocte + regreso)`}: viático de{' '}
+                  <b className="text-gray-300">ARS {f0.format(calc.viaticoPersonaArs)}</b> por persona, con {f0.format(tarifas.comision)} % de comisión incluida. Mismo método que Solicitudes.
+                </p>
+              )}
             </div>
           </Seccion>
         </div>
@@ -328,7 +335,7 @@ function PestanaPresupuesto({ config, flota, irAConfig }) {
           <Fila rotulo="Mano de obra · Ingenieros" detalle={`${f2.format(calc.jornadasIng)} jornadas`} valor={f2.format(calc.moIng)} tenue={calc.moIng === 0} />
           <Fila rotulo="Mano de obra · Técnicos" detalle={`${f2.format(calc.jornadasTec)} jornadas`} valor={f2.format(calc.moTec)} tenue={calc.moTec === 0} />
           <Fila rotulo="Alojamiento" valor={f2.format(calc.alojamiento)} tenue={calc.alojamiento === 0} />
-          <Fila rotulo="Viáticos" detalle={d.viaticos ? undefined : 'No incluidos'} valor={f2.format(calc.viaticos)} tenue={calc.viaticos === 0} />
+          <Fila rotulo="Viáticos" detalle={d.viaticos ? `${calc.personas} pers. × ${calc.diasViaje} ${calc.diasViaje === 1 ? 'día' : 'días'}` : 'No incluidos'} valor={f2.format(calc.viaticos)} tenue={calc.viaticos === 0} />
           <Fila rotulo={lab.internoItems} valor={f2.format(calc.repuestos)} tenue={calc.repuestos === 0} />
           <div className="mt-2 rounded-md bg-gray-950 px-3 py-2">
             <Fila rotulo="Total interno (costo)" valor={usd(calc.totalInterno)} fuerte />
@@ -407,13 +414,36 @@ function PestanaConfig({ estado, flota, onGuardada }) {
           </div>
         </Seccion>
         <Seccion titulo="Costos en pesos (ARS)">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Campo label="Viático por persona / día"><Numero value={c.viaticoDia} onChange={(v) => set('viaticoDia', v)} /></Campo>
+          <div className="grid gap-3 sm:grid-cols-2">
             <Campo label="Alojamiento por persona / noche"><Numero value={c.alojamientoNoche} onChange={(v) => set('alojamientoNoche', v)} /></Campo>
             <Campo label="Peaje por unidad"><Numero value={c.peaje} onChange={(v) => set('peaje', v)} /></Campo>
           </div>
         </Seccion>
       </div>
+
+      <Seccion titulo="Viáticos (de Solicitudes)">
+        <p className="mb-3 text-xs text-gray-400">
+          Se calculan con el mismo método que <b className="text-gray-300">Solicitudes</b>: los días del viaje son noches + 1; un viaje de 1 día usa la tarifa "en el día" y uno de N días
+          usa (N − 1) × "con pernocte" + 1 × "día de regreso". La comisión de la tarjeta prepaga ya va incluida. Las tarifas se cambian en Solicitudes → Configuración.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-4">
+          {[
+            ['En el día', flota.tarifas.dia],
+            ['Con pernocte (por día)', flota.tarifas.pernocte],
+            ['Día de regreso', flota.tarifas.regreso],
+          ].map(([rot, v]) => (
+            <div key={rot} className="rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
+              <div className="text-[11px] text-gray-500">{rot}</div>
+              <div className="text-sm font-semibold tabular-nums text-gray-100">ARS {f0.format(v)}</div>
+              <div className="text-[11px] text-gray-500">con comisión: {f0.format(Math.round(v * (1 + flota.tarifas.comision / 100)))}</div>
+            </div>
+          ))}
+          <div className="rounded-md border border-gray-800 bg-gray-950 px-3 py-2">
+            <div className="text-[11px] text-gray-500">Comisión tarjeta prepaga</div>
+            <div className="text-sm font-semibold tabular-nums text-gray-100">{f0.format(flota.tarifas.comision)} %</div>
+          </div>
+        </div>
+      </Seccion>
 
       <Seccion titulo="Vehículos, consumos y combustible">
         <p className="mb-3 text-xs text-gray-400">

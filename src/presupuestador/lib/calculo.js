@@ -1,3 +1,5 @@
+import { TARIFAS_DEFECTO, viaticoPersona } from '../../solicitudes/lib/viaticos'
+
 // Cálculo del presupuesto: reproduce las fórmulas de la planilla "Presupuestador_PostVenta" (hojas
 // Presupuesto Interno y Presupuesto Cliente). Todo en USD; los valores en pesos se convierten con el tipo de cambio.
 
@@ -18,8 +20,9 @@ const n0 = (v) => num(v) ?? 0
  * @param d       datos del presupuesto (ver datosVacios)
  * @param config  parámetros (ver CONFIG_INICIAL)
  * @param flota   vehículos [{ nombre, consumo (L/100 km), combustible, precioLitro (ARS/L) }] (ver flota.js)
+ * @param tarifas viáticos de Solicitudes { dia, regreso, pernocte, comision } (ver flota.js)
  */
-export function calcular(d, config, flota = []) {
+export function calcular(d, config, flota = [], tarifas = TARIFAS_DEFECTO) {
   const tc = n0(config.tipoCambio)
   const g = n0(config.ganancia) / 100
   const aUsd = (ars) => (tc > 0 ? ars / tc : 0)
@@ -45,9 +48,16 @@ export function calcular(d, config, flota = []) {
   const personasNoche = n0(d.noches) * (nIng + nTec)
   const alojamiento = aUsd(personasNoche * n0(config.alojamientoNoche))
 
+  // Viáticos: mismo método que Solicitudes. Días del viaje = noches + 1 (se cuentan el primer y el último día).
+  //   1 día  → tarifa "en el día";  N días → (N−1) × "con pernocte" + 1 × "día de regreso".
+  // La comisión de la tarjeta prepaga va incluida en cada monto. Todo en pesos enteros, convertido a USD.
+  const noches = Math.max(0, Math.floor(n0(d.noches)))
+  const diasViaje = noches + 1
+  const personas = nIng + nTec
+  const viaticoPersonaArs = viaticoPersona({ dias: diasViaje, modo: 'auto', t: tarifas }) ?? 0
   const conViaticos = d.viaticos ? 1 : 0
-  const viaticosIng = aUsd(jornadasIng * n0(config.viaticoDia)) * conViaticos
-  const viaticosTec = aUsd(jornadasTec * n0(config.viaticoDia)) * conViaticos
+  const viaticosIng = aUsd(nIng * viaticoPersonaArs) * conViaticos
+  const viaticosTec = aUsd(nTec * viaticoPersonaArs) * conViaticos
   const viaticos = viaticosIng + viaticosTec
 
   // Repuestos / actividades: cantidad × costo unitario (una fila suma si tiene cantidad)
@@ -92,6 +102,10 @@ export function calcular(d, config, flota = []) {
     jornadasIng,
     jornadasTec,
     personasNoche,
+    diasViaje,
+    personas,
+    viaticoPersonaArs,
+    tarifas,
     filas,
     repuestos,
     subtotalServicio,

@@ -5,6 +5,8 @@
 //  - La fecha es un valor fijo (la original usa HOY() y cambia cada vez que se abre).
 //  - Los vehículos, consumos y precios de combustible salen de Solicitudes (igual que en la herramienta): van en una
 //    hoja nueva "Vehículos" y las fórmulas del combustible la usan, así que no hay límite de vehículos.
+//  - Los viáticos usan el método de Solicitudes (días del viaje = noches + 1; en el día / con pernocte + regreso; con comisión
+//    de la tarjeta prepaga). Las tarifas van al pie de la hoja Configuración (filas 35 a 39) y las fórmulas de viáticos las leen.
 //  - Se completan las fórmulas de total de las filas 6 a 9 de "Repuestos - Servicios" (en la original estaban vacías,
 //    por lo que un repuesto cargado en esas filas no se sumaba), y el total de la hoja pasa a ser una SUMA simple.
 import { num } from './calculo'
@@ -15,7 +17,7 @@ function fechaExcel(iso) {
   return y ? new Date(Date.UTC(y, m - 1, d)) : new Date()
 }
 
-export async function generarExcel(plantilla, { d, config, flota, validezTexto, notas }) {
+export async function generarExcel(plantilla, { d, config, flota, tarifas, validezTexto, notas }) {
   const { default: ExcelJS } = await import('exceljs')
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.load(plantilla)
@@ -43,7 +45,28 @@ export async function generarExcel(plantilla, { d, config, flota, validezTexto, 
   cf.getCell('C6').value = (num(config.ganancia) ?? 0) / 100
   cf.getCell('B9').value = 'Precios de combustible: ver hoja «Vehículos»'
   for (const c of ['C9', 'B10', 'C10', 'B11', 'C11']) cf.getCell(c).value = null
-  cf.getCell('C12').value = num(config.viaticoDia) ?? 0
+  cf.getCell('B12').value = 'Viáticos: ver tarifas al pie (método Solicitudes)'
+  cf.getCell('C12').value = null
+  // Tarifas de viáticos (de Solicitudes), al pie de la hoja
+  const copiar = (origen, destino) => {
+    cf.getCell(destino).style = structuredClone(cf.getCell(origen).style)
+  }
+  copiar('B16', 'B35')
+  copiar('B16', 'C35')
+  cf.getCell('B35').value = 'VIÁTICOS (método de Solicitudes)'
+  ;[
+    ['Viático en el día (ARS)', tarifas.dia],
+    ['Día con pernocte (ARS)', tarifas.pernocte],
+    ['Día de regreso (ARS)', tarifas.regreso],
+    ['Comisión tarjeta prepaga (%)', tarifas.comision],
+  ].forEach(([rot, v], i) => {
+    const r = 36 + i
+    copiar('B9', `B${r}`)
+    copiar('C9', `C${r}`)
+    cf.getCell(`B${r}`).value = rot
+    cf.getCell(`C${r}`).value = v
+  })
+  cf.getColumn('B').width = Math.max(cf.getColumn('B').width || 0, 38)
   cf.getCell('C13').value = num(config.alojamientoNoche) ?? 0
   cf.getCell('C14').value = num(config.peaje) ?? 0
   cf.getCell('C17').value = num(config.moIngenieroUsd) ?? 0
@@ -66,6 +89,19 @@ export async function generarExcel(plantilla, { d, config, flota, validezTexto, 
     ...(typeof e10.value === 'object' ? e10.value : {}),
     formula: `IFERROR('Ingreso de Datos'!C12*(${consumoF}/100)*${precioF}/Configuración!C5,0)`,
   }
+
+  // Viáticos: días del viaje = noches + 1; 1 día = tarifa en el día; N días = (N-1) × pernocte + regreso (con comisión, en pesos enteros)
+  const dias = "(INT('Ingreso de Datos'!C22)+1)"
+  const k = '(1+Configuración!C39/100)'
+  const porPersona = `IF(${dias}=1,ROUND(Configuración!C36*${k},0),(${dias}-1)*ROUND(Configuración!C37*${k},0)+ROUND(Configuración!C38*${k},0))`
+  const conV = "IF('Ingreso de Datos'!C23=\"Sí\",1,0)"
+  const detalleV = `IF('Ingreso de Datos'!C23="Sí",${dias}&IF(${dias}=1," día"," días")&" · ARS "&TEXT(${porPersona},"#,##0")&"/persona (incl. "&TEXT(Configuración!C39,"0")&"% comisión)","No incluidos")`
+  pi.getCell('C15').value = { formula: detalleV }
+  pi.getCell('C16').value = { formula: detalleV }
+  pi.getCell('D15').value = { formula: "'Ingreso de Datos'!C16" }
+  pi.getCell('D16').value = { formula: "'Ingreso de Datos'!C18" }
+  pi.getCell('E15').value = { formula: `IFERROR('Ingreso de Datos'!C16*${porPersona}/Configuración!C5*${conV},0)` }
+  pi.getCell('E16').value = { formula: `IFERROR('Ingreso de Datos'!C18*${porPersona}/Configuración!C5*${conV},0)` }
 
   // ── Ingreso de Datos
   const ws = wb.getWorksheet('Ingreso de Datos')
@@ -114,9 +150,9 @@ export async function generarExcel(plantilla, { d, config, flota, validezTexto, 
   return wb.xlsx.writeBuffer()
 }
 
-export async function descargarExcel({ d, config, flota, validezTexto, notas }) {
+export async function descargarExcel({ d, config, flota, tarifas, validezTexto, notas }) {
   const resp = await fetch('/plantilla-presupuesto-postventa.xlsx')
   if (!resp.ok) throw new Error('No se encontró la plantilla de Excel')
-  const buf = await generarExcel(await resp.arrayBuffer(), { d, config, flota, validezTexto, notas })
+  const buf = await generarExcel(await resp.arrayBuffer(), { d, config, flota, tarifas, validezTexto, notas })
   descargarArchivo(buf, `Presupuesto_${slug(d.tipo)}_${slug(d.cliente) || 'cliente'}_${d.fecha || ''}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }

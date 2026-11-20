@@ -1,12 +1,11 @@
 // Parámetros del Presupuestador de visitas / intervenciones postventa.
 // Los valores iniciales son los de la planilla "Presupuestador_PostVenta" (hoja Configuración).
-// Los vehículos, consumos y precios de combustible NO están acá: se leen de Solicitudes (ver flota.js).
+// Los vehículos, consumos, precios de combustible y tarifas de viáticos NO están acá: se leen de Solicitudes (ver flota.js).
 // Se editan en la pestaña Configuración y se guardan compartidos para todo el equipo (ver datos.js).
 
 export const CONFIG_INICIAL = {
   tipoCambio: '1510', // ARS por USD
   ganancia: '50', // % de recargo sobre el costo
-  viaticoDia: '10000', // ARS por persona y por día
   alojamientoNoche: '60000', // ARS por persona y por noche
   peaje: '2500', // ARS por peaje
   moIngenieroUsd: '100', // USD por día

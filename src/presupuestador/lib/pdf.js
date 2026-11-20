@@ -270,6 +270,15 @@ function construirCliente({ JsPDF, fuentes, logo, d, calc }) {
 
 // ─────────────────────────────── PDF interno ───────────────────────────────
 
+// Detalle del viático por persona (método de Solicitudes)
+function textoViatico(d, calc) {
+  if (!d.viaticos) return 'No incluidos'
+  const t = calc.tarifas
+  const dias = calc.diasViaje
+  const base = dias === 1 ? `1 día en el día` : `${dias} días: ${dias - 1} con pernocte + regreso`
+  return `${base} · ARS ${f0.format(calc.viaticoPersonaArs)}/persona (incl. ${f0.format(t.comision)} % comisión)`
+}
+
 function construirInterno({ JsPDF, fuentes, logo, d, calc, config }) {
   const lab = etiquetas(d.tipo)
   const u = nuevoDoc(JsPDF, fuentes)
@@ -299,8 +308,8 @@ function construirInterno({ JsPDF, fuentes, logo, d, calc, config }) {
     ['Mano de obra – Ingenieros', `USD ${f2.format(n0(p.moIngenieroUsd))}/día`, `${f2.format(calc.jornadasIng)} jornadas`, calc.moIng],
     ['Mano de obra – Técnicos', `USD ${f2.format(n0(p.moTecnicoUsd))}/día`, `${f2.format(calc.jornadasTec)} jornadas`, calc.moTec],
     ['Alojamiento', `Valor noche/persona: ${ars(n0(p.alojamientoNoche))} ARS`, `${f2.format(calc.personasNoche)} noches-persona`, calc.alojamiento],
-    ['Viáticos – Ingenieros', d.viaticos ? `Valor/día/persona: ${ars(n0(p.viaticoDia))} ARS` : 'No incluidos', `${f2.format(calc.jornadasIng)} jornadas`, calc.viaticosIng],
-    ['Viáticos – Técnicos', d.viaticos ? `Valor/día/persona: ${ars(n0(p.viaticoDia))} ARS` : 'No incluidos', `${f2.format(calc.jornadasTec)} jornadas`, calc.viaticosTec],
+    ['Viáticos – Ingenieros', textoViatico(d, calc), `${f0.format(n0(d.ingenieros))} pers.`, calc.viaticosIng],
+    ['Viáticos – Técnicos', textoViatico(d, calc), `${f0.format(n0(d.tecnicos))} pers.`, calc.viaticosTec],
   ]
   const fila = (a, b, c, v, i, fuerte = false) => {
     const det = envolver(b, 70, 8.4)

@@ -9,28 +9,38 @@ import { MODO_DEMO, supabase } from '../../auth/auth'
 import { cargarTodo } from '../../solicitudes/lib/data'
 import { categoriaDe } from '../../solicitudes/lib/categorias'
 import { VEHICULOS_FLOTA } from '../../data/vehiculosCombustible'
+import { tarifasDe } from '../../solicitudes/lib/viaticos'
 
 // Tipo de cambio fijo con el que se armó la copia del Estimador (precios en USD por litro)
 const TC_RESPALDO = 1545
 
 /**
- * @returns {Promise<{ vehiculos: {nombre, kmL, consumo, combustible, precioLitro}[], origen: 'solicitudes' | 'estimador' }>}
- *   consumo = litros cada 100 km; precioLitro = ARS por litro
+ * @returns {Promise<{ vehiculos: {nombre, kmL, consumo, combustible, precioLitro}[], tarifas: {dia, regreso, pernocte, comision}, origen: 'solicitudes' | 'estimador' }>}
+ *   consumo = litros cada 100 km; precioLitro = ARS por litro. `tarifas` son los viáticos de Solicitudes (ARS por persona, sin comisión;
+ *   comisión en %).
  */
 export async function cargarFlota() {
   try {
     let vehiculosDb
     let combustibles
+    let ajustes
     if (MODO_DEMO) {
       const t = await cargarTodo()
       vehiculosDb = t.vehiculos
       combustibles = t.combustibles
+      ajustes = t.ajustes
     } else {
-      const [v, c] = await Promise.all([supabase.from('vehiculos').select('*'), supabase.from('combustibles').select('*')])
+      const [v, c, a] = await Promise.all([
+        supabase.from('vehiculos').select('*'),
+        supabase.from('combustibles').select('*'),
+        supabase.from('ajustes').select('*'),
+      ])
       if (v.error) throw new Error(v.error.message)
       if (c.error) throw new Error(c.error.message)
+      if (a.error) throw new Error(a.error.message)
       vehiculosDb = v.data
       combustibles = c.data
+      ajustes = Object.fromEntries(a.data.map((x) => [x.clave, x.valor]))
     }
     const precios = Object.fromEntries(combustibles.map((c) => [c.nombre, Number(c.precio)]))
     const lista = agrupar(
@@ -38,12 +48,13 @@ export async function cargarFlota() {
         .filter((v) => v.activo !== false && ['utilitario', 'camion'].includes(categoriaDe(v)) && Number(v.km_l) > 0 && precios[v.combustible] >= 0)
         .map((v) => ({ nombre: v.modelo, kmL: Number(v.km_l), combustible: v.combustible, precioLitro: precios[v.combustible] })),
     )
-    if (lista.length) return { vehiculos: lista, origen: 'solicitudes' }
+    if (lista.length) return { vehiculos: lista, tarifas: tarifasDe(ajustes), origen: 'solicitudes' }
   } catch (e) {
     console.warn('No se pudo leer la flota de Solicitudes; se usa la copia del Estimador:', e)
   }
   return {
     vehiculos: agrupar(VEHICULOS_FLOTA.map((v) => ({ nombre: v.nombre, kmL: v.kmPorLitro, combustible: v.combustible, precioLitro: Math.round(v.precioLitroUsd * TC_RESPALDO) }))),
+    tarifas: tarifasDe({}),
     origen: 'estimador',
   }
 }
