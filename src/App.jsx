@@ -380,6 +380,69 @@ function ContenedorTabs({ activa, children }) {
   );
 }
 
+// Nombre del programa en el encabezado: al tocarlo se abre una ventana que explica qué significa.
+function NombreSoltrack() {
+  const [abierto, setAbierto] = useState(false);
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const h = (e) => {
+      if (e.key === 'Escape') setAbierto(false);
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [abierto]);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        title="¿Qué significa Soltrack?"
+        className="cursor-pointer border-l border-white/15 pl-4 text-left transition-opacity hover:opacity-80"
+      >
+        <div className="text-sm font-bold">Soltrack</div>
+        <div className="text-xs text-gray-500 dark:text-gray-500">Indicadores de gestión fotovoltaica</div>
+      </button>
+      {abierto &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4" onClick={() => setAbierto(false)}>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Qué significa Soltrack"
+              className="w-full max-w-md rounded-2xl border border-white/10 p-6 text-white shadow-2xl"
+              style={{ background: 'linear-gradient(135deg, #123138 0%, #1d4a50 60%, #24604f 100%)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center gap-3">
+                <img src="/logo-ecovatio.png" alt="" className="hidden" />
+                <h2 className="text-2xl font-extrabold tracking-tight">Soltrack</h2>
+                <span className="rounded-full border border-[#95de1d]/40 bg-[#95de1d]/10 px-2.5 py-0.5 text-xs font-semibold text-[#95de1d]">
+                  Sol + Track
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-gray-100">
+                Nace de <b>Sol</b> + <b>Track</b> (seguimiento): seguir cada obra fotovoltaica, del presupuesto a la energía instalada.
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-gray-300">
+                Como un <b className="text-gray-100">seguidor solar</b> que gira para apuntar siempre al sol, orienta todos los tableros y herramientas hacia un mismo punto: cada obra.
+              </p>
+              <div className="mt-5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setAbierto(false)}
+                  className="cursor-pointer rounded-lg bg-[#95de1d] px-4 py-1.5 text-sm font-bold text-gray-900 transition hover:bg-[#a8ee3a]"
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
+
 function FuenteDatos({ tab }) {
   const f = FUENTES_DATOS[tab];
   if (!f) return null;
@@ -3501,7 +3564,7 @@ const construirHtmlInforme = (r) => {
     </div>
 
     <footer class="pie">
-      <div>Uso interno · Áreas Comercial, Ingeniería y Operaciones<br />Documento generado desde el Panel de Obras Solares.</div>
+      <div>Uso interno · Áreas Comercial, Ingeniería y Operaciones<br />Documento generado desde Soltrack.</div>
       <div class="marca">ECOVATIO</div>
     </footer>
   </main>
@@ -6858,17 +6921,7 @@ const dataAnio =
           >
             <img src="/logo-ecovatio.png" alt="Ecovatio" className="h-7" />
           </a>
-          <button
-            type="button"
-            onClick={() => irA('inicio')}
-            title="Ir al inicio"
-            className="cursor-pointer border-l border-white/15 pl-4 text-left transition-opacity hover:opacity-80"
-          >
-            <div className="text-sm font-bold">Panel de Obras Solares</div>
-            <div className="text-xs text-gray-500 dark:text-gray-500">
-              Indicadores de gestión fotovoltaica
-            </div>
-          </button>
+          <NombreSoltrack />
         </div>
         <div className="flex items-center gap-3">
           {lastUpdate && (
@@ -6940,7 +6993,7 @@ const dataAnio =
                 ECOVATIO · Energía solar
               </div>
               <h1 className="max-w-3xl text-3xl font-extrabold leading-tight md:text-5xl 2xl:text-6xl">
-                Panel de Obras Solares
+                Soltrack
               </h1>
               <p className="mt-3 max-w-xl text-base text-gray-200 md:text-lg 2xl:max-w-2xl 2xl:text-xl">
                 Indicadores, tableros y herramientas para gestionar cada obra fotovoltaica. Elegí a qué sección querés entrar.

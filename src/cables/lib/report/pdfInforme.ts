@@ -137,7 +137,7 @@ function construir(
   doc.setProperties({
     title: `Dimensionamiento de conductores${datos.proyecto ? " - " + datos.proyecto : ""}`,
     author: datos.elaboro || "Ecovatio",
-    creator: "Panel de Obras Solares · Ecovatio",
+    creator: "Soltrack · Ecovatio",
   });
 
   const r = res.shown!;
@@ -629,7 +629,7 @@ function construir(
     doc.setPage(p);
     hline(ML, W - ML, H - 20.5, LINE, 0.3);
     wrap(aviso, CW, 6.6, "normal").forEach((l, i) => drawRich(l, ML, H - 17.2 + i * 2.9, 6.6, "normal", LGRAY));
-    drawRich("Ecovatio · Panel de Obras Solares · Uso interno", ML, H - 8.2, 7, "normal", LGRAY);
+    drawRich("Ecovatio · Soltrack · Uso interno", ML, H - 8.2, 7, "normal", LGRAY);
     drawRich(`Página ${p} de ${total}`, W - ML, H - 8.2, 7.4, "bold", GRAY, "right");
   }
   return doc;

@@ -1,4 +1,4 @@
-# Panel de Obras Solares — Ecovatio
+# Soltrack (antes Panel de Obras Solares) — Ecovatio
 
 Dashboard interno de gestión de obras fotovoltaicas: KPIs de obras, estado de
 proyectos, potencia instalada, personal de operaciones, comparativa de mano
