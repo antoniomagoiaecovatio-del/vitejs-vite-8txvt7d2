@@ -397,10 +397,10 @@ function NombreSoltrack() {
         type="button"
         onClick={() => setAbierto(true)}
         title="¿Qué significa Soltrack?"
-        className="cursor-pointer border-l border-white/15 pl-4 text-left transition-opacity hover:opacity-80"
+        className="flex cursor-pointer items-center gap-3 text-left transition-opacity hover:opacity-80"
       >
-        <div className="text-sm font-bold">Soltrack</div>
-        <div className="text-xs text-gray-500 dark:text-gray-500">Indicadores de gestión fotovoltaica</div>
+        <img src="/logo/soltrack-horizontal-oscuro.svg" alt="Soltrack" className="h-8 w-auto" />
+        <span className="hidden border-l border-white/15 pl-3 text-xs text-gray-500 md:block">Indicadores de gestión fotovoltaica</span>
       </button>
       {abierto &&
         createPortal(
@@ -414,7 +414,7 @@ function NombreSoltrack() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex items-center gap-3">
-                <img src="/logo-ecovatio.png" alt="" className="hidden" />
+                <img src="/logo/soltrack-icono-oscuro.svg" alt="" className="size-10 shrink-0" />
                 <h2 className="text-2xl font-extrabold tracking-tight">Soltrack</h2>
                 <span className="rounded-full border border-[#95de1d]/40 bg-[#95de1d]/10 px-2.5 py-0.5 text-xs font-semibold text-[#95de1d]">
                   Sol + Track
@@ -6912,15 +6912,6 @@ const dataAnio =
               <span className="sm:hidden">Inicio</span>
             </button>
           )}
-          <a
-            href="https://ecovatio.com.ar/"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Ir a ecovatio.com.ar"
-            className="mr-4 shrink-0 transition-opacity hover:opacity-80"
-          >
-            <img src="/logo-ecovatio.png" alt="Ecovatio" className="h-7" />
-          </a>
           <NombreSoltrack />
         </div>
         <div className="flex items-center gap-3">
@@ -6992,8 +6983,8 @@ const dataAnio =
                 <span className="size-1.5 rounded-full bg-[#95de1d]" />
                 ECOVATIO · Energía solar
               </div>
-              <h1 className="max-w-3xl text-3xl font-extrabold leading-tight md:text-5xl 2xl:text-6xl">
-                Soltrack
+              <h1 className="max-w-3xl">
+                <img src="/logo/soltrack-horizontal-oscuro.svg" alt="Soltrack" className="h-14 w-auto md:h-20 2xl:h-24" />
               </h1>
               <p className="mt-3 max-w-xl text-base text-gray-200 md:text-lg 2xl:max-w-2xl 2xl:text-xl">
                 Indicadores, tableros y herramientas para gestionar cada obra fotovoltaica. Elegí a qué sección querés entrar.
