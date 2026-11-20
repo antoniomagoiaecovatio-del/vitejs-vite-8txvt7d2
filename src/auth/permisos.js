@@ -10,6 +10,7 @@
 import { MODO_DEMO, supabase } from './auth'
 
 export const HERRAMIENTAS = [
+  { id: 'estimador', nombre: 'Estimador y presupuestador de obras FV', corto: 'Estimador' },
   { id: 'solicitudes', nombre: 'Solicitudes de combustible y viáticos', corto: 'Solicitudes' },
   { id: 'cables', nombre: 'Dimensionamiento de cables', corto: 'Cables' },
   { id: 'presupuestador', nombre: 'Presupuestador de visitas postventa', corto: 'Presupuestador' },

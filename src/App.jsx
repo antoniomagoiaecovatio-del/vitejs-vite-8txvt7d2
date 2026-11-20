@@ -24,6 +24,8 @@ const Cables = lazy(() => import('./cables/Cables'));
 const Presupuestador = lazy(() => import('./presupuestador/Presupuestador'));
 // Accesos de usuarios (qué herramienta con clave puede usar cada persona; solo administradores).
 const Accesos = lazy(() => import('./accesos/Accesos'));
+// Pide usuario, contraseña y permiso para herramientas que viven dentro de este archivo (Estimador de obras FV).
+const Protegida = lazy(() => import('./auth/Protegida'));
 import {
   RiBuilding2Line,
   RiFlashlightLine,
@@ -464,6 +466,7 @@ const INFO_TABS = {
     nombre: 'Estimador y presupuestador de obras FV',
     descripcion:
       'Estimá la duración de una obra y presupuestá mano de obra, viáticos, alojamiento y combustible.',
+    conClave: true,
   },
 };
 
@@ -7072,6 +7075,8 @@ const dataAnio =
 
       {/* ── ESTIMADOR ── */}
       {tabActiva === 'estimador' && (
+        <Suspense fallback={<div className="py-16 text-center text-sm text-gray-400">Cargando herramienta…</div>}>
+        <Protegida titulo="Estimador de obras FV" subtitulo="Duración y presupuesto · acceso con usuario" herramienta="estimador">
         <main style={S.main}>
           <div style={S.card}>
             <h2 style={{ margin: 0, fontSize: 20 }}>Estimación de Obras FV</h2>
@@ -8432,6 +8437,8 @@ const dataAnio =
             </div>
           )}
         </main>
+        </Protegida>
+        </Suspense>
       )}
 
       {/* ── ESTADO PROYECTOS ── */}

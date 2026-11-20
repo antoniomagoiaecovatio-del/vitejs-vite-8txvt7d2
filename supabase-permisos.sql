@@ -1,6 +1,6 @@
 -- Accesos por herramienta del Panel de Obras Solares.
 -- Cada usuario (email de Supabase Authentication) tiene una lista de herramientas autorizadas:
---   solicitudes · cables · presupuestador · admin (admin = todo + administrar accesos).
+--   estimador · solicitudes · cables · presupuestador · admin (admin = todo + administrar accesos).
 --
 -- CÓMO EJECUTARLO (una sola vez): Supabase → SQL Editor → New query → pegar TODO este archivo → Run.
 -- ANTES de ejecutarlo, reemplazá abajo REEMPLAZAR_POR_TU_EMAIL por tu email de ingreso al panel.
@@ -18,10 +18,15 @@ begin;
 -- ───────────── 1) Tabla y funciones ─────────────
 create table if not exists public.permisos_herramientas (
   email       text not null check (email = lower(email)),
-  herramienta text not null check (herramienta in ('solicitudes', 'cables', 'presupuestador', 'admin')),
+  herramienta text not null check (herramienta in ('estimador', 'solicitudes', 'cables', 'presupuestador', 'admin')),
   created_at  timestamptz not null default now(),
   primary key (email, herramienta)
 );
+
+-- Si la tabla ya existía de una versión anterior del script, se actualiza la lista de herramientas permitidas
+alter table public.permisos_herramientas drop constraint if exists permisos_herramientas_herramienta_check;
+alter table public.permisos_herramientas add constraint permisos_herramientas_herramienta_check
+  check (herramienta in ('estimador', 'solicitudes', 'cables', 'presupuestador', 'admin'));
 
 create or replace function public.tiene_acceso(h text)
 returns boolean
