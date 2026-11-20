@@ -275,6 +275,7 @@ function textoViatico(d, calc) {
   if (!d.viaticos) return 'No incluidos'
   const t = calc.tarifas
   const dias = calc.diasViaje
+  if (calc.manual) return `${dias} ${dias === 1 ? 'día' : 'días'} × ARS ${f0.format(Math.round((calc.diarioManual || 0) * (1 + t.comision / 100)))} (otro monto, incl. ${f0.format(t.comision)} % comisión)`
   const base = dias === 1 ? `1 día en el día` : `${dias} días: ${dias - 1} con pernocte + regreso`
   return `${base} · ARS ${f0.format(calc.viaticoPersonaArs)}/persona (incl. ${f0.format(t.comision)} % comisión)`
 }

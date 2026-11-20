@@ -1,4 +1,4 @@
-import { TARIFAS_DEFECTO, viaticoPersona } from '../../solicitudes/lib/viaticos'
+import { TARIFAS_DEFECTO, viaticoPersona, diarioManualARS } from '../../solicitudes/lib/viaticos'
 
 // Cálculo del presupuesto: reproduce las fórmulas de la planilla "Presupuestador_PostVenta" (hojas
 // Presupuesto Interno y Presupuesto Cliente). Todo en USD; los valores en pesos se convierten con el tipo de cambio.
@@ -54,7 +54,10 @@ export function calcular(d, config, flota = [], tarifas = TARIFAS_DEFECTO) {
   const noches = Math.max(0, Math.floor(n0(d.noches)))
   const diasViaje = noches + 1
   const personas = nIng + nTec
-  const viaticoPersonaArs = viaticoPersona({ dias: diasViaje, modo: 'auto', t: tarifas }) ?? 0
+  const manual = d.viaticoModo === 'manual'
+  // "Otro monto": valor por día (en pesos, o en USD convertido con el tipo de cambio del presupuesto), sin comisión
+  const diarioManual = manual ? diarioManualARS({ moneda: d.viaticoMoneda, monto: d.viaticoMonto, tipoCambio: config.tipoCambio }) : null
+  const viaticoPersonaArs = viaticoPersona({ dias: diasViaje, modo: manual ? 'manual' : 'auto', t: tarifas, diarioManual }) ?? 0
   const conViaticos = d.viaticos ? 1 : 0
   const viaticosIng = aUsd(nIng * viaticoPersonaArs) * conViaticos
   const viaticosTec = aUsd(nTec * viaticoPersonaArs) * conViaticos
@@ -104,6 +107,8 @@ export function calcular(d, config, flota = [], tarifas = TARIFAS_DEFECTO) {
     personasNoche,
     diasViaje,
     personas,
+    manual,
+    diarioManual,
     viaticoPersonaArs,
     tarifas,
     filas,

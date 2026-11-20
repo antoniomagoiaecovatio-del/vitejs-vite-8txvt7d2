@@ -6,10 +6,12 @@
 //  - Los vehículos, consumos y precios de combustible salen de Solicitudes (igual que en la herramienta): van en una
 //    hoja nueva "Vehículos" y las fórmulas del combustible la usan, así que no hay límite de vehículos.
 //  - Los viáticos usan el método de Solicitudes (días del viaje = noches + 1; en el día / con pernocte + regreso; con comisión
-//    de la tarjeta prepaga). Las tarifas van al pie de la hoja Configuración (filas 35 a 39) y las fórmulas de viáticos las leen.
+//    de la tarjeta prepaga). Las tarifas van al pie de la hoja Configuración (filas 35 a 40; la 40 es el modo "Otro monto")
+//    y las fórmulas de viáticos las leen.
 //  - Se completan las fórmulas de total de las filas 6 a 9 de "Repuestos - Servicios" (en la original estaban vacías,
 //    por lo que un repuesto cargado en esas filas no se sumaba), y el total de la hoja pasa a ser una SUMA simple.
 import { num } from './calculo'
+import { diarioManualARS } from '../../solicitudes/lib/viaticos'
 import { slug, descargarArchivo } from './formato'
 
 function fechaExcel(iso) {
@@ -18,6 +20,7 @@ function fechaExcel(iso) {
 }
 
 export async function generarExcel(plantilla, { d, config, flota, tarifas, validezTexto, notas }) {
+  const calcManual = d.viaticoModo === 'manual' ? diarioManualARS({ moneda: d.viaticoMoneda, monto: d.viaticoMonto, tipoCambio: config.tipoCambio }) : null
   const { default: ExcelJS } = await import('exceljs')
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.load(plantilla)
@@ -66,6 +69,11 @@ export async function generarExcel(plantilla, { d, config, flota, tarifas, valid
     cf.getCell(`B${r}`).value = rot
     cf.getCell(`C${r}`).value = v
   })
+  // Modo "Otro monto": valor fijo por día en pesos (0 = se usan las tarifas automáticas de arriba)
+  copiar('B9', 'B40')
+  copiar('C9', 'C40')
+  cf.getCell('B40').value = 'Otro monto por día (ARS, 0 = automático)'
+  cf.getCell('C40').value = calcManual ? Math.round(calcManual) : 0
   cf.getColumn('B').width = Math.max(cf.getColumn('B').width || 0, 38)
   cf.getCell('C13').value = num(config.alojamientoNoche) ?? 0
   cf.getCell('C14').value = num(config.peaje) ?? 0
@@ -93,7 +101,7 @@ export async function generarExcel(plantilla, { d, config, flota, tarifas, valid
   // Viáticos: días del viaje = noches + 1; 1 día = tarifa en el día; N días = (N-1) × pernocte + regreso (con comisión, en pesos enteros)
   const dias = "(INT('Ingreso de Datos'!C22)+1)"
   const k = '(1+Configuración!C39/100)'
-  const porPersona = `IF(${dias}=1,ROUND(Configuración!C36*${k},0),(${dias}-1)*ROUND(Configuración!C37*${k},0)+ROUND(Configuración!C38*${k},0))`
+  const porPersona = `IF(Configuración!C40>0,${dias}*ROUND(Configuración!C40*${k},0),IF(${dias}=1,ROUND(Configuración!C36*${k},0),(${dias}-1)*ROUND(Configuración!C37*${k},0)+ROUND(Configuración!C38*${k},0)))`
   const conV = "IF('Ingreso de Datos'!C23=\"Sí\",1,0)"
   const detalleV = `IF('Ingreso de Datos'!C23="Sí",${dias}&IF(${dias}=1," día"," días")&" · ARS "&TEXT(${porPersona},"#,##0")&"/persona (incl. "&TEXT(Configuración!C39,"0")&"% comisión)","No incluidos")`
   pi.getCell('C15').value = { formula: detalleV }

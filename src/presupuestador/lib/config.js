@@ -40,6 +40,9 @@ export function datosVacios(hoyISO) {
     diasTecnicos: '',
     noches: '',
     viaticos: true,
+    viaticoModo: 'auto', // 'auto' (tarifas de Solicitudes) | 'manual' (otro monto por día)
+    viaticoMoneda: 'ARS',
+    viaticoMonto: '',
     validez: VALIDEZ_INICIAL,
     notas: [...NOTAS_INICIALES],
     repuestos: Array.from({ length: FILAS_REPUESTOS }, () => ({ desc: '', cant: '', precio: '' })),

@@ -247,16 +247,59 @@ function PestanaPresupuesto({ config, flota, tarifas, irAConfig }) {
             <div className="grid gap-3">
               <Campo label="Noches de alojamiento" ayuda="Se cobra por cada persona (ingenieros + técnicos). Define los días del viaje: noches + 1."><Numero value={d.noches} onChange={(v) => set('noches', v)} /></Campo>
               <Grupo label="Incluir viáticos"><Segmentado opciones={[['si', 'Sí'], ['no', 'No']]} valor={d.viaticos ? 'si' : 'no'} onCambio={(v) => set('viaticos', v === 'si')} /></Grupo>
-              {d.viaticos && (
-                <p className="text-xs text-gray-500">
-                  Viaje de <b className="text-gray-300">{calc.diasViaje} {calc.diasViaje === 1 ? 'día' : 'días'}</b>
-                  {calc.diasViaje === 1 ? ' (en el día)' : ` (${calc.diasViaje - 1} con pernocte + regreso)`}: viático de{' '}
-                  <b className="text-gray-300">ARS {f0.format(calc.viaticoPersonaArs)}</b> por persona, con {f0.format(tarifas.comision)} % de comisión incluida. Mismo método que Solicitudes.
-                </p>
-              )}
             </div>
           </Seccion>
         </div>
+
+        {d.viaticos && (
+          <Seccion titulo="Viático por día">
+            <Segmentado
+              className="mb-3 max-w-md"
+              opciones={[['auto', 'Automático'], ['manual', 'Otro monto']]}
+              valor={d.viaticoModo}
+              onCambio={(m) => set('viaticoModo', m)}
+            />
+            {d.viaticoModo !== 'manual' ? (
+              <div className="grid gap-2 text-sm sm:grid-cols-3">
+                {[
+                  ['Viaje en el día', tarifas.dia],
+                  ['Día con pernocte', tarifas.pernocte],
+                  ['Día de regreso', tarifas.regreso],
+                ].map(([texto, base]) => (
+                  <div key={texto} className="rounded-md border border-gray-800 bg-gray-950/60 px-3 py-2">
+                    <div className="text-xs text-gray-400">{texto}</div>
+                    <div className="text-lg font-semibold tabular-nums text-gray-50">$ {f0.format(Math.round(base * (1 + tarifas.comision / 100)))}</div>
+                    <div className="text-xs text-gray-500">$ {f0.format(base)} + {f0.format(tarifas.comision)}% comisión</div>
+                  </div>
+                ))}
+                <p className="text-xs text-gray-500 sm:col-span-3">
+                  1 día = viaje en el día. Más días = pernocte cada día y el último a tarifa de regreso. Los días del viaje son las noches + 1 (cargá las noches en Estadía).
+                  Los valores se cambian en Solicitudes → Configuración.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Campo label="Moneda">
+                  <Select value={d.viaticoMoneda} onChange={(e) => set('viaticoMoneda', e.target.value)}>
+                    <option value="ARS">Pesos</option>
+                    <option value="USD">Dólares (USD)</option>
+                  </Select>
+                </Campo>
+                <Campo label="Monto por día" ayuda={d.viaticoMoneda === 'USD' ? `Se convierte con el tipo de cambio de la configuración ($ ${f0.format(calc.tc)})` : undefined}>
+                  <Numero value={d.viaticoMonto} onChange={(v) => set('viaticoMonto', v)} />
+                </Campo>
+                <div className="self-end pb-2 text-sm text-gray-400">
+                  {calc.diarioManual ? `= $ ${f0.format(calc.diarioManual)} + ${f0.format(tarifas.comision)}% → $ ${f0.format(Math.round(calc.diarioManual * (1 + tarifas.comision / 100)))} por día` : ''}
+                </div>
+              </div>
+            )}
+            <p className="mt-3 text-sm text-gray-300">
+              Viaje de <b>{calc.diasViaje} {calc.diasViaje === 1 ? 'día' : 'días'}</b>
+              {!calc.manual && (calc.diasViaje === 1 ? ' (en el día)' : ` (${calc.diasViaje - 1} con pernocte + regreso)`)}: viático de{' '}
+              <b>$ {f0.format(calc.viaticoPersonaArs)}</b> por persona, con {f0.format(tarifas.comision)} % de comisión incluida.
+            </p>
+          </Seccion>
+        )}
 
         <Seccion titulo={`5 · ${lab.hojaTitulo}`}>
           <p className="mb-3 text-xs text-gray-400">{lab.hojaAyuda} El precio se carga a <b className="text-gray-300">costo</b>: el presupuesto del cliente le suma la ganancia.</p>
