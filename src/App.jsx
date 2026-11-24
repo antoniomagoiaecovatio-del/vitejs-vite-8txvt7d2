@@ -1207,6 +1207,7 @@ const normalizarEstadoProyecto = (p) => {
     avance: parseProjectPercent(p.avance),
     responsable: cleanText(p.responsable),
     observaciones: cleanText(p.observaciones),
+    responsable_observacion: cleanText(p.responsable_observacion),
     ultima_actualizacion: cleanText(p.ultima_actualizacion),
     documentacion_avance:
       p.documentacion_avance === null || p.documentacion_avance === undefined
@@ -9390,7 +9391,7 @@ const dataAnio =
                             <span>{p.nombre_proyecto || '—'}</span>
                             {p.observaciones && (
                               <span
-                                title={p.observaciones}
+                                title={`${p.observaciones}${p.responsable_observacion ? `\n\nResponsable de seguirla: ${p.responsable_observacion}` : '\n\nSin responsable asignado'}`}
                                 style={{
                                   cursor: 'help',
                                   color: '#ffc933',

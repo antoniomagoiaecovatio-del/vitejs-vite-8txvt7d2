@@ -165,6 +165,11 @@ export default function ProyectoDetalle({ proyecto: p, etapasCols, grupos, getAv
           <div style={{ marginTop: 5, fontSize: 16, lineHeight: 1.4, color: p.observaciones ? '#fff4cf' : '#8fa6a9', whiteSpace: 'pre-wrap' }}>
             {p.observaciones || 'Sin observaciones cargadas.'}
           </div>
+          {p.observaciones && (
+            <div style={{ marginTop: 8, fontSize: 13, fontWeight: 700, color: p.responsable_observacion ? '#d9e6a0' : '#ff7b7b' }}>
+              {p.responsable_observacion ? `Responsable de seguirla: ${p.responsable_observacion}` : 'Sin responsable asignado'}
+            </div>
+          )}
         </div>
 
         {/* Lo que falta */}
