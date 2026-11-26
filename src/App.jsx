@@ -57,6 +57,7 @@ import {
   RiShieldUserLine,
   RiCalendarCheckLine,
   RiExternalLinkLine,
+  RiLockUnlockLine,
 } from '@remixicon/react';
 
 const {
@@ -505,7 +506,7 @@ const ACCESOS_EXTERNOS = [
     label: 'Parte diario',
     icono: RiCalendarCheckLine,
     color: '#f472b6',
-    descripcion: 'Planilla del parte diario: el trabajo asignado al personal, día por día.',
+    descripcion: 'Planilla de Google con el trabajo asignado al personal, día por día. Se abre en otra pestaña.',
     url: 'https://docs.google.com/spreadsheets/d/1TAZGvuaJqsoPh5SI2KxeR14xHXZ550dvIAkx2I8EGHw/edit?usp=sharing',
   },
 ];
@@ -589,8 +590,7 @@ const GRUPOS_INICIO = [
     // Más grande que el banner y corrida para que el techo con paneles quede a la derecha, sin tapar el texto
     fotoTam: '150% auto',
     fotoPos: '18% 41%',
-    tabs: ['estimador', 'solicitudes', 'cables', 'presupuestador', 'accesos'],
-    externos: ['parteDiario'],
+    tabs: ['estimador', 'solicitudes', 'cables', 'presupuestador', 'parteDiario', 'accesos'],
   },
 ];
 
@@ -6963,29 +6963,31 @@ const dataAnio =
             Inicio
           </TabNavigationLink>
           {DASHBOARD_TABS.map(([id, label, Icon]) => (
-            <TabNavigationLink
-              key={id}
-              active={tabActiva === id}
-              onClick={() => irA(id)}
-              className="cursor-pointer gap-1.5"
-            >
-              <Icon className="size-4" aria-hidden="true" />
-              {label}
-            </TabNavigationLink>
-          ))}
-          {ACCESOS_EXTERNOS.map((a) => (
-            <TabNavigationLink
-              key={a.id}
-              href={a.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={`${a.label}: se abre la planilla en otra pestaña`}
-              className="cursor-pointer gap-1.5"
-            >
-              <a.icono className="size-4" aria-hidden="true" />
-              {a.label}
-              <RiExternalLinkLine className="size-3.5 opacity-70" aria-hidden="true" />
-            </TabNavigationLink>
+            <React.Fragment key={id}>
+              {id === 'accesos' &&
+                ACCESOS_EXTERNOS.map((a) => (
+                  <TabNavigationLink
+                    key={a.id}
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`${a.label}: se abre la planilla en otra pestaña`}
+                    className="cursor-pointer gap-1.5"
+                  >
+                    <a.icono className="size-4" aria-hidden="true" />
+                    {a.label}
+                    <RiExternalLinkLine className="size-3.5 opacity-70" aria-hidden="true" />
+                  </TabNavigationLink>
+                ))}
+              <TabNavigationLink
+                active={tabActiva === id}
+                onClick={() => irA(id)}
+                className="cursor-pointer gap-1.5"
+              >
+                <Icon className="size-4" aria-hidden="true" />
+                {label}
+              </TabNavigationLink>
+            </React.Fragment>
           ))}
         </TabNavigation>
         </ContenedorTabs>
@@ -7059,7 +7061,7 @@ const dataAnio =
 
               <div
                 className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ${
-                  g.tabs.length + (g.externos || []).length >= 6
+                  g.tabs.length >= 6
                     ? 'xl:grid-cols-6'
                     : g.tabs.length >= 5
                     ? 'xl:grid-cols-5'
@@ -7067,6 +7069,48 @@ const dataAnio =
                 }`}
               >
                 {g.tabs.map((id) => {
+                  const ext = ACCESOS_EXTERNOS.find((x) => x.id === id);
+                  if (ext) {
+                    const a = ext;
+                    const orden = GRUPOS_INICIO.flatMap((x) => x.tabs).indexOf(id);
+                    return (
+                      <a
+                        key={a.id}
+                        href={a.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tarjeta-inicio group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 p-5 text-left shadow-lg shadow-black/20 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-[var(--c)] hover:shadow-2xl active:translate-y-0 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c)]"
+                        style={{ '--c': a.color, '--i': orden }}
+                      >
+                        <div
+                          className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-20 blur-2xl transition-opacity duration-200 group-hover:opacity-40"
+                          style={{ background: a.color }}
+                        />
+                        <div
+                          className="relative mb-4 flex size-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+                          style={{ background: a.color + '26', color: a.color }}
+                        >
+                          <a.icono className="size-6" aria-hidden="true" />
+                        </div>
+                        <div className="relative text-base font-bold">{a.label}</div>
+                        <div className="relative mt-1 text-sm text-gray-400">{a.descripcion}</div>
+                        <div className="relative mt-3 flex items-center gap-1 text-xs text-gray-400">
+                          <RiLockUnlockLine className="size-3.5" aria-hidden="true" />
+                          Acceso sin usuario ni contraseña
+                        </div>
+                        <div
+                          className="relative mt-auto flex items-center gap-1 pt-4 text-sm font-semibold"
+                          style={{ color: a.color }}
+                        >
+                          Abrir
+                          <RiExternalLinkLine
+                            className="size-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+                            aria-hidden="true"
+                          />
+                        </div>
+                      </a>
+                    );
+                  }
                   const tab = DASHBOARD_TABS.find((t) => t[0] === id);
                   const info = INFO_TABS[id];
                   const Icono = tab[2];
@@ -7125,48 +7169,6 @@ const dataAnio =
                         />
                       </div>
                     </button>
-                  );
-                })}
-                {(g.externos || []).map((idExt, k) => {
-                  const a = ACCESOS_EXTERNOS.find((x) => x.id === idExt);
-                  if (!a) return null;
-                  const orden = GRUPOS_INICIO.flatMap((x) => x.tabs).length + k;
-                  return (
-                    <a
-                      key={a.id}
-                      href={a.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="tarjeta-inicio group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 p-5 text-left shadow-lg shadow-black/20 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-[var(--c)] hover:shadow-2xl active:translate-y-0 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c)]"
-                      style={{ '--c': a.color, '--i': orden }}
-                    >
-                      <div
-                        className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-20 blur-2xl transition-opacity duration-200 group-hover:opacity-40"
-                        style={{ background: a.color }}
-                      />
-                      <div
-                        className="relative mb-4 flex size-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
-                        style={{ background: a.color + '26', color: a.color }}
-                      >
-                        <a.icono className="size-6" aria-hidden="true" />
-                      </div>
-                      <div className="relative text-base font-bold">{a.label}</div>
-                      <div className="relative mt-1 text-sm text-gray-400">{a.descripcion}</div>
-                      <div className="relative mt-3 flex items-center gap-1 text-xs text-gray-400">
-                        <RiExternalLinkLine className="size-3.5" aria-hidden="true" />
-                        Planilla de Google · se abre en otra pestaña
-                      </div>
-                      <div
-                        className="relative mt-auto flex items-center gap-1 pt-4 text-sm font-semibold"
-                        style={{ color: a.color }}
-                      >
-                        Abrir
-                        <RiExternalLinkLine
-                          className="size-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
-                          aria-hidden="true"
-                        />
-                      </div>
-                    </a>
                   );
                 })}
               </div>
