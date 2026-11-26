@@ -55,6 +55,8 @@ import {
   RiMapPinLine,
   RiFileList3Line,
   RiShieldUserLine,
+  RiCalendarCheckLine,
+  RiExternalLinkLine,
 } from '@remixicon/react';
 
 const {
@@ -496,6 +498,18 @@ const DASHBOARD_TABS = [
   ['accesos', 'Accesos y uso', RiShieldUserLine],
 ];
 
+// Accesos directos a planillas de Google: se abren en otra pestaña (no son pestañas del panel).
+const ACCESOS_EXTERNOS = [
+  {
+    id: 'parteDiario',
+    label: 'Parte diario',
+    icono: RiCalendarCheckLine,
+    color: '#f472b6',
+    descripcion: 'Planilla del parte diario: el trabajo asignado al personal, día por día.',
+    url: 'https://docs.google.com/spreadsheets/d/1TAZGvuaJqsoPh5SI2KxeR14xHXZ550dvIAkx2I8EGHw/edit?usp=sharing',
+  },
+];
+
 // ── Portada ("Inicio") ──
 // Cada pestaña del panel con su color y una descripción corta para la portada.
 const INFO_TABS = {
@@ -576,6 +590,7 @@ const GRUPOS_INICIO = [
     fotoTam: '150% auto',
     fotoPos: '18% 41%',
     tabs: ['estimador', 'solicitudes', 'cables', 'presupuestador', 'accesos'],
+    externos: ['parteDiario'],
   },
 ];
 
@@ -6958,6 +6973,20 @@ const dataAnio =
               {label}
             </TabNavigationLink>
           ))}
+          {ACCESOS_EXTERNOS.map((a) => (
+            <TabNavigationLink
+              key={a.id}
+              href={a.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`${a.label}: se abre la planilla en otra pestaña`}
+              className="cursor-pointer gap-1.5"
+            >
+              <a.icono className="size-4" aria-hidden="true" />
+              {a.label}
+              <RiExternalLinkLine className="size-3.5 opacity-70" aria-hidden="true" />
+            </TabNavigationLink>
+          ))}
         </TabNavigation>
         </ContenedorTabs>
         <FuenteDatos tab={tabActiva} />
@@ -7030,7 +7059,11 @@ const dataAnio =
 
               <div
                 className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ${
-                  g.tabs.length >= 5 ? 'xl:grid-cols-5' : ''
+                  g.tabs.length + (g.externos || []).length >= 6
+                    ? 'xl:grid-cols-6'
+                    : g.tabs.length >= 5
+                    ? 'xl:grid-cols-5'
+                    : ''
                 }`}
               >
                 {g.tabs.map((id) => {
@@ -7092,6 +7125,48 @@ const dataAnio =
                         />
                       </div>
                     </button>
+                  );
+                })}
+                {(g.externos || []).map((idExt, k) => {
+                  const a = ACCESOS_EXTERNOS.find((x) => x.id === idExt);
+                  if (!a) return null;
+                  const orden = GRUPOS_INICIO.flatMap((x) => x.tabs).length + k;
+                  return (
+                    <a
+                      key={a.id}
+                      href={a.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tarjeta-inicio group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gray-900/70 p-5 text-left shadow-lg shadow-black/20 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-[var(--c)] hover:shadow-2xl active:translate-y-0 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--c)]"
+                      style={{ '--c': a.color, '--i': orden }}
+                    >
+                      <div
+                        className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-20 blur-2xl transition-opacity duration-200 group-hover:opacity-40"
+                        style={{ background: a.color }}
+                      />
+                      <div
+                        className="relative mb-4 flex size-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+                        style={{ background: a.color + '26', color: a.color }}
+                      >
+                        <a.icono className="size-6" aria-hidden="true" />
+                      </div>
+                      <div className="relative text-base font-bold">{a.label}</div>
+                      <div className="relative mt-1 text-sm text-gray-400">{a.descripcion}</div>
+                      <div className="relative mt-3 flex items-center gap-1 text-xs text-gray-400">
+                        <RiExternalLinkLine className="size-3.5" aria-hidden="true" />
+                        Planilla de Google · se abre en otra pestaña
+                      </div>
+                      <div
+                        className="relative mt-auto flex items-center gap-1 pt-4 text-sm font-semibold"
+                        style={{ color: a.color }}
+                      >
+                        Abrir
+                        <RiExternalLinkLine
+                          className="size-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </a>
                   );
                 })}
               </div>
